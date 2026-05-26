@@ -66,11 +66,23 @@ sistema-agendamentos/
 
 ## Orquestração de Agentes
 
-Ao implementar uma feature completa, use o `feature-orchestrator`:
-- Ele spawna `api-agent` e `web-agent` em paralelo em worktrees isoladas
-- `tenant-guard` revisa o resultado para garantir isolamento correto
-- `payment-agent` é chamado apenas para features de pagamento
-- `ai-features-agent` implementa as funcionalidades com Claude API
+| Agente | Quando usar |
+|---|---|
+| `feature-orchestrator` | Feature completa — spawna api-agent + web-agent em paralelo |
+| `api-agent` | Qualquer trabalho Laravel: migration, model, controller, teste |
+| `web-agent` | Qualquer trabalho Next.js: page, component, service, hook |
+| `db-agent` | Design de schema, índices, performance PostgreSQL |
+| `tenant-guard` | Auditoria de isolamento multi-tenant |
+| `payment-agent` | Integração MercadoPago (PIX, cartão, webhooks) |
+| `ai-features-agent` | Features com Claude API (assistente, insights) |
+| `github-agent` | Branch, PR, issue board — toda a gestão GitHub |
+
+## Fluxo de trabalho por issue
+
+1. `github-agent` cria branch + move issue para In Progress
+2. `feature-orchestrator` implementa (api-agent + web-agent em paralelo)
+3. `tenant-guard` audita o código gerado
+4. `github-agent` abre PR linkando a issue (`Closes #N`)
 
 ## Como Rodar
 

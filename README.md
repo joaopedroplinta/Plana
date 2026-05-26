@@ -112,6 +112,7 @@ Este projeto usa subagentes do Claude Code para desenvolvimento paralelo:
 | `tenant-guard` | Auditoria de isolamento multi-tenant |
 | `payment-agent` | Integração MercadoPago (PIX, cartão, webhooks) |
 | `ai-features-agent` | Features com Claude API |
+| `github-agent` | Branch, PR, issue board — toda a gestão GitHub |
 
 ### Slash commands disponíveis
 
@@ -120,6 +121,7 @@ Este projeto usa subagentes do Claude Code para desenvolvimento paralelo:
 /scaffold-api <descrição>    # só o lado Laravel
 /scaffold-web <descrição>    # só o lado Next.js
 /check-tenant                # auditoria de isolamento multi-tenant
+/close-sprint <sprint-N>     # fecha sprint, gera release, move issues pendentes
 ```
 
 ## Testes
