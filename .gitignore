@@ -1,0 +1,22 @@
+# OS
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+
+# IDEs
+.idea/
+.vscode/
+.cursor/
+.zed/
+*.code-workspace
+
+# Docker volumes
+postgres_data/
+
+# Logs raiz
+*.log
+
+# Env raiz (caso exista)
+.env
+.env.local
