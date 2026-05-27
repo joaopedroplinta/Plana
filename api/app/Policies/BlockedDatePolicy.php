@@ -25,7 +25,10 @@ class BlockedDatePolicy
 
     public function delete(User $user, BlockedDate $blockedDate): bool
     {
+        $currentTenant = app('currentTenant');
+
         return $user->hasRole(['salon_owner', 'salon_staff'])
-            && $user->belongsToTenant(app('currentTenant'));
+            && $user->belongsToTenant($currentTenant)
+            && $blockedDate->tenant_id === $currentTenant->id;
     }
 }

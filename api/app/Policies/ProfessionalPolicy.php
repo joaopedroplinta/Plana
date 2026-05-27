@@ -29,13 +29,19 @@ class ProfessionalPolicy
 
     public function update(User $user, Professional $professional): bool
     {
+        $currentTenant = app('currentTenant');
+
         return $user->hasRole(['salon_owner', 'salon_staff'])
-            && $user->belongsToTenant(app('currentTenant'));
+            && $user->belongsToTenant($currentTenant)
+            && $professional->tenant_id === $currentTenant->id;
     }
 
     public function delete(User $user, Professional $professional): bool
     {
+        $currentTenant = app('currentTenant');
+
         return $user->hasRole('salon_owner')
-            && $user->belongsToTenant(app('currentTenant'));
+            && $user->belongsToTenant($currentTenant)
+            && $professional->tenant_id === $currentTenant->id;
     }
 }

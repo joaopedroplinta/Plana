@@ -29,19 +29,28 @@ class ServicePolicy
 
     public function update(User $user, Service $service): bool
     {
+        $currentTenant = app('currentTenant');
+
         return $user->hasRole(['salon_owner', 'salon_staff'])
-            && $user->belongsToTenant(app('currentTenant'));
+            && $user->belongsToTenant($currentTenant)
+            && $service->tenant_id === $currentTenant->id;
     }
 
     public function delete(User $user, Service $service): bool
     {
+        $currentTenant = app('currentTenant');
+
         return $user->hasRole('salon_owner')
-            && $user->belongsToTenant(app('currentTenant'));
+            && $user->belongsToTenant($currentTenant)
+            && $service->tenant_id === $currentTenant->id;
     }
 
     public function uploadImage(User $user, Service $service): bool
     {
+        $currentTenant = app('currentTenant');
+
         return $user->hasRole(['salon_owner', 'salon_staff'])
-            && $user->belongsToTenant(app('currentTenant'));
+            && $user->belongsToTenant($currentTenant)
+            && $service->tenant_id === $currentTenant->id;
     }
 }
