@@ -41,8 +41,9 @@ sistema-agendamentos/
 
 - Models com tenant scope: sempre use o global scope `TenantScope` ou trait `BelongsToTenant`
 - Controllers: sempre resolva o tenant via middleware `ResolveTenant` antes de qualquer query
-- Policies: verifique `$user->tenant_id === $resource->tenant_id`
+- Policies: dupla verificação — `$user->belongsToTenant($currentTenant) && $resource->tenant_id === $currentTenant->id`
 - Rotas: prefixo `/api/v1/salao/{tenant:slug}/` para endpoints do salão
+- FKs de outros tenants em requests: sempre usar `Rule::exists('tabela', 'id')->where('tenant_id', app('currentTenant')->id)`
 
 ## Convenções da API (Laravel)
 
@@ -53,6 +54,9 @@ sistema-agendamentos/
 - Feature tests com Pest 4 para toda rota nova
 - Rodar `vendor/bin/pint --dirty` após editar PHP
 - PostgreSQL: usar tipos nativos (uuid, jsonb, timestamptz)
+- Models com UUID: definir `$incrementing = false`, `$keyType = 'string'` e auto-gerar no `boot()` via `Str::uuid()`
+- Envelope de resposta padrão: `{ "data": {...} }` via API Resource — nunca retornar array cru
+- Plano padrão para novos tenants: `'starter'`
 
 ## Convenções do Frontend (Next.js)
 
@@ -63,6 +67,9 @@ sistema-agendamentos/
 - API calls centralizadas em `src/services/` — nunca `fetch` direto nas páginas
 - Auth: token Bearer no header via `src/lib/api.ts`
 - Rotas protegidas com middleware Next.js
+- `useState` lazy initializer para valores de localStorage: `useState(() => localStorage.getItem('token'))`
+- Nunca chamar `setState` sincronamente no corpo do `useEffect` — regra `react-hooks/set-state-in-effect`; usar callbacks async (`.then`, `.finally`) ou lazy initializer
+- Preços sempre em centavos na API; usar `formatPrice` de `src/lib/format.ts` para exibição
 
 ## Orquestração de Agentes
 
@@ -77,12 +84,21 @@ sistema-agendamentos/
 | `ai-features-agent` | Features com Claude API (assistente, insights) |
 | `github-agent` | Branch, PR, issue board — toda a gestão GitHub |
 
+## Slash Commands
+
+| Comando | O que faz |
+|---|---|
+| `/start-issue <N>` | Cria branch, move issue para In Progress, spawna feature-orchestrator, abre PR |
+| `/sync-main` | Faz merge de main na branch atual e resolve conflitos simples |
+| `/run-tests` | Roda Pest (API) e TypeScript + ESLint (web) e reporta resultado |
+| `/build-feature <desc>` | Implementa feature completa end-to-end via feature-orchestrator |
+| `/close-sprint` | Fecha sprint: resume issues, cria tag + release, move pendências |
+
 ## Fluxo de trabalho por issue
 
-1. `github-agent` cria branch + move issue para In Progress
-2. `feature-orchestrator` implementa (api-agent + web-agent em paralelo)
-3. `tenant-guard` audita o código gerado
-4. `github-agent` abre PR linkando a issue (`Closes #N`)
+1. `/start-issue <N>` — inicia tudo automaticamente (branch, In Progress, implementação, PR)
+2. Internamente: `github-agent` cria branch + move issue → `feature-orchestrator` spawna api-agent + web-agent em paralelo → `tenant-guard` audita → `github-agent` abre PR com `Closes #N`
+3. Sempre atribuir o usuário como Assignee no PR
 
 ## Como Rodar
 
