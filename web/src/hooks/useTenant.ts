@@ -20,7 +20,7 @@ const MOCK_TENANT: Tenant = {
 export function useTenant(slug: string): UseTenantReturn {
   const [tenant, setTenant] = useState<Tenant | null>(null)
   const [isLoading, setIsLoading] = useState(!!slug)
-  const [error, setError] = useState<string | null>(slug ? null : 'Slug não informado')
+  const [error] = useState<string | null>(slug ? null : 'Slug não informado')
 
   useEffect(() => {
     if (!slug) return

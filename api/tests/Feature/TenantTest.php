@@ -3,6 +3,7 @@
 use App\Models\Tenant;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 
 uses(RefreshDatabase::class);
 
@@ -35,7 +36,7 @@ test('pivot tenant_user registra corretamente o owner', function () {
 
     $tenant->users()->attach($user->id, ['role' => 'owner']);
 
-    $pivotRow = \Illuminate\Support\Facades\DB::table('tenant_user')
+    $pivotRow = DB::table('tenant_user')
         ->where('tenant_id', $tenant->id)
         ->where('user_id', $user->id)
         ->first();
