@@ -10,20 +10,36 @@ import { authService } from '@/services/auth'
 import type { ApiError } from '@/types/index'
 import { isAxiosError } from 'axios'
 
-export default function LoginPage() {
+interface FieldErrors {
+  name?: string[]
+  email?: string[]
+  password?: string[]
+  password_confirmation?: string[]
+}
+
+export default function RegisterPage() {
   const router = useRouter()
+  const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [passwordConfirmation, setPasswordConfirmation] = useState('')
   const [error, setError] = useState<string | null>(null)
+  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({})
   const [isLoading, setIsLoading] = useState(false)
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     setError(null)
+    setFieldErrors({})
     setIsLoading(true)
 
     try {
-      const response = await authService.login(email, password)
+      const response = await authService.register({
+        name,
+        email,
+        password,
+        password_confirmation: passwordConfirmation,
+      })
       const { token, tenant } = response.data.data
       localStorage.setItem('token', token)
       document.cookie = `token=${token}; path=/; SameSite=Lax`
@@ -31,7 +47,10 @@ export default function LoginPage() {
     } catch (err) {
       if (isAxiosError(err)) {
         const apiError = err.response?.data as ApiError | undefined
-        setError(apiError?.message ?? 'Erro ao fazer login. Tente novamente.')
+        if (apiError?.errors) {
+          setFieldErrors(apiError.errors as FieldErrors)
+        }
+        setError(apiError?.message ?? 'Erro ao criar conta. Tente novamente.')
       } else {
         setError('Erro inesperado. Tente novamente.')
       }
@@ -44,20 +63,37 @@ export default function LoginPage() {
     <div className="flex flex-1 items-center justify-center px-6 py-16">
       <div className="w-full max-w-sm">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900">Entrar na sua conta</h1>
+          <h1 className="text-2xl font-bold text-gray-900">Criar conta grátis</h1>
           <p className="mt-2 text-sm text-gray-600">
-            Ainda não tem conta?{' '}
+            Já tem uma conta?{' '}
             <Link
-              href="/register"
+              href="/login"
               className="font-medium text-indigo-600 hover:text-indigo-500"
             >
-              Criar conta grátis
+              Entrar
             </Link>
           </p>
         </div>
 
         <div className="mt-8 rounded-2xl border border-gray-100 bg-white p-8 shadow-sm">
           <form onSubmit={handleSubmit} className="space-y-5">
+            <div className="space-y-1.5">
+              <Label htmlFor="name">Nome do salão</Label>
+              <Input
+                id="name"
+                type="text"
+                autoComplete="organization"
+                required
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Ex: Salão da Maria"
+                disabled={isLoading}
+              />
+              {fieldErrors.name && (
+                <p className="text-xs text-red-600">{fieldErrors.name[0]}</p>
+              )}
+            </div>
+
             <div className="space-y-1.5">
               <Label htmlFor="email">E-mail</Label>
               <Input
@@ -70,28 +106,45 @@ export default function LoginPage() {
                 placeholder="seu@email.com"
                 disabled={isLoading}
               />
+              {fieldErrors.email && (
+                <p className="text-xs text-red-600">{fieldErrors.email[0]}</p>
+              )}
             </div>
 
             <div className="space-y-1.5">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="password">Senha</Label>
-                <Link
-                  href="/forgot-password"
-                  className="text-xs font-medium text-indigo-600 hover:text-indigo-500"
-                >
-                  Esqueceu a senha?
-                </Link>
-              </div>
+              <Label htmlFor="password">Senha</Label>
               <Input
                 id="password"
                 type="password"
-                autoComplete="current-password"
+                autoComplete="new-password"
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
                 disabled={isLoading}
               />
+              {fieldErrors.password && (
+                <p className="text-xs text-red-600">{fieldErrors.password[0]}</p>
+              )}
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="password_confirmation">Confirmar senha</Label>
+              <Input
+                id="password_confirmation"
+                type="password"
+                autoComplete="new-password"
+                required
+                value={passwordConfirmation}
+                onChange={(e) => setPasswordConfirmation(e.target.value)}
+                placeholder="••••••••"
+                disabled={isLoading}
+              />
+              {fieldErrors.password_confirmation && (
+                <p className="text-xs text-red-600">
+                  {fieldErrors.password_confirmation[0]}
+                </p>
+              )}
             </div>
 
             {error && (
@@ -105,7 +158,7 @@ export default function LoginPage() {
               className="w-full rounded-full"
               disabled={isLoading}
             >
-              {isLoading ? 'Entrando...' : 'Entrar'}
+              {isLoading ? 'Criando conta...' : 'Criar conta grátis'}
             </Button>
           </form>
         </div>

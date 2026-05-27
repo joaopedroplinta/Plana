@@ -11,11 +11,14 @@ export interface User {
   name: string
   email: string
   email_verified_at: string | null
-  roles: Role[]
+  roles: string[]
+  tenant?: Tenant
 }
 
-export interface Role {
-  name: 'super_admin' | 'salon_owner' | 'salon_staff' | 'client'
+export interface AuthResponse {
+  token: string
+  user: User
+  tenant: Tenant
 }
 
 export interface Service {
