@@ -1,5 +1,7 @@
 # Sistema de Agendamentos
 
+[![CI](https://github.com/joaopedroplinta/sistema-agendamentos/actions/workflows/ci.yml/badge.svg)](https://github.com/joaopedroplinta/sistema-agendamentos/actions/workflows/ci.yml)
+
 SaaS multi-tenant de agendamentos para salões de beleza. Cada salão é um tenant isolado com slug único, plano de assinatura e painel administrativo próprio.
 
 ## Stack
