@@ -1,3 +1,5 @@
+import Link from 'next/link'
+
 const features = [
   {
     title: 'Agendamento Online',
@@ -34,12 +36,12 @@ export default function LandingPage() {
             profissionais e relatórios — tudo em um só lugar.
           </p>
           <div className="mt-10 flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
-            <a
+            <Link
               href="/login"
               className="rounded-full bg-indigo-600 px-8 py-3 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 transition-colors"
             >
               Começar grátis
-            </a>
+            </Link>
             <a
               href="#features"
               className="rounded-full border border-gray-300 px-8 py-3 text-sm font-semibold text-gray-700 hover:border-gray-400 hover:bg-gray-50 transition-colors"
@@ -84,12 +86,12 @@ export default function LandingPage() {
           <p className="mt-4 text-indigo-100">
             Crie sua conta grátis e comece a receber agendamentos ainda hoje.
           </p>
-          <a
+          <Link
             href="/login"
             className="mt-8 inline-block rounded-full bg-white px-8 py-3 text-sm font-semibold text-indigo-600 shadow hover:bg-indigo-50 transition-colors"
           >
             Começar grátis
-          </a>
+          </Link>
         </div>
       </section>
     </div>

@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
@@ -12,12 +13,12 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
         <div className="mx-auto flex max-w-7xl items-center justify-between">
           <span className="text-lg font-bold text-gray-900">Agendei</span>
           <nav className="flex items-center gap-6">
-            <a
+            <Link
               href="/login"
               className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors"
             >
               Entrar
-            </a>
+            </Link>
           </nav>
         </div>
       </header>

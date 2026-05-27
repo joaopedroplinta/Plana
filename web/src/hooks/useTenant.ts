@@ -19,15 +19,11 @@ const MOCK_TENANT: Tenant = {
 
 export function useTenant(slug: string): UseTenantReturn {
   const [tenant, setTenant] = useState<Tenant | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const [isLoading, setIsLoading] = useState(!!slug)
+  const [error, setError] = useState<string | null>(slug ? null : 'Slug não informado')
 
   useEffect(() => {
-    if (!slug) {
-      setIsLoading(false)
-      setError('Slug não informado')
-      return
-    }
+    if (!slug) return
 
     // TODO: substituir mock pela chamada real quando a rota existir:
     // tenantsService.show(slug).then(r => setTenant(r.data.data)).catch(...)
