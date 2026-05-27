@@ -104,6 +104,33 @@ it('logout revoga token', function () {
     $meResponse->assertUnauthorized();
 });
 
+it('login com tenant_slug resolve o tenant correto', function () {
+    $registerResponse = registerUser();
+    $slug = $registerResponse->json('data.tenant.slug');
+
+    $response = $this->postJson('/api/v1/auth/login', [
+        'email' => 'joao@teste.com',
+        'password' => 'password123',
+        'tenant_slug' => $slug,
+    ]);
+
+    $response->assertOk();
+    expect($response->json('data.tenant.slug'))->toBe($slug);
+});
+
+it('login com tenant_slug inválido retorna 422', function () {
+    registerUser();
+
+    $response = $this->postJson('/api/v1/auth/login', [
+        'email' => 'joao@teste.com',
+        'password' => 'password123',
+        'tenant_slug' => 'slug-inexistente',
+    ]);
+
+    $response->assertUnprocessable()
+        ->assertJsonValidationErrors(['tenant_slug']);
+});
+
 it('me retorna user autenticado com tenant', function () {
     $registerResponse = registerUser();
     $token = $registerResponse->json('data.token');

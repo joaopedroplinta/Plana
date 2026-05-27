@@ -56,7 +56,10 @@ class AuthController extends Controller
             return response()->json(['message' => 'Credenciais inválidas.'], 401);
         }
 
-        $tenant = $user->tenants()->first();
+        $slug = $request->string('tenant_slug')->toString();
+        $tenant = $slug
+            ? $user->tenants()->where('slug', $slug)->firstOrFail()
+            : $user->tenants()->first();
 
         $token = $user->createToken('auth')->plainTextToken;
 
