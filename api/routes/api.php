@@ -1,6 +1,11 @@
 <?php
 
 use App\Http\Controllers\Api\V1\AuthController;
+use App\Http\Controllers\Api\V1\BlockedDateController;
+use App\Http\Controllers\Api\V1\ProfessionalController;
+use App\Http\Controllers\Api\V1\ScheduleController;
+use App\Http\Controllers\Api\V1\ServiceController;
+use App\Http\Controllers\Api\V1\ServicePackageController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->group(function () {
@@ -12,17 +17,31 @@ Route::prefix('v1')->group(function () {
             Route::get('me', [AuthController::class, 'me']);
         });
     });
+
     // Rotas públicas do tenant
     Route::prefix('salao/{tenant:slug}')->middleware('tenant')->group(function () {
-        // aqui virão as rotas públicas do salão
         Route::get('ping', fn () => response()->json(['ok' => true]))->name('tenant.ping');
+
+        Route::apiResource('services', ServiceController::class)->only(['index', 'show']);
+        Route::apiResource('packages', ServicePackageController::class)->only(['index', 'show']);
+        Route::apiResource('professionals', ProfessionalController::class)->only(['index', 'show']);
+        Route::apiResource('professionals/{professional}/schedules', ScheduleController::class)->only(['index', 'show']);
+        Route::apiResource('professionals/{professional}/blocked-dates', BlockedDateController::class)->only(['index', 'show']);
     });
 
     // Rotas autenticadas do tenant
     Route::prefix('salao/{tenant:slug}')
         ->middleware(['tenant', 'auth:sanctum'])
         ->group(function () {
-            // aqui virão as rotas autenticadas
+            Route::apiResource('services', ServiceController::class)->except(['index', 'show']);
+            Route::post('services/{service}/image', [ServiceController::class, 'uploadImage']);
+
+            Route::apiResource('packages', ServicePackageController::class)->except(['index', 'show']);
+
+            Route::apiResource('professionals', ProfessionalController::class)->except(['index', 'show']);
+            Route::apiResource('professionals/{professional}/schedules', ScheduleController::class)->except(['index', 'show']);
+            Route::apiResource('professionals/{professional}/blocked-dates', BlockedDateController::class)
+                ->except(['index', 'show', 'update']);
         });
 
     // Rotas super admin
