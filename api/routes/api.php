@@ -27,7 +27,7 @@ Route::prefix('v1')->group(function () {
 
     // Rotas super admin
     Route::prefix('admin')
-        ->middleware(['auth:sanctum'])
+        ->middleware(['auth:sanctum', 'role:super_admin'])
         ->group(function () {
             // aqui virão as rotas de super admin
         });
