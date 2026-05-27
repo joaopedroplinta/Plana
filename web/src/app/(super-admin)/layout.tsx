@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
@@ -16,12 +17,12 @@ export default function SuperAdminLayout({ children }: { children: React.ReactNo
             </span>
           </div>
           <nav className="flex items-center gap-4">
-            <a
+            <Link
               href="/super-admin"
               className="text-sm font-medium text-gray-300 hover:text-white transition-colors"
             >
               Dashboard
-            </a>
+            </Link>
           </nav>
         </div>
       </header>

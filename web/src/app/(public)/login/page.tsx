@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
@@ -12,9 +13,9 @@ export default function LoginPage() {
           <h1 className="text-2xl font-bold text-gray-900">Entrar na sua conta</h1>
           <p className="mt-2 text-sm text-gray-600">
             Ainda não tem conta?{' '}
-            <a href="/" className="font-medium text-indigo-600 hover:text-indigo-500">
+            <Link href="/" className="font-medium text-indigo-600 hover:text-indigo-500">
               Criar conta grátis
-            </a>
+            </Link>
           </p>
         </div>
 

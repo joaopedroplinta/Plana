@@ -15,8 +15,14 @@ interface UseAuthReturn {
 
 export function useAuth(): UseAuthReturn {
   const [user, setUser] = useState<User | null>(null)
-  const [token, setToken] = useState<string | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
+  const [token, setToken] = useState<string | null>(() => {
+    if (typeof window === 'undefined') return null
+    return localStorage.getItem('token')
+  })
+  const [isLoading, setIsLoading] = useState(() => {
+    if (typeof window === 'undefined') return false
+    return !!localStorage.getItem('token')
+  })
 
   const saveToken = useCallback((newToken: string) => {
     localStorage.setItem('token', newToken)
@@ -33,12 +39,7 @@ export function useAuth(): UseAuthReturn {
 
   useEffect(() => {
     const storedToken = localStorage.getItem('token')
-    if (!storedToken) {
-      setIsLoading(false)
-      return
-    }
-
-    setToken(storedToken)
+    if (!storedToken) return
 
     authService
       .me()

@@ -4,6 +4,7 @@ namespace Database\Factories;
 
 use App\Models\Tenant;
 use Illuminate\Database\Eloquent\Factories\Factory;
+use Illuminate\Support\Str;
 
 /**
  * @extends Factory<Tenant>
@@ -45,10 +46,10 @@ class TenantFactory extends Factory
         $prefix = $this->faker->randomElement($this->salonPrefixes);
         $suffix = $this->faker->randomElement($this->salonSuffixes);
         $name = "{$prefix} {$suffix}";
-        $slug = \Illuminate\Support\Str::slug($name).'-'.$this->faker->unique()->numberBetween(1, 9999);
+        $slug = Str::slug($name).'-'.$this->faker->unique()->numberBetween(1, 9999);
 
         return [
-            'id' => (string) \Illuminate\Support\Str::uuid(),
+            'id' => (string) Str::uuid(),
             'name' => $name,
             'slug' => $slug,
             'plan' => $this->faker->randomElement(['starter', 'pro', 'enterprise']),
