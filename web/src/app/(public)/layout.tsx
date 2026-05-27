@@ -14,6 +14,12 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
           <span className="text-lg font-bold text-gray-900">Agendei</span>
           <nav className="flex items-center gap-6">
             <Link
+              href="/register"
+              className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors"
+            >
+              Criar conta
+            </Link>
+            <Link
               href="/login"
               className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors"
             >

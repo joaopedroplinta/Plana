@@ -57,7 +57,7 @@ export function useAuth(): UseAuthReturn {
   const login = useCallback(
     async (email: string, password: string) => {
       const response = await authService.login(email, password)
-      const { token: newToken, user: loggedUser } = response.data
+      const { token: newToken, user: loggedUser } = response.data.data
       saveToken(newToken)
       setUser(loggedUser)
     },
