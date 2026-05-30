@@ -18,9 +18,6 @@ export function useTenant(slug: string): UseTenantReturn {
   useEffect(() => {
     if (!slug) return
 
-    setIsLoading(true)
-    setError(null)
-
     tenantsService
       .show(slug)
       .then((res) => setTenant(res.data.data))
