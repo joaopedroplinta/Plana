@@ -4,6 +4,27 @@ Todas as mudanças relevantes deste projeto são documentadas aqui.
 
 ---
 
+## [v0.7.0] — Sprint 8: Super Admin (2026-05-30)
+
+### API
+- Rotas `/api/v1/admin/*` protegidas por `role:super_admin` (middleware Spatie registrado)
+- `GET /admin/metrics` — métricas globais da plataforma (tenants, usuários, agendamentos, receita total)
+- `GET /admin/tenants` — listagem paginada de todos os salões com `user_count` e `owner`
+- `GET /admin/tenants/{id}` — detalhes do salão com owner (nome + email)
+- `PATCH /admin/tenants/{id}` — atualização de plano (starter/pro/enterprise) e status (active)
+- `AdminTenantResource` com `whenLoaded` para `user_count` e `owner`
+- 9 testes Pest cobrindo acesso super_admin, salon_owner (403) e unauthenticated (401)
+
+### Web
+- Layout do Super Admin reescrito com sidebar escura (Agendei ADMIN badge), auth guard e logout
+- Guard de role `super_admin` — redireciona para `/` se não autorizado
+- `/super-admin` — dashboard com 4 cards de métricas reais e tabela de distribuição por plano
+- `/super-admin/tenants` — tabela paginada com dropdown de plano inline e toggle ativo/inativo
+- `adminService` em `src/services/admin.ts`
+- Tipos `AdminTenant`, `AdminTenantOwner` e `AdminMetrics` em `src/types/index.ts`
+
+---
+
 ## [v0.6.0] — Sprint 6: Dashboard (2026-05-30)
 
 ### API
