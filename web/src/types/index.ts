@@ -113,6 +113,32 @@ export interface CreateAppointmentData {
   notes?: string
 }
 
+export interface AdminTenantOwner {
+  name: string
+  email: string
+}
+
+export interface AdminTenant {
+  id: string
+  name: string
+  slug: string
+  plan: 'starter' | 'pro' | 'enterprise'
+  active: boolean
+  created_at: string
+  trial_ends_at: string | null
+  user_count: number
+  owner: AdminTenantOwner | null
+}
+
+export interface AdminMetrics {
+  total_tenants: number
+  active_tenants: number
+  tenants_by_plan: Array<{ plan: string; count: number }>
+  total_users: number
+  total_appointments: number
+  total_revenue: number
+}
+
 export interface DashboardSummary {
   total_appointments: number
   completed_appointments: number
