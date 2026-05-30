@@ -1,14 +1,40 @@
+'use client'
+
+import { useState } from 'react'
 import Link from 'next/link'
-import type { Metadata } from 'next'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-
-export const metadata: Metadata = {
-  title: 'Recuperar senha | Agendei',
-}
+import { api } from '@/lib/api'
+import type { ApiError } from '@/types/index'
+import { isAxiosError } from 'axios'
 
 export default function ForgotPasswordPage() {
+  const [email, setEmail] = useState('')
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [sent, setSent] = useState(false)
+
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault()
+    setError(null)
+    setIsLoading(true)
+
+    try {
+      await api.post('auth/forgot-password', { email })
+      setSent(true)
+    } catch (err) {
+      if (isAxiosError(err)) {
+        const apiError = err.response?.data as ApiError | undefined
+        setError(apiError?.message ?? 'Erro ao enviar email. Tente novamente.')
+      } else {
+        setError('Erro inesperado. Tente novamente.')
+      }
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
   return (
     <div className="flex flex-1 items-center justify-center px-6 py-16">
       <div className="w-full max-w-sm">
@@ -26,25 +52,60 @@ export default function ForgotPasswordPage() {
         </div>
 
         <div className="mt-8 rounded-2xl border border-gray-100 bg-white p-8 shadow-sm">
-          <div className="space-y-5">
-            <div className="space-y-1.5">
-              <Label htmlFor="email">E-mail</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="seu@email.com"
-                disabled
-              />
+          {sent ? (
+            <div className="space-y-4 text-center">
+              <div className="rounded-lg bg-green-50 px-4 py-4">
+                <p className="text-sm font-medium text-green-800">
+                  Verifique seu email — enviamos um link de redefinicao de senha.
+                </p>
+              </div>
+              <Link
+                href="/login"
+                className="block text-sm font-medium text-indigo-600 hover:text-indigo-500"
+              >
+                Voltar para o login
+              </Link>
             </div>
+          ) : (
+            <form onSubmit={handleSubmit} className="space-y-5">
+              <div className="space-y-1.5">
+                <Label htmlFor="email">E-mail</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  autoComplete="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="seu@email.com"
+                  disabled={isLoading}
+                />
+              </div>
 
-            <Button className="w-full rounded-full" disabled>
-              Enviar link de recuperação
-            </Button>
+              {error && (
+                <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">
+                  {error}
+                </p>
+              )}
 
-            <p className="text-center text-xs text-gray-400">
-              Em breve — funcionalidade disponível na próxima versão.
-            </p>
-          </div>
+              <Button
+                type="submit"
+                className="w-full rounded-full"
+                disabled={isLoading}
+              >
+                {isLoading ? 'Enviando...' : 'Enviar link de recuperacao'}
+              </Button>
+
+              <p className="text-center text-sm text-gray-500">
+                <Link
+                  href="/login"
+                  className="font-medium text-indigo-600 hover:text-indigo-500"
+                >
+                  Voltar para o login
+                </Link>
+              </p>
+            </form>
+          )}
         </div>
       </div>
     </div>

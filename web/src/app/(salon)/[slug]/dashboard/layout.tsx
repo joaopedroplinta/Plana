@@ -36,6 +36,18 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     }
   }, [isLoading, isAuthenticated, router])
 
+  // Role guard: apenas salon_owner e salon_staff acessam o dashboard
+  useEffect(() => {
+    if (!isLoading && isAuthenticated && user) {
+      const hasAccess = user.roles?.some((r) =>
+        ['salon_owner', 'salon_staff'].includes(r.name),
+      )
+      if (!hasAccess) {
+        router.push(`/${slug}`)
+      }
+    }
+  }, [isLoading, isAuthenticated, user, router, slug])
+
   const navItems: NavItem[] = [
     {
       label: 'Visão Geral',

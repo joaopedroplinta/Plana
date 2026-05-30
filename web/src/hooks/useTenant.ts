@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import type { Tenant } from '@/types/index'
+import { tenantsService } from '@/services/tenants'
 
 interface UseTenantReturn {
   tenant: Tenant | null
@@ -9,30 +10,22 @@ interface UseTenantReturn {
   error: string | null
 }
 
-const MOCK_TENANT: Tenant = {
-  id: 'mock-tenant-id',
-  name: 'Salão Exemplo',
-  slug: 'salao-exemplo',
-  plan: 'pro',
-  active: true,
-}
-
 export function useTenant(slug: string): UseTenantReturn {
   const [tenant, setTenant] = useState<Tenant | null>(null)
   const [isLoading, setIsLoading] = useState(!!slug)
-  const [error] = useState<string | null>(slug ? null : 'Slug não informado')
+  const [error, setError] = useState<string | null>(slug ? null : 'Slug nao informado')
 
   useEffect(() => {
     if (!slug) return
 
-    // TODO: substituir mock pela chamada real quando a rota existir:
-    // tenantsService.show(slug).then(r => setTenant(r.data.data)).catch(...)
-    const timer = setTimeout(() => {
-      setTenant({ ...MOCK_TENANT, slug, name: `Salão ${slug}` })
-      setIsLoading(false)
-    }, 0)
+    setIsLoading(true)
+    setError(null)
 
-    return () => clearTimeout(timer)
+    tenantsService
+      .show(slug)
+      .then((res) => setTenant(res.data.data))
+      .catch(() => setError('Salao nao encontrado'))
+      .finally(() => setIsLoading(false))
   }, [slug])
 
   return { tenant, isLoading, error }
