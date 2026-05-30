@@ -10,6 +10,7 @@ use App\Models\ServicePackage;
 use App\Models\Tenant;
 use App\Models\User;
 use Illuminate\Database\Seeder;
+use Spatie\Permission\Models\Role;
 
 class DatabaseSeeder extends Seeder
 {
@@ -66,10 +67,19 @@ class DatabaseSeeder extends Seeder
             }
         });
 
-        // Usuário de teste genérico
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
+        // Roles Spatie
+        $ownerRole  = Role::firstOrCreate(['name' => 'salon_owner', 'guard_name' => 'web']);
+        $superRole  = Role::firstOrCreate(['name' => 'super_admin', 'guard_name' => 'web']);
+        Role::firstOrCreate(['name' => 'salon_staff', 'guard_name' => 'web']);
+        Role::firstOrCreate(['name' => 'client', 'guard_name' => 'web']);
+
+        $owner->assignRole($ownerRole);
+
+        // Super admin da plataforma
+        $superAdmin = User::factory()->create([
+            'name' => 'Super Admin',
+            'email' => 'admin@agendei.com',
         ]);
+        $superAdmin->assignRole($superRole);
     }
 }

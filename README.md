@@ -9,58 +9,58 @@ SaaS multi-tenant de agendamentos para salões de beleza. Cada salão é um tena
 | Camada | Tecnologia |
 |---|---|
 | API | Laravel 13 · PHP 8.5 · PostgreSQL 16 |
-| Autenticação | Laravel Sanctum (Bearer tokens) |
+| Autenticação | Laravel Sanctum (Bearer tokens stateless) |
 | Autorização | Spatie Laravel Permission |
-| Pagamento | MercadoPago (PIX + cartão) |
-| Frontend | Next.js 16 · TypeScript · Tailwind CSS · shadcn/ui |
-| IA | Claude API (claude-sonnet-4-6) |
+| Pagamento | MercadoPago SDK (PIX nativo + Checkout Pro) |
+| Frontend | Next.js 16 · TypeScript strict · Tailwind CSS · shadcn/ui |
+| Gráficos | Recharts |
 | Infra | Docker Compose (PostgreSQL + Redis) |
-
-## Estrutura do Monorepo
-
-```
-sistema-agendamentos/
-├── api/              # Laravel 13 — API REST versionada
-├── web/              # Next.js 16 — Frontend SaaS
-├── docker-compose.yml
-└── .claude/
-    ├── agents/       # Subagentes especializados (Claude Code)
-    └── commands/     # Slash commands para desenvolvimento
-```
+| CI | GitHub Actions (PHP lint + Pest · TypeScript + ESLint) |
 
 ## Funcionalidades
 
-- **Multi-tenant** — cada salão tem dados completamente isolados por `tenant_id`
-- **Agendamento online** — clientes agendam diretamente pelo link do salão
-- **Gestão de serviços e pacotes** — admin cria serviços avulsos e pacotes de sessões
-- **Profissionais e agenda** — disponibilidade por profissional e por dia da semana
-- **Pagamentos** — PIX e cartão via MercadoPago, webhooks com verificação de assinatura
-- **Dashboard** — gráficos de faturamento, ocupação e serviços mais agendados
-- **IA** — assistente de agendamento e insights de negócio via Claude API
-- **Super Admin** — gestão de tenants, planos e métricas da plataforma
+- **Multi-tenant** — dados completamente isolados por `tenant_id` com `TenantScope` global
+- **Catálogo** — CRUD de serviços (com upload de imagem), pacotes e profissionais
+- **Agenda** — disponibilidade por profissional, dia da semana e datas bloqueadas
+- **Agendamento online** — clientes agendam pelo link do salão em 5 etapas
+- **Pagamentos** — PIX com QR Code e polling de status; cartão via Checkout Pro (redirect)
+- **Dashboard** — gráficos de receita diária, ocupação por status e top serviços (Recharts)
+- **Super Admin** — métricas globais da plataforma, gestão de tenants e planos
 
 ## Roles
 
 | Role | Escopo | Permissões |
 |---|---|---|
-| `super_admin` | Plataforma | Gerencia todos os tenants e planos |
+| `super_admin` | Plataforma | Métricas globais, gestão de todos os tenants e planos |
 | `salon_owner` | Tenant | Gerencia serviços, equipe, agenda e financeiro |
 | `salon_staff` | Tenant | Visualiza agenda, confirma/cancela agendamentos |
-| `client` | Tenant | Agenda serviços, histórico, pagamentos |
+| `client` | Tenant | Agenda serviços, paga, visualiza histórico |
+
+## Estrutura
+
+```
+sistema-agendamentos/
+├── api/              # Laravel 13 — API REST /api/v1/
+├── web/              # Next.js 16 — Frontend
+└── docker-compose.yml
+```
 
 ## Como Rodar
 
 ### Pré-requisitos
-- PHP 8.5+, Composer 2+
-- Node.js 20+, npm 10+
-- Docker + Docker Compose
 
-### 1. Infra (PostgreSQL + Redis)
+- Docker + Docker Compose
+- PHP 8.5+ e Composer 2+
+- Node.js 20+ e npm 10+
+
+### 1. Banco de dados
+
 ```bash
 docker compose up -d
 ```
 
 ### 2. API
+
 ```bash
 cd api
 cp .env.example .env
@@ -70,70 +70,106 @@ php artisan migrate --seed
 php artisan serve
 ```
 
+O seed cria o tenant demo e um super admin (ver credenciais abaixo).
+
 ### 3. Frontend
+
 ```bash
 cd web
-cp .env.local.example .env.local
+cp .env.local.example .env.local   # ou crie manualmente
 npm install
 npm run dev
 ```
 
-A API ficará em `http://localhost:8000` e o frontend em `http://localhost:3000`.
+API em `http://localhost:8000` · Frontend em `http://localhost:3000`
 
 ## Variáveis de Ambiente
 
-### api/.env
+### `api/.env` (campos relevantes)
+
 ```env
 DB_CONNECTION=pgsql
+DB_HOST=127.0.0.1
+DB_PORT=5432
 DB_DATABASE=agendamentos
 DB_USERNAME=postgres
 DB_PASSWORD=secret
 
-MERCADOPAGO_ACCESS_TOKEN=
-MERCADOPAGO_PUBLIC_KEY=
-MERCADOPAGO_WEBHOOK_SECRET=
-
-ANTHROPIC_API_KEY=
+MERCADOPAGO_ACCESS_TOKEN=your_access_token
+MERCADOPAGO_PUBLIC_KEY=your_public_key
+MERCADOPAGO_WEBHOOK_SECRET=     # opcional — só valida HMAC se preenchido
 ```
 
-### web/.env.local
+### `web/.env.local`
+
 ```env
 NEXT_PUBLIC_API_URL=http://localhost:8000/api/v1
 ```
 
-## Desenvolvimento com Agentes
+## Dados de Demonstração
 
-Este projeto usa subagentes do Claude Code para desenvolvimento paralelo:
+O seeder (`php artisan migrate --seed`) cria:
 
-| Agente | Responsabilidade |
-|---|---|
-| `feature-orchestrator` | Coordena API + Web em paralelo para features completas |
-| `api-agent` | Migrations, models, controllers, resources, testes Laravel |
-| `web-agent` | Pages, components, services, hooks Next.js |
-| `db-agent` | Schema design, índices, performance PostgreSQL |
-| `tenant-guard` | Auditoria de isolamento multi-tenant |
-| `payment-agent` | Integração MercadoPago (PIX, cartão, webhooks) |
-| `ai-features-agent` | Features com Claude API |
-| `github-agent` | Branch, PR, issue board — toda a gestão GitHub |
+**Tenant demo**
+- URL: `http://localhost:3000/salao-demo`
+- Dashboard: `http://localhost:3000/salao-demo/dashboard`
 
-### Slash commands disponíveis
+**Usuário salon_owner**
+- Email: `owner@salao-demo.com.br`
+- Senha: `password`
 
-```bash
-/build-feature <descrição>   # feature completa (API + Web em paralelo)
-/scaffold-api <descrição>    # só o lado Laravel
-/scaffold-web <descrição>    # só o lado Next.js
-/check-tenant                # auditoria de isolamento multi-tenant
-/close-sprint <sprint-N>     # fecha sprint, gera release, move issues pendentes
+**Super Admin**
+- URL: `http://localhost:3000/super-admin`
+- Email: `admin@agendei.com`
+- Senha: `password`
+
+O tenant demo vem com 8 serviços, 3 profissionais com horários de segunda a sábado (09h–18h) e 2 pacotes de serviços.
+
+## Rotas da API
+
 ```
+POST   /api/v1/auth/register
+POST   /api/v1/auth/login
+POST   /api/v1/auth/logout
+GET    /api/v1/auth/me
+
+GET    /api/v1/salao/{slug}
+GET    /api/v1/salao/{slug}/availability
+GET    /api/v1/salao/{slug}/services
+GET    /api/v1/salao/{slug}/packages
+GET    /api/v1/salao/{slug}/professionals
+
+GET    /api/v1/salao/{slug}/appointments
+POST   /api/v1/salao/{slug}/appointments
+PATCH  /api/v1/salao/{slug}/appointments/{id}/confirm
+PATCH  /api/v1/salao/{slug}/appointments/{id}/cancel
+PATCH  /api/v1/salao/{slug}/appointments/{id}/complete
+
+POST   /api/v1/salao/{slug}/appointments/{id}/payments
+GET    /api/v1/salao/{slug}/payments/{id}
+POST   /api/v1/payments/webhook
+
+GET    /api/v1/salao/{slug}/dashboard
+
+GET    /api/v1/admin/metrics
+GET    /api/v1/admin/tenants
+PATCH  /api/v1/admin/tenants/{id}
+```
+
+Documentação manual em `api/docs/api.http` (VS Code REST Client).
 
 ## Testes
 
 ```bash
-# API
+# API — 90 testes Pest
 cd api && php artisan test --compact
 
 # Lint PHP
 cd api && vendor/bin/pint --dirty
+
+# Frontend — TypeScript + ESLint
+cd web && npm run build
+cd web && npm run lint
 ```
 
 ## Licença
