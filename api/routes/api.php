@@ -1,6 +1,8 @@
 <?php
 
+use App\Http\Controllers\Api\V1\AppointmentController;
 use App\Http\Controllers\Api\V1\AuthController;
+use App\Http\Controllers\Api\V1\AvailabilityController;
 use App\Http\Controllers\Api\V1\BlockedDateController;
 use App\Http\Controllers\Api\V1\ProfessionalController;
 use App\Http\Controllers\Api\V1\ScheduleController;
@@ -27,6 +29,8 @@ Route::prefix('v1')->group(function () {
         Route::get('/', fn (Request $request) => new TenantResource($request->tenant));
         Route::get('ping', fn () => response()->json(['ok' => true]))->name('tenant.ping');
 
+        Route::get('availability', AvailabilityController::class);
+
         Route::apiResource('services', ServiceController::class)->only(['index', 'show']);
         Route::apiResource('packages', ServicePackageController::class)->only(['index', 'show']);
         Route::apiResource('professionals', ProfessionalController::class)->only(['index', 'show']);
@@ -47,6 +51,13 @@ Route::prefix('v1')->group(function () {
             Route::apiResource('professionals/{professional}/schedules', ScheduleController::class)->except(['index', 'show']);
             Route::apiResource('professionals/{professional}/blocked-dates', BlockedDateController::class)
                 ->except(['index', 'show', 'update']);
+
+            Route::get('appointments', [AppointmentController::class, 'index']);
+            Route::post('appointments', [AppointmentController::class, 'store']);
+            Route::get('appointments/{appointment}', [AppointmentController::class, 'show']);
+            Route::patch('appointments/{appointment}/confirm', [AppointmentController::class, 'confirm']);
+            Route::patch('appointments/{appointment}/cancel', [AppointmentController::class, 'cancel']);
+            Route::patch('appointments/{appointment}/complete', [AppointmentController::class, 'complete']);
         });
 
     // Rotas super admin
