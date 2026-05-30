@@ -68,8 +68,8 @@ class DatabaseSeeder extends Seeder
         });
 
         // Roles Spatie
-        $ownerRole  = Role::firstOrCreate(['name' => 'salon_owner', 'guard_name' => 'web']);
-        $superRole  = Role::firstOrCreate(['name' => 'super_admin', 'guard_name' => 'web']);
+        $ownerRole = Role::firstOrCreate(['name' => 'salon_owner', 'guard_name' => 'web']);
+        $superRole = Role::firstOrCreate(['name' => 'super_admin', 'guard_name' => 'web']);
         Role::firstOrCreate(['name' => 'salon_staff', 'guard_name' => 'web']);
         Role::firstOrCreate(['name' => 'client', 'guard_name' => 'web']);
 
