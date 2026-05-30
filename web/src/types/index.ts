@@ -89,3 +89,15 @@ export interface ApiError {
   message: string
   errors?: Record<string, string[]>
 }
+
+export interface TimeSlot {
+  starts_at: string // "HH:MM"
+  ends_at: string   // "HH:MM"
+}
+
+export interface CreateAppointmentData {
+  professional_id: string
+  service_id: string
+  starts_at: string // ISO datetime: "YYYY-MM-DDTHH:MM:00"
+  notes?: string
+}
