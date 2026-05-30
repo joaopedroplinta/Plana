@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\Api\V1\AdminMetricsController;
+use App\Http\Controllers\Api\V1\AdminTenantController;
 use App\Http\Controllers\Api\V1\AppointmentController;
 use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\AvailabilityController;
@@ -75,6 +77,9 @@ Route::prefix('v1')->group(function () {
     Route::prefix('admin')
         ->middleware(['auth:sanctum', 'role:super_admin'])
         ->group(function () {
-            // aqui virão as rotas de super admin
+            Route::get('metrics', AdminMetricsController::class);
+            Route::get('tenants', [AdminTenantController::class, 'index']);
+            Route::get('tenants/{tenant}', [AdminTenantController::class, 'show']);
+            Route::patch('tenants/{tenant}', [AdminTenantController::class, 'update']);
         });
 });
