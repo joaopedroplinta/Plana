@@ -1,132 +1,260 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
-import { Card } from '@/components/ui/card'
-import { Scissors, Users, Calendar } from 'lucide-react'
-import { servicesService } from '@/services/services'
-import { professionalsService } from '@/services/professionals'
-import { appointmentsService } from '@/services/appointments'
+import {
+  LineChart,
+  Line,
+  BarChart,
+  Bar,
+  PieChart,
+  Pie,
+  Cell,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+} from 'recharts'
+import { metricsService } from '@/services/metrics'
+import { formatPrice } from '@/lib/format'
+import type { DashboardMetrics } from '@/types'
 
-interface MetricCardProps {
-  title: string
-  value: string | number
-  icon: React.ReactNode
-  description: string
-  isLoading?: boolean
+const STATUS_COLORS: Record<string, string> = {
+  completed: '#10b981',
+  confirmed: '#3b82f6',
+  pending: '#f59e0b',
+  cancelled: '#ef4444',
 }
 
-function MetricCard({ title, value, icon, description, isLoading = false }: MetricCardProps) {
+const STATUS_LABELS: Record<string, string> = {
+  completed: 'Concluído',
+  confirmed: 'Confirmado',
+  pending: 'Pendente',
+  cancelled: 'Cancelado',
+}
+
+function formatShortDate(dateStr: string): string {
+  const parts = dateStr.split('-')
+  return `${parts[2]}/${parts[1]}`
+}
+
+function SummaryCard({ label, value }: { label: string; value: string }) {
   return (
-    <Card className="p-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-sm font-medium text-gray-500">{title}</p>
-          {isLoading ? (
-            <div className="mt-2 h-9 w-16 animate-pulse rounded-md bg-gray-100" />
-          ) : (
-            <p className="mt-2 text-3xl font-bold text-gray-900">{value}</p>
-          )}
-          <p className="mt-1 text-xs text-gray-400">{description}</p>
-        </div>
-        <div className="rounded-full bg-indigo-50 p-3 text-indigo-600">{icon}</div>
-      </div>
-    </Card>
+    <div className="rounded-lg border bg-white p-5">
+      <p className="text-xs font-medium uppercase tracking-wide text-gray-500">{label}</p>
+      <p className="mt-2 text-2xl font-bold text-gray-900">{value}</p>
+    </div>
   )
 }
 
-interface Metrics {
-  totalServices: number
-  totalProfessionals: number
-  appointmentsToday: number
+function SummaryCardSkeleton() {
+  return (
+    <div className="rounded-lg border bg-white p-5 animate-pulse">
+      <div className="h-3 w-24 rounded bg-gray-200" />
+      <div className="mt-3 h-7 w-16 rounded bg-gray-200" />
+    </div>
+  )
 }
 
 export default function DashboardPage() {
   const params = useParams()
   const slug = typeof params.slug === 'string' ? params.slug : ''
 
-  const [metrics, setMetrics] = useState<Metrics>({
-    totalServices: 0,
-    totalProfessionals: 0,
-    appointmentsToday: 0,
-  })
+  const [metrics, setMetrics] = useState<DashboardMetrics | null>(null)
+  const [period, setPeriod] = useState(30)
   const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     if (!slug) return
-
-    const today = new Date().toISOString().split('T')[0]
-
-    Promise.all([
-      servicesService.list(slug),
-      professionalsService.list(slug),
-      appointmentsService.list(slug, { date: today, status: 'pending,confirmed' }),
-    ])
-      .then(([svcRes, proRes, apptRes]) => {
-        setMetrics({
-          totalServices: svcRes.data.meta.total,
-          totalProfessionals: proRes.data.data.length,
-          appointmentsToday: apptRes.data.meta.total,
-        })
-      })
-      .catch(() => {
-        // Silently fail — metrics remain at 0
-      })
-      .finally(() => {
-        setIsLoading(false)
-      })
-  }, [slug])
+    metricsService
+      .dashboard(slug, period)
+      .then((res) => setMetrics(res.data.data))
+      .catch(() => setError('Erro ao carregar métricas'))
+      .finally(() => setIsLoading(false))
+  }, [slug, period])
 
   return (
-    <div className="space-y-6">
-      <div>
+    <div className="space-y-6 p-6">
+      <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-gray-900">Visão Geral</h1>
-        <p className="mt-1 text-sm text-gray-500">
-          Resumo das informações do seu salão
-        </p>
+        <select
+          value={period}
+          onChange={(e) => {
+            setIsLoading(true)
+            setError(null)
+            setMetrics(null)
+            setPeriod(Number(e.target.value))
+          }}
+          className="rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+        >
+          <option value={7}>Últimos 7 dias</option>
+          <option value={30}>Últimos 30 dias</option>
+          <option value={90}>Últimos 90 dias</option>
+        </select>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <MetricCard
-          title="Total de Serviços"
-          value={metrics.totalServices}
-          icon={<Scissors className="h-6 w-6" />}
-          description="Serviços cadastrados"
-          isLoading={isLoading}
-        />
-        <MetricCard
-          title="Profissionais"
-          value={metrics.totalProfessionals}
-          icon={<Users className="h-6 w-6" />}
-          description="Profissionais ativos"
-          isLoading={isLoading}
-        />
-        <MetricCard
-          title="Agendamentos Hoje"
-          value={metrics.appointmentsToday}
-          icon={<Calendar className="h-6 w-6" />}
-          description="Pendentes e confirmados"
-          isLoading={isLoading}
-        />
+      {error && (
+        <div className="rounded-md bg-red-50 p-4 text-sm text-red-700">{error}</div>
+      )}
+
+      {/* Summary cards */}
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+        {isLoading ? (
+          Array.from({ length: 4 }).map((_, i) => <SummaryCardSkeleton key={i} />)
+        ) : metrics ? (
+          <>
+            <SummaryCard
+              label="Agendamentos"
+              value={String(metrics.summary.total_appointments)}
+            />
+            <SummaryCard
+              label="Receita do mês"
+              value={formatPrice(metrics.summary.revenue_this_month)}
+            />
+            <SummaryCard
+              label="Hoje"
+              value={String(metrics.summary.appointments_today)}
+            />
+            <SummaryCard
+              label="Clientes únicos"
+              value={String(metrics.summary.total_clients)}
+            />
+          </>
+        ) : null}
       </div>
 
-      <div className="rounded-xl border bg-white p-6">
-        <h2 className="text-base font-semibold text-gray-900">Próximas funcionalidades</h2>
-        <ul className="mt-3 space-y-2 text-sm text-gray-500">
-          <li className="flex items-center gap-2">
-            <span className="h-1.5 w-1.5 rounded-full bg-indigo-400" />
-            Calendário de agendamentos
-          </li>
-          <li className="flex items-center gap-2">
-            <span className="h-1.5 w-1.5 rounded-full bg-indigo-400" />
-            Relatórios financeiros
-          </li>
-          <li className="flex items-center gap-2">
-            <span className="h-1.5 w-1.5 rounded-full bg-indigo-400" />
-            Integração com pagamentos PIX
-          </li>
-        </ul>
-      </div>
+      {/* Charts row */}
+      {!isLoading && metrics && (
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+          {/* Revenue line chart */}
+          <div className="rounded-lg border bg-white p-5">
+            <h2 className="mb-4 text-sm font-semibold text-gray-700">Receita Diária</h2>
+            {metrics.revenue_by_day.length === 0 ? (
+              <p className="py-12 text-center text-sm text-gray-400">Sem dados no período</p>
+            ) : (
+              <ResponsiveContainer width="100%" height={200}>
+                <LineChart data={metrics.revenue_by_day}>
+                  <XAxis
+                    dataKey="date"
+                    tickFormatter={formatShortDate}
+                    tick={{ fontSize: 11 }}
+                    tickLine={false}
+                  />
+                  <YAxis
+                    tickFormatter={(v: number) => `R$${(v / 100).toFixed(0)}`}
+                    tick={{ fontSize: 11 }}
+                    tickLine={false}
+                    axisLine={false}
+                  />
+                  <Tooltip
+                    formatter={(v) => [formatPrice(Number(v)), 'Receita']}
+                    labelFormatter={(label) => formatShortDate(String(label ?? ''))}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="revenue"
+                    stroke="#6366f1"
+                    strokeWidth={2}
+                    dot={false}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            )}
+          </div>
+
+          {/* Status pie chart */}
+          <div className="rounded-lg border bg-white p-5">
+            <h2 className="mb-4 text-sm font-semibold text-gray-700">
+              Agendamentos por Status
+            </h2>
+            {metrics.appointments_by_status.length === 0 ? (
+              <p className="py-12 text-center text-sm text-gray-400">Sem agendamentos</p>
+            ) : (
+              <ResponsiveContainer width="100%" height={200}>
+                <PieChart>
+                  <Pie
+                    data={metrics.appointments_by_status}
+                    dataKey="count"
+                    nameKey="status"
+                    cx="50%"
+                    cy="50%"
+                    outerRadius={75}
+                    label={(props) => {
+                      const status = (props as { status?: string }).status ?? ''
+                      const percent = (props as { percent?: number }).percent ?? 0
+                      return `${STATUS_LABELS[status] ?? status} ${(percent * 100).toFixed(0)}%`
+                    }}
+                  >
+                    {metrics.appointments_by_status.map((entry) => (
+                      <Cell
+                        key={entry.status}
+                        fill={STATUS_COLORS[entry.status] ?? '#94a3b8'}
+                      />
+                    ))}
+                  </Pie>
+                  <Tooltip formatter={(v) => [`${Number(v)} agendamentos`, '']} />
+                </PieChart>
+              </ResponsiveContainer>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Top services bar chart */}
+      {!isLoading && metrics && metrics.top_services.length > 0 && (
+        <div className="rounded-lg border bg-white p-5">
+          <h2 className="mb-4 text-sm font-semibold text-gray-700">Top Serviços</h2>
+          <ResponsiveContainer width="100%" height={200}>
+            <BarChart data={metrics.top_services} layout="vertical">
+              <XAxis type="number" tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
+              <YAxis
+                type="category"
+                dataKey="name"
+                width={140}
+                tick={{ fontSize: 11 }}
+                tickLine={false}
+                axisLine={false}
+              />
+              <Tooltip formatter={(v) => [`${Number(v)} agendamentos`, '']} />
+              <Bar dataKey="count" fill="#6366f1" radius={[0, 4, 4, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      )}
+
+      {/* Professionals table */}
+      {!isLoading && metrics && metrics.appointments_by_professional.length > 0 && (
+        <div className="rounded-lg border bg-white">
+          <div className="border-b p-5">
+            <h2 className="text-sm font-semibold text-gray-700">Profissionais</h2>
+          </div>
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b bg-gray-50">
+                <th className="px-5 py-3 text-left font-medium text-gray-600">
+                  Profissional
+                </th>
+                <th className="px-5 py-3 text-right font-medium text-gray-600">
+                  Agendamentos
+                </th>
+                <th className="px-5 py-3 text-right font-medium text-gray-600">Receita</th>
+              </tr>
+            </thead>
+            <tbody>
+              {metrics.appointments_by_professional.map((p) => (
+                <tr key={p.name} className="border-b last:border-0 hover:bg-gray-50">
+                  <td className="px-5 py-3 text-gray-900">{p.name}</td>
+                  <td className="px-5 py-3 text-right text-gray-700">{p.count}</td>
+                  <td className="px-5 py-3 text-right text-gray-700">
+                    {formatPrice(p.revenue)}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   )
 }
