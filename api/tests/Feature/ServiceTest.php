@@ -162,3 +162,51 @@ it('validacao falha se name esta ausente ao criar servico', function () {
     $response->assertUnprocessable()
         ->assertJsonValidationErrors(['name']);
 });
+
+it('cannot update service from another tenant', function () {
+    $tenantA = Tenant::factory()->create();
+    $tenantB = Tenant::factory()->create();
+    $ownerA = makeOwner($tenantA);
+    $serviceB = Service::factory()->create(['tenant_id' => $tenantB->id]);
+
+    $response = $this->actingAs($ownerA)->putJson("/api/v1/salao/{$tenantA->slug}/services/{$serviceB->id}", [
+        'name' => 'Serviço Invadido',
+    ]);
+
+    $response->assertNotFound();
+});
+
+it('cannot delete service from another tenant', function () {
+    $tenantA = Tenant::factory()->create();
+    $tenantB = Tenant::factory()->create();
+    $ownerA = makeOwner($tenantA);
+    $serviceB = Service::factory()->create(['tenant_id' => $tenantB->id]);
+
+    $response = $this->actingAs($ownerA)->deleteJson("/api/v1/salao/{$tenantA->slug}/services/{$serviceB->id}");
+
+    $response->assertNotFound();
+});
+
+it('cannot create service in another tenant via route', function () {
+    $tenantA = Tenant::factory()->create();
+    $tenantB = Tenant::factory()->create();
+    $ownerA = makeOwner($tenantA);
+
+    $response = $this->actingAs($ownerA)->postJson("/api/v1/salao/{$tenantA->slug}/services", [
+        'name' => 'Serviço Novo',
+        'price' => 5000,
+        'duration_minutes' => 60,
+    ]);
+
+    $response->assertCreated();
+
+    $this->assertDatabaseHas('services', [
+        'name' => 'Serviço Novo',
+        'tenant_id' => $tenantA->id,
+    ]);
+
+    $this->assertDatabaseMissing('services', [
+        'name' => 'Serviço Novo',
+        'tenant_id' => $tenantB->id,
+    ]);
+});

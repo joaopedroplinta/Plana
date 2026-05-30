@@ -6,12 +6,16 @@ use App\Http\Controllers\Api\V1\ProfessionalController;
 use App\Http\Controllers\Api\V1\ScheduleController;
 use App\Http\Controllers\Api\V1\ServiceController;
 use App\Http\Controllers\Api\V1\ServicePackageController;
+use App\Http\Resources\TenantResource;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->group(function () {
     Route::prefix('auth')->group(function () {
         Route::post('register', [AuthController::class, 'register']);
         Route::post('login', [AuthController::class, 'login']);
+        Route::post('forgot-password', [AuthController::class, 'forgotPassword']);
+        Route::post('reset-password', [AuthController::class, 'resetPassword']);
         Route::middleware('auth:sanctum')->group(function () {
             Route::post('logout', [AuthController::class, 'logout']);
             Route::get('me', [AuthController::class, 'me']);
@@ -20,6 +24,7 @@ Route::prefix('v1')->group(function () {
 
     // Rotas públicas do tenant
     Route::prefix('salao/{tenant:slug}')->middleware('tenant')->group(function () {
+        Route::get('/', fn (Request $request) => new TenantResource($request->tenant));
         Route::get('ping', fn () => response()->json(['ok' => true]))->name('tenant.ping');
 
         Route::apiResource('services', ServiceController::class)->only(['index', 'show']);

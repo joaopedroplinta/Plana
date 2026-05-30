@@ -131,3 +131,34 @@ it('usuario nao autenticado nao pode criar pacote', function () {
 
     $response->assertUnauthorized();
 });
+
+it('cannot update package from another tenant', function () {
+    $tenantA = Tenant::factory()->create();
+    $tenantB = Tenant::factory()->create();
+    $ownerA = pkgOwner($tenantA);
+    $packageB = ServicePackage::factory()->create(['tenant_id' => $tenantB->id]);
+
+    $response = $this->actingAs($ownerA)->putJson("/api/v1/salao/{$tenantA->slug}/packages/{$packageB->id}", [
+        'name' => 'Pacote Invadido',
+    ]);
+
+    $response->assertNotFound();
+});
+
+it('cannot reference services from another tenant in service_ids', function () {
+    $tenantA = Tenant::factory()->create();
+    $tenantB = Tenant::factory()->create();
+    $ownerA = pkgOwner($tenantA);
+    $servicesB = Service::factory(2)->create(['tenant_id' => $tenantB->id]);
+
+    $response = $this->actingAs($ownerA)->postJson("/api/v1/salao/{$tenantA->slug}/packages", [
+        'name' => 'Pacote Cross-Tenant',
+        'price' => 15000,
+        'sessions' => 3,
+        'valid_days' => 60,
+        'service_ids' => $servicesB->pluck('id')->toArray(),
+    ]);
+
+    $response->assertUnprocessable()
+        ->assertJsonValidationErrors(['service_ids.0']);
+});

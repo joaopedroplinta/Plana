@@ -1,0 +1,190 @@
+### Variaveis
+@baseUrl = http://127.0.0.1:8000/api/v1
+@token = SEU_TOKEN_AQUI
+@slug = salao-demo
+
+### ============================================================
+### AUTH
+### ============================================================
+
+### Register — cria conta + salao
+POST {{baseUrl}}/auth/register
+Content-Type: application/json
+
+{
+  "name": "Joao Silva",
+  "email": "joao@email.com",
+  "password": "password123",
+  "password_confirmation": "password123",
+  "salon_name": "Studio Joao"
+}
+
+###
+
+### Login
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "owner@salao-demo.com",
+  "password": "password"
+}
+
+###
+
+### Me — usuario autenticado
+GET {{baseUrl}}/auth/me
+Authorization: Bearer {{token}}
+
+###
+
+### Logout
+POST {{baseUrl}}/auth/logout
+Authorization: Bearer {{token}}
+
+###
+
+### Forgot Password
+POST {{baseUrl}}/auth/forgot-password
+Content-Type: application/json
+
+{
+  "email": "joao@email.com"
+}
+
+###
+
+### Reset Password
+POST {{baseUrl}}/auth/reset-password
+Content-Type: application/json
+
+{
+  "token": "TOKEN_DO_EMAIL",
+  "email": "joao@email.com",
+  "password": "novaSenha123",
+  "password_confirmation": "novaSenha123"
+}
+
+### ============================================================
+### TENANT
+### ============================================================
+
+### Info do salao (publico)
+GET {{baseUrl}}/salao/{{slug}}
+
+### ============================================================
+### SERVICES
+### ============================================================
+
+### Listar servicos
+GET {{baseUrl}}/salao/{{slug}}/services
+Authorization: Bearer {{token}}
+
+###
+
+### Criar servico
+POST {{baseUrl}}/salao/{{slug}}/services
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "name": "Corte Feminino",
+  "description": "Corte e escova",
+  "price": 8000,
+  "duration_minutes": 60,
+  "active": true
+}
+
+###
+
+### Atualizar servico
+PUT {{baseUrl}}/salao/{{slug}}/services/SERVICE_ID
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "name": "Corte Feminino Premium",
+  "price": 10000
+}
+
+###
+
+### Deletar servico
+DELETE {{baseUrl}}/salao/{{slug}}/services/SERVICE_ID
+Authorization: Bearer {{token}}
+
+### ============================================================
+### PACKAGES
+### ============================================================
+
+### Listar pacotes
+GET {{baseUrl}}/salao/{{slug}}/packages
+Authorization: Bearer {{token}}
+
+###
+
+### Criar pacote
+POST {{baseUrl}}/salao/{{slug}}/packages
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "name": "Pacote Bronze",
+  "description": "3 cortes por R$200",
+  "price": 20000,
+  "sessions": 3,
+  "valid_days": 90,
+  "service_ids": []
+}
+
+### ============================================================
+### PROFESSIONALS
+### ============================================================
+
+### Listar profissionais
+GET {{baseUrl}}/salao/{{slug}}/professionals
+Authorization: Bearer {{token}}
+
+###
+
+### Criar profissional
+POST {{baseUrl}}/salao/{{slug}}/professionals
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "name": "Ana Paula",
+  "bio": "Especialista em coloracao",
+  "active": true
+}
+
+###
+
+### Listar agenda do profissional
+GET {{baseUrl}}/salao/{{slug}}/professionals/PROFESSIONAL_ID/schedules
+Authorization: Bearer {{token}}
+
+###
+
+### Criar horario na agenda
+POST {{baseUrl}}/salao/{{slug}}/professionals/PROFESSIONAL_ID/schedules
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "day_of_week": 1,
+  "start_time": "09:00",
+  "end_time": "18:00"
+}
+
+###
+
+### Criar data bloqueada
+POST {{baseUrl}}/salao/{{slug}}/professionals/PROFESSIONAL_ID/blocked-dates
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "date": "2026-06-15",
+  "reason": "Ferias"
+}

@@ -252,6 +252,30 @@ it('salon_owner deleta data bloqueada', function () {
     $this->assertDatabaseMissing('blocked_dates', ['id' => $blocked->id]);
 });
 
+it('cannot update professional from another tenant', function () {
+    $tenantA = Tenant::factory()->create();
+    $tenantB = Tenant::factory()->create();
+    $ownerA = profOwner($tenantA);
+    $professionalB = Professional::factory()->create(['tenant_id' => $tenantB->id]);
+
+    $response = $this->actingAs($ownerA)->putJson("/api/v1/salao/{$tenantA->slug}/professionals/{$professionalB->id}", [
+        'name' => 'Profissional Invadido',
+    ]);
+
+    $response->assertNotFound();
+});
+
+it('cannot delete professional from another tenant', function () {
+    $tenantA = Tenant::factory()->create();
+    $tenantB = Tenant::factory()->create();
+    $ownerA = profOwner($tenantA);
+    $professionalB = Professional::factory()->create(['tenant_id' => $tenantB->id]);
+
+    $response = $this->actingAs($ownerA)->deleteJson("/api/v1/salao/{$tenantA->slug}/professionals/{$professionalB->id}");
+
+    $response->assertNotFound();
+});
+
 it('nao vaza horarios entre tenants', function () {
     $tenantA = Tenant::factory()->create();
     $tenantB = Tenant::factory()->create();
