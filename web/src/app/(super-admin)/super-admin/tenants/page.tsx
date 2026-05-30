@@ -27,7 +27,6 @@ export default function TenantsPage() {
   const [updating, setUpdating] = useState<string | null>(null)
 
   useEffect(() => {
-    setIsLoading(true)
     adminService
       .listTenants(page)
       .then((res) => setData(res.data))
@@ -172,14 +171,14 @@ export default function TenantsPage() {
             </p>
             <div className="flex gap-2">
               <button
-                onClick={() => setPage((p) => p - 1)}
+                onClick={() => { setIsLoading(true); setPage((p) => p - 1) }}
                 disabled={meta.current_page === 1}
                 className="rounded-md border px-3 py-1 text-xs font-medium text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 Anterior
               </button>
               <button
-                onClick={() => setPage((p) => p + 1)}
+                onClick={() => { setIsLoading(true); setPage((p) => p + 1) }}
                 disabled={meta.current_page === meta.last_page}
                 className="rounded-md border px-3 py-1 text-xs font-medium text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
               >
