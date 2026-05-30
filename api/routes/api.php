@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\V1\AppointmentController;
 use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\AvailabilityController;
 use App\Http\Controllers\Api\V1\BlockedDateController;
+use App\Http\Controllers\Api\V1\DashboardController;
 use App\Http\Controllers\Api\V1\PaymentController;
 use App\Http\Controllers\Api\V1\ProfessionalController;
 use App\Http\Controllers\Api\V1\ScheduleController;
@@ -62,6 +63,8 @@ Route::prefix('v1')->group(function () {
             Route::patch('appointments/{appointment}/confirm', [AppointmentController::class, 'confirm']);
             Route::patch('appointments/{appointment}/cancel', [AppointmentController::class, 'cancel']);
             Route::patch('appointments/{appointment}/complete', [AppointmentController::class, 'complete']);
+
+            Route::get('dashboard', DashboardController::class);
 
             Route::get('appointments/{appointment}/payments', [PaymentController::class, 'index']);
             Route::post('appointments/{appointment}/payments', [PaymentController::class, 'store']);

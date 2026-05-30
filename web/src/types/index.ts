@@ -112,3 +112,21 @@ export interface CreateAppointmentData {
   starts_at: string // ISO datetime: "YYYY-MM-DDTHH:MM:00"
   notes?: string
 }
+
+export interface DashboardSummary {
+  total_appointments: number
+  completed_appointments: number
+  appointments_today: number
+  total_clients: number
+  total_revenue: number
+  revenue_this_month: number
+}
+
+export interface DashboardMetrics {
+  summary: DashboardSummary
+  appointments_by_status: Array<{ status: string; count: number }>
+  revenue_by_day: Array<{ date: string; revenue: number; count: number }>
+  top_services: Array<{ name: string; count: number; revenue: number }>
+  appointments_by_professional: Array<{ name: string; count: number; revenue: number }>
+  period: number
+}
