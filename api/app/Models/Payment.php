@@ -1,0 +1,62 @@
+<?php
+
+namespace App\Models;
+
+use App\Traits\BelongsToTenant;
+use Database\Factories\PaymentFactory;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Str;
+
+class Payment extends Model
+{
+    /** @use HasFactory<PaymentFactory> */
+    use BelongsToTenant, HasFactory;
+
+    public $incrementing = false;
+
+    protected $keyType = 'string';
+
+    /** @var list<string> */
+    protected $fillable = [
+        'tenant_id',
+        'appointment_id',
+        'amount',
+        'method',
+        'external_id',
+        'preference_id',
+        'status',
+        'pix_qr_code',
+        'pix_qr_code_base64',
+        'paid_at',
+    ];
+
+    /**
+     * @return array<string, string>
+     */
+    protected function casts(): array
+    {
+        return [
+            'amount' => 'integer',
+            'paid_at' => 'datetime',
+        ];
+    }
+
+    protected static function boot(): void
+    {
+        parent::boot();
+
+        static::creating(function (Payment $payment) {
+            if (empty($payment->id)) {
+                $payment->id = (string) Str::uuid();
+            }
+        });
+    }
+
+    /** @return BelongsTo<Appointment, $this> */
+    public function appointment(): BelongsTo
+    {
+        return $this->belongsTo(Appointment::class);
+    }
+}
