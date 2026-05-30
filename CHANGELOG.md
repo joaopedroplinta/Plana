@@ -4,6 +4,62 @@ Todas as mudanças relevantes deste projeto são documentadas aqui.
 
 ---
 
+## [v0.6.0] — Sprint 6: Dashboard (2026-05-30)
+
+### API
+- Endpoint `GET /api/v1/salao/{slug}/dashboard?period=30` (invokable `DashboardController`)
+- Retorna: 6 métricas resumo, agendamentos por status, receita por dia, top 5 serviços, top 5 profissionais
+- Gate `viewDashboard` — acesso restrito a `salon_owner` e `salon_staff`; `client` recebe 403
+- Parâmetro `period` com máximo de 90 dias
+- 6 testes Pest cobrindo roles, estrutura de resposta e cálculo de receita
+
+### Web
+- Dashboard reescrito com **Recharts** (LineChart, PieChart, BarChart horizontal)
+- Seletor de período (7/30/90 dias) com re-fetch automático
+- 4 cards de resumo com skeleton de loading
+- Tabela de top profissionais com receita formatada
+- `metricsService` em `src/services/metrics.ts`
+- Tipos `DashboardSummary` e `DashboardMetrics` em `src/types/index.ts`
+
+---
+
+## [v0.5.0] — Sprint 5: Pagamentos (2026-05-30)
+
+### API
+- Integração **MercadoPago SDK** (PIX nativo + Checkout Pro)
+- `POST /salao/{slug}/appointments/{id}/payments` — cria pagamento PIX ou cartão
+- `GET /salao/{slug}/payments/{id}` — consulta status com sync automático
+- `POST /v1/payments/webhook` — webhook MercadoPago com verificação HMAC condicional
+- `PaymentService` com `createPix`, `createCheckoutPro`, `syncStatus`, `handleWebhook`
+- Confirmação automática do agendamento ao receber pagamento aprovado
+
+### Web
+- Fluxo de agendamento estendido com etapa de pagamento (PIX ou cartão)
+- QR Code PIX exibido com polling a cada 5s via `setInterval`
+- Redirecionamento para URL do Checkout Pro no fluxo de cartão
+- Página `/payment-success` para retorno pós-pagamento
+- `paymentsService` em `src/services/payments.ts`
+
+---
+
+## [v0.4.0] — Sprint 4: Agendamentos (2026-05-30)
+
+### API
+- CRUD de **agendamentos** (`/salao/{slug}/appointments`)
+- `PATCH confirm`, `cancel`, `complete` — transições de status com policy por role
+- `GET /salao/{slug}/availability` — slots livres por profissional, serviço e data
+- Fix de isolamento cross-tenant no `TenantScope` (fallback via `request()->route('tenant')`)
+- Senha recuperação: `POST /auth/forgot-password` e `POST /auth/reset-password`
+- Seeder demo: tenant `salao-demo` com 8 serviços, 3 profissionais e pacotes
+
+### Web
+- Fluxo de agendamento em 5 etapas: serviço → profissional → data → horário → confirmação
+- Página `/forgot-password` funcional e `/reset-password` com token via query string
+- Guard de middleware corrigido para Next.js 16 (`proxy.ts` com export `proxy`)
+- Fix ESLint `react-hooks/set-state-in-effect` no hook `useTenant`
+
+---
+
 ## [v0.3.0] — Sprint 3: Catálogo (2026-05-27)
 
 ### API
