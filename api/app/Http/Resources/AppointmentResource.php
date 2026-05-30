@@ -27,6 +27,7 @@ class AppointmentResource extends JsonResource
             ]),
             'professional' => new ProfessionalResource($this->whenLoaded('professional')),
             'service' => new ServiceResource($this->whenLoaded('service')),
+            'payments' => PaymentResource::collection($this->whenLoaded('payments')),
             'created_at' => $this->created_at->toISOString(),
             'updated_at' => $this->updated_at->toISOString(),
         ];

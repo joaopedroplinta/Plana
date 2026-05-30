@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\V1\AppointmentController;
 use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\AvailabilityController;
 use App\Http\Controllers\Api\V1\BlockedDateController;
+use App\Http\Controllers\Api\V1\PaymentController;
 use App\Http\Controllers\Api\V1\ProfessionalController;
 use App\Http\Controllers\Api\V1\ScheduleController;
 use App\Http\Controllers\Api\V1\ServiceController;
@@ -11,6 +12,9 @@ use App\Http\Controllers\Api\V1\ServicePackageController;
 use App\Http\Resources\TenantResource;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+
+// Webhook — public, outside tenant prefix, no auth required
+Route::post('v1/payments/webhook', [PaymentController::class, 'webhook']);
 
 Route::prefix('v1')->group(function () {
     Route::prefix('auth')->group(function () {
@@ -58,6 +62,10 @@ Route::prefix('v1')->group(function () {
             Route::patch('appointments/{appointment}/confirm', [AppointmentController::class, 'confirm']);
             Route::patch('appointments/{appointment}/cancel', [AppointmentController::class, 'cancel']);
             Route::patch('appointments/{appointment}/complete', [AppointmentController::class, 'complete']);
+
+            Route::get('appointments/{appointment}/payments', [PaymentController::class, 'index']);
+            Route::post('appointments/{appointment}/payments', [PaymentController::class, 'store']);
+            Route::get('payments/{payment}', [PaymentController::class, 'show']);
         });
 
     // Rotas super admin

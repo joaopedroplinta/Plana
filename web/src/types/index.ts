@@ -65,13 +65,18 @@ export interface Appointment {
   service: Service
   professional: Professional
   client: User
+  payments?: Payment[]
 }
 
 export interface Payment {
   id: string
+  appointment_id: string
   amount: number
   method: 'pix' | 'credit_card'
-  status: 'pending' | 'paid' | 'refunded' | 'failed'
+  status: 'pending' | 'approved' | 'rejected' | 'refunded'
+  pix_qr_code: string | null
+  pix_qr_code_base64: string | null
+  preference_url: string | null
   paid_at: string | null
 }
 

@@ -13,7 +13,8 @@ import { Card } from '@/components/ui/card'
 import { servicesService } from '@/services/services'
 import { professionalsService } from '@/services/professionals'
 import { appointmentsService } from '@/services/appointments'
-import type { Service, Professional, TimeSlot, ApiError } from '@/types/index'
+import { paymentsService } from '@/services/payments'
+import type { Service, Professional, TimeSlot, ApiError, Payment } from '@/types/index'
 import { formatPrice, formatDate, formatDuration } from '@/lib/format'
 
 const TOTAL_STEPS = 5
@@ -97,6 +98,13 @@ export default function BookingPage() {
   const [error, setError] = useState('')
   const [success, setSuccess] = useState(false)
 
+  // Payment state
+  const [appointmentId, setAppointmentId] = useState<string | null>(null)
+  const [payment, setPayment] = useState<Payment | null>(null)
+  const [paymentLoading, setPaymentLoading] = useState(false)
+  const [paymentError, setPaymentError] = useState('')
+  const [pixPaid, setPixPaid] = useState(false)
+
   const today = new Date().toISOString().split('T')[0]
 
   useEffect(() => {
@@ -117,6 +125,26 @@ export default function BookingPage() {
         setInitialLoading(false)
       })
   }, [slug])
+
+  // PIX polling
+  useEffect(() => {
+    if (!payment || payment.method !== 'pix' || payment.status === 'approved' || pixPaid) return
+
+    const interval = setInterval(async () => {
+      try {
+        const res = await paymentsService.status(slug, payment.id)
+        if (res.data.data.status === 'approved') {
+          setPixPaid(true)
+          setPayment(res.data.data)
+          clearInterval(interval)
+        }
+      } catch {
+        // silenciar erros de polling
+      }
+    }, 5000)
+
+    return () => clearInterval(interval)
+  }, [payment, slug, pixPaid])
 
   async function loadAvailability() {
     if (!selectedProfessional || !selectedService || !selectedDate) return
@@ -143,13 +171,15 @@ export default function BookingPage() {
     setIsLoading(true)
     setError('')
     try {
-      await appointmentsService.create(slug, {
+      const result = await appointmentsService.create(slug, {
         professional_id: selectedProfessional.id,
         service_id: selectedService.id,
         starts_at: `${selectedDate}T${selectedSlot.starts_at}:00`,
         notes: notes.trim() || undefined,
       })
-      setSuccess(true)
+      setAppointmentId(result.data.data.id)
+      setSuccess(false)
+      setStep(6)
     } catch (err) {
       if (isAxiosError(err)) {
         const apiError = err.response?.data as ApiError | undefined
@@ -159,6 +189,36 @@ export default function BookingPage() {
       }
     } finally {
       setIsLoading(false)
+    }
+  }
+
+  async function handlePayPix() {
+    if (!appointmentId) return
+    setPaymentLoading(true)
+    setPaymentError('')
+    try {
+      const res = await paymentsService.create(slug, appointmentId, 'pix')
+      setPayment(res.data.data)
+      setStep(7)
+    } catch {
+      setPaymentError('Erro ao gerar PIX. Tente novamente.')
+    } finally {
+      setPaymentLoading(false)
+    }
+  }
+
+  async function handlePayCard() {
+    if (!appointmentId) return
+    setPaymentLoading(true)
+    setPaymentError('')
+    try {
+      const res = await paymentsService.create(slug, appointmentId, 'credit_card')
+      const url = res.data.data.preference_url
+      if (url) window.location.href = url
+    } catch {
+      setPaymentError('Erro ao iniciar pagamento. Tente novamente.')
+    } finally {
+      setPaymentLoading(false)
     }
   }
 
@@ -214,10 +274,11 @@ export default function BookingPage() {
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-8">
-      <StepProgress current={step} />
+      {/* Show progress bar only for steps 1–5 */}
+      {step <= 5 && <StepProgress current={step} />}
 
       <div className="mb-4 flex items-center gap-3">
-        {step > 1 && (
+        {step > 1 && step <= 5 && (
           <button
             onClick={goBack}
             className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-800 transition-colors"
@@ -226,12 +287,14 @@ export default function BookingPage() {
             Voltar
           </button>
         )}
-        <button
-          onClick={() => router.push(`/${slug}`)}
-          className="ml-auto text-sm text-gray-400 hover:text-gray-600 transition-colors"
-        >
-          Cancelar
-        </button>
+        {step <= 5 && (
+          <button
+            onClick={() => router.push(`/${slug}`)}
+            className="ml-auto text-sm text-gray-400 hover:text-gray-600 transition-colors"
+          >
+            Cancelar
+          </button>
+        )}
       </div>
 
       {error && (
@@ -499,6 +562,93 @@ export default function BookingPage() {
           >
             {isLoading ? 'Confirmando...' : 'Confirmar Agendamento'}
           </Button>
+        </div>
+      )}
+
+      {/* Step 6: Escolher método de pagamento */}
+      {step === 6 && (
+        <div className="space-y-6">
+          <h2 className="text-xl font-semibold">Pagamento</h2>
+          <p className="text-gray-500">
+            Resumo: {selectedService?.name} — {formatPrice(selectedService?.price ?? 0)}
+          </p>
+          {paymentError && <p className="text-red-500 text-sm">{paymentError}</p>}
+          <div className="grid grid-cols-2 gap-4">
+            <button
+              onClick={handlePayPix}
+              disabled={paymentLoading}
+              className="border-2 border-green-500 rounded-lg p-6 text-center hover:bg-green-50 transition-colors disabled:opacity-50"
+            >
+              <div className="text-3xl mb-2">PIX</div>
+              <div className="font-semibold text-green-700">PIX</div>
+              <div className="text-sm text-gray-500">Pagamento imediato</div>
+            </button>
+            <button
+              onClick={handlePayCard}
+              disabled={paymentLoading}
+              className="border-2 border-blue-500 rounded-lg p-6 text-center hover:bg-blue-50 transition-colors disabled:opacity-50"
+            >
+              <div className="text-3xl mb-2">Cartao</div>
+              <div className="font-semibold text-blue-700">Cartao de credito</div>
+              <div className="text-sm text-gray-500">Redirecionado para MercadoPago</div>
+            </button>
+          </div>
+          {paymentLoading && <p className="text-center text-gray-400 animate-pulse">Aguarde...</p>}
+        </div>
+      )}
+
+      {/* Step 7: QR Code PIX */}
+      {step === 7 && payment && (
+        <div className="space-y-6 text-center">
+          {pixPaid ? (
+            <div className="space-y-4">
+              <div className="text-6xl flex justify-center">
+                <CheckCircle className="h-16 w-16 text-green-500" />
+              </div>
+              <h2 className="text-2xl font-bold text-green-600">Pagamento confirmado!</h2>
+              <p className="text-gray-500">Seu agendamento esta garantido.</p>
+              <a
+                href={`/${slug}`}
+                className="inline-block mt-4 px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
+              >
+                Voltar ao inicio
+              </a>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <h2 className="text-xl font-semibold">Pague via PIX</h2>
+              <p className="text-gray-500">Escaneie o QR code ou copie o codigo abaixo</p>
+              {payment.pix_qr_code_base64 && (
+                <div className="flex justify-center">
+                  <img
+                    src={`data:image/png;base64,${payment.pix_qr_code_base64}`}
+                    alt="QR Code PIX"
+                    className="w-48 h-48 border rounded-lg"
+                  />
+                </div>
+              )}
+              {payment.pix_qr_code && (
+                <div className="space-y-2">
+                  <p className="text-sm font-medium text-gray-600">Codigo PIX (copia e cola):</p>
+                  <div className="flex items-center gap-2">
+                    <input
+                      readOnly
+                      value={payment.pix_qr_code}
+                      className="flex-1 text-xs p-2 border rounded bg-gray-50 font-mono truncate"
+                    />
+                    <button
+                      onClick={() => navigator.clipboard.writeText(payment.pix_qr_code ?? '')}
+                      className="px-3 py-2 bg-gray-100 border rounded hover:bg-gray-200 text-sm"
+                    >
+                      Copiar
+                    </button>
+                  </div>
+                </div>
+              )}
+              <p className="text-sm text-gray-400 animate-pulse">Aguardando confirmacao do pagamento...</p>
+              <p className="text-xs text-gray-300">Verificando a cada 5 segundos</p>
+            </div>
+          )}
         </div>
       )}
     </div>
