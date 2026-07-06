@@ -169,7 +169,7 @@ PATCH  /api/v1/admin/tenants/{id}
 ## Testes
 
 ```bash
-cd api && php artisan test --compact   # 99 testes Pest
+cd api && php artisan test --compact   # 129 testes Pest
 cd web && npm run build                # TypeScript check
 cd web && npm run lint                 # ESLint
 ```
