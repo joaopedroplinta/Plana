@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Appointment;
 use App\Models\Payment;
+use App\Models\Subscription;
 use App\Models\User;
 use MercadoPago\Client\Payment\PaymentClient;
 use MercadoPago\Client\Preference\PreferenceClient;
@@ -98,20 +99,32 @@ class PaymentService
         }
 
         $payment = Payment::withoutTenantScope()->where('external_id', $externalId)->first();
-        if (! $payment) {
-            return;
-        }
 
         $client = new PaymentClient;
         $result = $client->get((int) $externalId);
 
-        $payment->update([
-            'status' => $result->status,
-            'paid_at' => $result->status === 'approved' ? now() : null,
-        ]);
+        if ($payment) {
+            $payment->update([
+                'status' => $result->status,
+                'paid_at' => $result->status === 'approved' ? now() : null,
+            ]);
 
-        if ($result->status === 'approved') {
-            $payment->appointment->update(['status' => 'confirmed']);
+            if ($result->status === 'approved') {
+                $payment->appointment->update(['status' => 'confirmed']);
+            }
+
+            return;
+        }
+
+        // If no appointment payment found, try subscription
+        $subscription = Subscription::withoutTenantScope()->where('mp_payment_id', $externalId)->first();
+        if ($subscription && $result->status === 'approved') {
+            $subscription->update([
+                'status' => 'approved',
+                'paid_at' => now(),
+                'expires_at' => now()->addYear(),
+            ]);
+            $subscription->tenant->update(['plan' => $subscription->plan]);
         }
     }
 }

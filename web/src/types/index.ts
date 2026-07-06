@@ -130,6 +130,35 @@ export interface AdminTenant {
   owner: AdminTenantOwner | null
 }
 
+export interface SubscriptionPlan {
+  key: 'starter' | 'pro' | 'enterprise'
+  name: string
+  price: number // centavos
+  professionals: string
+  appointments: string
+  features: string[]
+}
+
+export interface Subscription {
+  id: string
+  plan: 'starter' | 'pro' | 'enterprise'
+  amount: number
+  method: 'pix' | 'credit_card'
+  status: 'pending' | 'approved' | 'rejected' | 'cancelled'
+  pix_qr_code: string | null
+  pix_qr_code_base64: string | null
+  mp_preference_id: string | null
+  paid_at: string | null
+  expires_at: string | null
+  created_at: string
+}
+
+export interface SubscriptionResponse {
+  current_plan: 'starter' | 'pro' | 'enterprise'
+  plans: SubscriptionPlan[]
+  subscriptions: Subscription[]
+}
+
 export interface AdminMetrics {
   total_tenants: number
   active_tenants: number

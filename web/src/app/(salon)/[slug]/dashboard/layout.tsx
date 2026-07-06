@@ -11,6 +11,7 @@ import {
   Package,
   Users,
   Calendar,
+  CreditCard,
   LogOut,
   Menu,
   X,
@@ -74,6 +75,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       href: `/${slug}/dashboard/schedule`,
       icon: <Calendar className="h-4 w-4" />,
     },
+    {
+      label: 'Planos',
+      href: `/${slug}/dashboard/planos`,
+      icon: <CreditCard className="h-4 w-4" />,
+    },
   ]
 
   if (isLoading) {
@@ -114,7 +120,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       >
         {/* Sidebar header */}
         <div className="flex h-16 items-center justify-between border-b px-5">
-          <span className="text-base font-bold text-gray-900 truncate">{salonName}</span>
+          <div className="flex items-center gap-2 min-w-0">
+            <span className="text-base font-bold text-gray-900 truncate">{salonName}</span>
+            {user?.tenant?.plan && <PlanBadge plan={user.tenant.plan} />}
+          </div>
           <button
             className="rounded p-1 text-gray-400 hover:text-gray-600 lg:hidden"
             onClick={() => setSidebarOpen(false)}
@@ -184,5 +193,20 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         <main className="flex-1 overflow-auto p-6">{children}</main>
       </div>
     </div>
+  )
+}
+
+function PlanBadge({ plan }: { plan: 'starter' | 'pro' | 'enterprise' }) {
+  const styles: Record<string, string> = {
+    starter: 'bg-gray-100 text-gray-600',
+    pro: 'bg-indigo-100 text-indigo-700',
+    enterprise: 'bg-purple-100 text-purple-700',
+  }
+  return (
+    <span
+      className={`shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide ${styles[plan]}`}
+    >
+      {plan}
+    </span>
   )
 }

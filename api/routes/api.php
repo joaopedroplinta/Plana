@@ -12,6 +12,7 @@ use App\Http\Controllers\Api\V1\ProfessionalController;
 use App\Http\Controllers\Api\V1\ScheduleController;
 use App\Http\Controllers\Api\V1\ServiceController;
 use App\Http\Controllers\Api\V1\ServicePackageController;
+use App\Http\Controllers\Api\V1\SubscriptionController;
 use App\Http\Resources\TenantResource;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -67,6 +68,9 @@ Route::prefix('v1')->group(function () {
             Route::patch('appointments/{appointment}/complete', [AppointmentController::class, 'complete']);
 
             Route::get('dashboard', DashboardController::class);
+
+            Route::get('subscription', [SubscriptionController::class, 'index']);
+            Route::post('subscription', [SubscriptionController::class, 'store']);
 
             Route::get('appointments/{appointment}/payments', [PaymentController::class, 'index']);
             Route::post('appointments/{appointment}/payments', [PaymentController::class, 'store']);
