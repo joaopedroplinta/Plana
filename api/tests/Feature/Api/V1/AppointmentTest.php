@@ -7,7 +7,12 @@ use App\Models\Schedule;
 use App\Models\Service;
 use App\Models\Tenant;
 use App\Models\User;
+use App\Notifications\AppointmentBooked;
+use App\Notifications\AppointmentCancelled;
+use App\Notifications\AppointmentConfirmed;
+use App\Notifications\NewAppointmentReceived;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Notification;
 use Spatie\Permission\Models\Role;
 
 uses(RefreshDatabase::class);
@@ -584,4 +589,54 @@ it('plano pro nao tem limite mensal de agendamentos', function () {
         'service_id' => $service->id,
         'starts_at' => $startsAt->toIso8601String(),
     ])->assertCreated();
+});
+
+// --- Notificações ---
+
+it('envia emails ao criar agendamento (cliente e owner)', function () {
+    Notification::fake();
+
+    $tenant = Tenant::factory()->create();
+    $owner = apptOwner($tenant);
+    $client = apptClient($tenant);
+    $professional = Professional::factory()->create(['tenant_id' => $tenant->id]);
+    $service = Service::factory()->create(['tenant_id' => $tenant->id, 'duration_minutes' => 60, 'price' => 5000]);
+    apptFullWeekSchedule($tenant, $professional);
+
+    $this->actingAs($client)->postJson("/api/v1/salao/{$tenant->slug}/appointments", [
+        'professional_id' => $professional->id,
+        'service_id' => $service->id,
+        'starts_at' => now()->addDay()->setTime(10, 0)->toIso8601String(),
+    ])->assertCreated();
+
+    Notification::assertSentTo($client, AppointmentBooked::class);
+    Notification::assertSentTo($owner, NewAppointmentReceived::class);
+});
+
+it('envia email ao confirmar e ao cancelar agendamento', function () {
+    Notification::fake();
+
+    $tenant = Tenant::factory()->create();
+    $owner = apptOwner($tenant);
+    $client = apptClient($tenant);
+    $professional = Professional::factory()->create(['tenant_id' => $tenant->id]);
+    $service = Service::factory()->create(['tenant_id' => $tenant->id]);
+    $appointment = Appointment::factory()->pending()->create([
+        'tenant_id' => $tenant->id,
+        'client_id' => $client->id,
+        'professional_id' => $professional->id,
+        'service_id' => $service->id,
+    ]);
+
+    $this->actingAs($owner)
+        ->patchJson("/api/v1/salao/{$tenant->slug}/appointments/{$appointment->id}/confirm")
+        ->assertOk();
+
+    Notification::assertSentTo($client, AppointmentConfirmed::class);
+
+    $this->actingAs($owner)
+        ->patchJson("/api/v1/salao/{$tenant->slug}/appointments/{$appointment->id}/cancel")
+        ->assertOk();
+
+    Notification::assertSentTo($client, AppointmentCancelled::class);
 });

@@ -5,6 +5,8 @@ namespace App\Services;
 use App\Models\Subscription;
 use App\Models\Tenant;
 use App\Models\User;
+use App\Notifications\SubscriptionActivated;
+use Illuminate\Support\Facades\Notification;
 use MercadoPago\Client\Payment\PaymentClient;
 use MercadoPago\Client\Preference\PreferenceClient;
 use MercadoPago\MercadoPagoConfig;
@@ -148,17 +150,20 @@ class SubscriptionService
         $client = new PaymentClient;
         $result = $client->get((int) $subscription->mp_payment_id);
 
+        $becameApproved = $result->status === 'approved' && $subscription->status !== 'approved';
+
         $updates = ['status' => $result->status];
 
-        if ($result->status === 'approved') {
+        if ($becameApproved) {
             $updates['paid_at'] = now();
             $updates['expires_at'] = now()->addMonth();
         }
 
         $subscription->update($updates);
 
-        if ($result->status === 'approved') {
+        if ($becameApproved) {
             $subscription->tenant->update(['plan' => $subscription->plan]);
+            Notification::send($subscription->tenant->owner, new SubscriptionActivated($subscription));
         }
 
         return $subscription->fresh();

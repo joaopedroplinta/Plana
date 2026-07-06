@@ -6,6 +6,9 @@ use App\Models\Appointment;
 use App\Models\Payment;
 use App\Models\Subscription;
 use App\Models\User;
+use App\Notifications\PaymentApproved;
+use App\Notifications\SubscriptionActivated;
+use Illuminate\Support\Facades\Notification;
 use MercadoPago\Client\Payment\PaymentClient;
 use MercadoPago\Client\Preference\PreferenceClient;
 use MercadoPago\MercadoPagoConfig;
@@ -140,14 +143,22 @@ class PaymentService
 
     private function applyStatus(Payment $payment, string $status): void
     {
+        $becameApproved = $status === 'approved' && $payment->status !== 'approved';
+
         $payment->update([
             'status' => $status,
             'paid_at' => $status === 'approved' ? ($payment->paid_at ?? now()) : $payment->paid_at,
         ]);
 
-        if ($status === 'approved' && $payment->appointment && $payment->appointment->status === 'pending') {
+        if (! $becameApproved) {
+            return;
+        }
+
+        if ($payment->appointment && $payment->appointment->status === 'pending') {
             $payment->appointment->update(['status' => 'confirmed']);
         }
+
+        $payment->appointment?->client?->notify(new PaymentApproved($payment));
     }
 
     private function handleSubscriptionWebhook(string $externalId, string $reference, string $status): void
@@ -178,6 +189,8 @@ class PaymentService
                 'expires_at' => now()->addMonth(),
             ]);
             $subscription->tenant->update(['plan' => $subscription->plan]);
+
+            Notification::send($subscription->tenant->owner, new SubscriptionActivated($subscription));
         } elseif ($subscription && $subscription->status !== 'approved') {
             $subscription->update(['status' => $status]);
         }

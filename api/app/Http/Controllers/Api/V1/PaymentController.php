@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
 use App\Http\Resources\PaymentResource;
+use App\Jobs\ProcessPaymentWebhook;
 use App\Models\Appointment;
 use App\Models\Payment;
 use App\Services\PaymentService;
@@ -87,7 +88,9 @@ class PaymentController extends Controller
             }
         }
 
-        $this->paymentService->handleWebhook($request->all());
+        // Processamento assíncrono: o MP recebe 200 imediatamente e o
+        // job reprocessa com retry em caso de falha.
+        ProcessPaymentWebhook::dispatch($request->all());
 
         return response()->json(['ok' => true]);
     }

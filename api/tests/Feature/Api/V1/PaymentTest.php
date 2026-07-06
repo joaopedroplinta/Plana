@@ -1,5 +1,6 @@
 <?php
 
+use App\Jobs\ProcessPaymentWebhook;
 use App\Models\Appointment;
 use App\Models\Payment;
 use App\Models\Professional;
@@ -7,8 +8,11 @@ use App\Models\Service;
 use App\Models\Subscription;
 use App\Models\Tenant;
 use App\Models\User;
+use App\Notifications\PaymentApproved;
 use App\Services\PaymentService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Facades\Queue;
 use Spatie\Permission\Models\Role;
 
 uses(RefreshDatabase::class);
@@ -326,4 +330,44 @@ it('nao permite pagar agendamento que ja tem pagamento aprovado', function () {
         ])
         ->assertUnprocessable()
         ->assertJsonValidationErrors(['method']);
+});
+
+it('webhook e processado em fila e notifica pagamento aprovado', function () {
+    Notification::fake();
+
+    [$tenant, $client] = payTenantWithClient();
+    $appointment = payAppointmentForClient($tenant, $client);
+
+    $payment = Payment::factory()->pix()->create([
+        'tenant_id' => $tenant->id,
+        'appointment_id' => $appointment->id,
+        'external_id' => '10101010',
+        'status' => 'pending',
+    ]);
+
+    $this->partialMock(PaymentService::class, function ($mock) use ($appointment) {
+        $mock->shouldAllowMockingProtectedMethods()
+            ->shouldReceive('fetchPayment')
+            ->once()
+            ->andReturn((object) ['status' => 'approved', 'external_reference' => $appointment->id]);
+    });
+
+    $this->postJson('/api/v1/payments/webhook', [
+        'type' => 'payment',
+        'data' => ['id' => '10101010'],
+    ])->assertOk();
+
+    expect($payment->fresh()->status)->toBe('approved');
+    Notification::assertSentTo($client, PaymentApproved::class);
+});
+
+it('webhook enfileira o job ProcessPaymentWebhook', function () {
+    Queue::fake();
+
+    $this->postJson('/api/v1/payments/webhook', [
+        'type' => 'payment',
+        'data' => ['id' => '123'],
+    ])->assertOk();
+
+    Queue::assertPushed(ProcessPaymentWebhook::class);
 });

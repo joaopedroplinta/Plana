@@ -9,6 +9,10 @@ use App\Models\Appointment;
 use App\Models\Service;
 use App\Models\Tenant;
 use App\Models\User;
+use App\Notifications\AppointmentBooked;
+use App\Notifications\AppointmentCancelled;
+use App\Notifications\AppointmentConfirmed;
+use App\Notifications\NewAppointmentReceived;
 use App\Services\SchedulingService;
 use App\Services\SubscriptionService;
 use Carbon\Carbon;
@@ -17,6 +21,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Validation\ValidationException;
 use Spatie\Permission\Models\Role;
 
@@ -78,7 +83,12 @@ class AppointmentController extends Controller
 
         $this->attachClientToTenant($request->user(), $tenant);
 
-        return (new AppointmentResource($appointment->load(['client', 'professional', 'service'])))
+        $appointment->load(['client', 'professional', 'service']);
+
+        $request->user()->notify(new AppointmentBooked($appointment));
+        Notification::send($tenant->owner, new NewAppointmentReceived($appointment));
+
+        return (new AppointmentResource($appointment))
             ->response()
             ->setStatusCode(201);
     }
@@ -120,8 +130,26 @@ class AppointmentController extends Controller
         }
 
         $appointment->update(['status' => $newStatus]);
+        $appointment->load(['client', 'professional', 'service']);
 
-        return new AppointmentResource($appointment->load(['client', 'professional', 'service']));
+        $this->notifyTransition($appointment, $newStatus);
+
+        return new AppointmentResource($appointment);
+    }
+
+    private function notifyTransition(Appointment $appointment, string $newStatus): void
+    {
+        /** @var Tenant $tenant */
+        $tenant = app('currentTenant');
+
+        if ($newStatus === 'confirmed') {
+            $appointment->client?->notify(new AppointmentConfirmed($appointment));
+        }
+
+        if ($newStatus === 'cancelled') {
+            $appointment->client?->notify(new AppointmentCancelled($appointment));
+            Notification::send($tenant->owner, new AppointmentCancelled($appointment));
+        }
     }
 
     private function assertPlanAllowsNewAppointment(Tenant $tenant, Carbon $startsAt): void

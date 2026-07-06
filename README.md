@@ -46,6 +46,7 @@ Plataforma SaaS de agendamentos para salões de beleza. Cada salão opera como u
 
 **Pagamento (MercadoPago)**
 - PIX (QR Code + polling) ou cartão (Checkout Pro); pagamento aprovado confirma o agendamento automaticamente via webhook
+- O webhook responde 200 imediatamente e é processado em fila (`ProcessPaymentWebhook`, 3 tentativas com backoff)
 - Não é possível pagar agendamento cancelado nem pagar duas vezes
 - Também é possível pagar no local — o agendamento fica `pending` até o salão confirmar
 
@@ -53,6 +54,11 @@ Plataforma SaaS de agendamentos para salões de beleza. Cada salão opera como u
 - Starter (grátis): 1 profissional, 50 agendamentos/mês · Pro (R$ 97/mês): 5 profissionais · Enterprise (R$ 197/mês): ilimitado
 - Limites aplicados na API (criação de profissional e de agendamento retornam 422 ao exceder)
 - Assinatura paga vale por 1 mês (`expires_at`); a aprovação via webhook atualiza o plano do tenant
+- Assinatura expirada: o scheduler diário (`subscriptions:downgrade-expired`, 03:00) rebaixa o tenant para Starter e avisa o owner por e-mail. Planos concedidos manualmente pelo super admin (sem assinatura) não são rebaixados
+
+**Notificações por e-mail** (enfileiradas)
+- Cliente: agendamento recebido, confirmado, cancelado e pagamento aprovado
+- Owner: novo agendamento, agendamento cancelado, plano ativado e assinatura expirada
 
 **Contas**
 - Registro como dono cria o salão (slug único gerado do nome do salão); registro como cliente não cria salão e pode já vincular a um salão existente
@@ -88,6 +94,10 @@ cp .env.local.example .env.local
 npm install
 npm run dev              # http://localhost:3000
 ```
+
+> **Produção:** rode também um worker de fila (`php artisan queue:work`) para webhooks e e-mails,
+> e o scheduler (`php artisan schedule:work` ou cron de `schedule:run`) para o downgrade de assinaturas expiradas.
+> Em dev com `QUEUE_CONNECTION=sync` tudo roda inline e os e-mails vão para `storage/logs/laravel.log` (`MAIL_MAILER=log`).
 
 ## Variáveis de ambiente
 

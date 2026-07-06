@@ -27,11 +27,11 @@ function PaymentSuccessContent() {
         </div>
         <h1 className="text-2xl font-bold text-green-600">Pagamento confirmado!</h1>
         <p className="text-gray-500">
-          Seu agendamento esta garantido. Em breve voce recebera uma confirmacao.
+          Seu agendamento está garantido. Em breve você receberá uma confirmação.
         </p>
         {(paymentId || externalRef) && (
           <p className="text-xs text-gray-400">
-            Referencia: {externalRef ?? paymentId}
+            Referência: {externalRef ?? paymentId}
           </p>
         )}
         <div className="flex flex-col gap-3">
@@ -39,7 +39,7 @@ function PaymentSuccessContent() {
             href={`/${slug}`}
             className="px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
           >
-            Voltar ao salao
+            Voltar ao salão
           </a>
           <a
             href={`/${slug}/booking`}
