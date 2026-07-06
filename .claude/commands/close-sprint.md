@@ -1,3 +1,8 @@
+---
+description: Fecha o sprint — resume issues, cria release tag e move pendências para o próximo sprint
+argument-hint: <número do sprint>
+---
+
 Use the github-agent to close the current sprint: $ARGUMENTS
 
 Execute the following steps:

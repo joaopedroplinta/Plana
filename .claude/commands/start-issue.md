@@ -1,3 +1,8 @@
+---
+description: Inicia trabalho em uma issue do GitHub — cria branch, move para In Progress, implementa e abre PR
+argument-hint: <número da issue>
+---
+
 Start work on a GitHub issue end-to-end: $ARGUMENTS
 
 The argument is the issue number (ex: `/start-issue 6`).

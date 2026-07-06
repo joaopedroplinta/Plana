@@ -1,3 +1,8 @@
+---
+description: Implementa feature completa end-to-end (API + frontend) via feature-orchestrator
+argument-hint: <descrição da feature>
+---
+
 Implement the following feature end-to-end using the feature-orchestrator agent: $ARGUMENTS
 
 The orchestrator must:

@@ -1,3 +1,8 @@
+---
+description: Gera scaffold completo de feature API via api-agent (migration, model, controller, policy, testes)
+argument-hint: <descrição da feature>
+---
+
 Use the api-agent to scaffold the following API feature: $ARGUMENTS
 
 The agent must create:
