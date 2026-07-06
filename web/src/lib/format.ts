@@ -30,3 +30,10 @@ export function formatDuration(minutes: number): string {
   if (m === 0) return `${h}h`
   return `${h}h ${m}min`
 }
+
+export function formatTime(date: string | Date): string {
+  return new Intl.DateTimeFormat('pt-BR', {
+    hour: '2-digit',
+    minute: '2-digit',
+  }).format(new Date(date))
+}

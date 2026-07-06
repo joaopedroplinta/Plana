@@ -24,7 +24,7 @@ export interface User {
 export interface AuthResponse {
   token: string
   user: User
-  tenant: Tenant
+  tenant: Tenant | null
 }
 
 export interface Service {

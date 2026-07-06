@@ -1,8 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { Suspense, useState } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -10,8 +10,10 @@ import { authService } from '@/services/auth'
 import type { ApiError } from '@/types/index'
 import { isAxiosError } from 'axios'
 
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const redirect = searchParams.get('redirect')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
@@ -24,10 +26,27 @@ export default function LoginPage() {
 
     try {
       const response = await authService.login(email, password)
-      const { token, tenant } = response.data.data
+      const { token, tenant, user } = response.data.data
       localStorage.setItem('token', token)
       document.cookie = `token=${token}; path=/; SameSite=Lax`
-      router.push(`/${tenant.slug}/dashboard`)
+
+      // Prioridade: volta para onde o usuário estava (ex: booking).
+      if (redirect && redirect.startsWith('/')) {
+        router.push(redirect)
+        return
+      }
+
+      const roleNames = user.roles?.map((r) => r.name) ?? []
+
+      if (roleNames.includes('super_admin')) {
+        router.push('/super-admin')
+      } else if (tenant && roleNames.some((r) => ['salon_owner', 'salon_staff'].includes(r))) {
+        router.push(`/${tenant.slug}/dashboard`)
+      } else if (tenant) {
+        router.push(`/${tenant.slug}/minha-conta`)
+      } else {
+        router.push('/')
+      }
     } catch (err) {
       if (isAxiosError(err)) {
         const apiError = err.response?.data as ApiError | undefined
@@ -48,7 +67,7 @@ export default function LoginPage() {
           <p className="mt-2 text-sm text-gray-600">
             Ainda não tem conta?{' '}
             <Link
-              href="/register"
+              href={redirect ? `/register?redirect=${encodeURIComponent(redirect)}` : '/register'}
               className="font-medium text-indigo-600 hover:text-indigo-500"
             >
               Criar conta grátis
@@ -111,5 +130,13 @@ export default function LoginPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense>
+      <LoginForm />
+    </Suspense>
   )
 }

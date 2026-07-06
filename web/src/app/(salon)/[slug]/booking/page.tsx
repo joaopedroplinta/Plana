@@ -10,6 +10,7 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
 import { Card } from '@/components/ui/card'
+import { useAuth } from '@/hooks/useAuth'
 import { servicesService } from '@/services/services'
 import { professionalsService } from '@/services/professionals'
 import { appointmentsService } from '@/services/appointments'
@@ -83,6 +84,7 @@ export default function BookingPage() {
   const params = useParams()
   const router = useRouter()
   const slug = typeof params.slug === 'string' ? params.slug : ''
+  const { isLoading: authLoading, isAuthenticated } = useAuth()
 
   const [step, setStep] = useState(1)
   const [selectedService, setSelectedService] = useState<Service | null>(null)
@@ -168,6 +170,13 @@ export default function BookingPage() {
 
   async function handleConfirm() {
     if (!selectedService || !selectedProfessional || !selectedDate || !selectedSlot) return
+
+    // Agendar exige conta — envia para o login e volta direto para cá.
+    if (!authLoading && !isAuthenticated) {
+      router.push(`/login?redirect=/${slug}/booking`)
+      return
+    }
+
     setIsLoading(true)
     setError('')
     try {
@@ -241,7 +250,7 @@ export default function BookingPage() {
         <div className="rounded-full bg-green-100 p-4 text-green-600">
           <CheckCircle className="h-10 w-10" />
         </div>
-        <h2 className="mt-4 text-2xl font-bold text-gray-900">Agendamento confirmado!</h2>
+        <h2 className="mt-4 text-2xl font-bold text-gray-900">Agendamento realizado!</h2>
         <p className="mt-2 text-sm text-gray-500">
           Seu horário foi reservado com sucesso. Aguarde a confirmação do salão.
         </p>
@@ -265,9 +274,14 @@ export default function BookingPage() {
               : '—'}
           </p>
         </div>
-        <Button className="mt-6" onClick={() => router.push(`/${slug}`)}>
-          Voltar ao início
-        </Button>
+        <div className="mt-6 flex gap-3">
+          <Button onClick={() => router.push(`/${slug}/minha-conta`)}>
+            Ver meus agendamentos
+          </Button>
+          <Button variant="outline" onClick={() => router.push(`/${slug}`)}>
+            Voltar ao início
+          </Button>
+        </div>
       </div>
     )
   }
@@ -568,11 +582,21 @@ export default function BookingPage() {
       {/* Step 6: Escolher método de pagamento */}
       {step === 6 && (
         <div className="space-y-6">
-          <h2 className="text-xl font-semibold">Pagamento</h2>
-          <p className="text-gray-500">
-            Resumo: {selectedService?.name} — {formatPrice(selectedService?.price ?? 0)}
+          <div>
+            <h2 className="text-xl font-bold text-gray-900">Pagamento</h2>
+            <p className="mt-1 text-sm text-gray-500">
+              Horário reservado! Escolha como deseja pagar.
+            </p>
+          </div>
+          <p className="text-gray-600">
+            {selectedService?.name} —{' '}
+            <span className="font-semibold text-indigo-600">
+              {formatPrice(selectedService?.price ?? 0)}
+            </span>
           </p>
-          {paymentError && <p className="text-red-500 text-sm">{paymentError}</p>}
+          {paymentError && (
+            <p className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-600">{paymentError}</p>
+          )}
           <div className="grid grid-cols-2 gap-4">
             <button
               onClick={handlePayPix}
@@ -588,11 +612,18 @@ export default function BookingPage() {
               disabled={paymentLoading}
               className="border-2 border-blue-500 rounded-lg p-6 text-center hover:bg-blue-50 transition-colors disabled:opacity-50"
             >
-              <div className="text-3xl mb-2">Cartao</div>
-              <div className="font-semibold text-blue-700">Cartao de credito</div>
-              <div className="text-sm text-gray-500">Redirecionado para MercadoPago</div>
+              <div className="text-3xl mb-2">💳</div>
+              <div className="font-semibold text-blue-700">Cartão de crédito</div>
+              <div className="text-sm text-gray-500">Redirecionado para o MercadoPago</div>
             </button>
           </div>
+          <button
+            onClick={() => setSuccess(true)}
+            disabled={paymentLoading}
+            className="w-full rounded-lg border border-gray-200 px-4 py-3 text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors disabled:opacity-50"
+          >
+            Pagar no local — finalizar sem pagamento online
+          </button>
           {paymentLoading && <p className="text-center text-gray-400 animate-pulse">Aguarde...</p>}
         </div>
       )}
@@ -606,18 +637,26 @@ export default function BookingPage() {
                 <CheckCircle className="h-16 w-16 text-green-500" />
               </div>
               <h2 className="text-2xl font-bold text-green-600">Pagamento confirmado!</h2>
-              <p className="text-gray-500">Seu agendamento esta garantido.</p>
-              <a
-                href={`/${slug}`}
-                className="inline-block mt-4 px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
-              >
-                Voltar ao inicio
-              </a>
+              <p className="text-gray-500">Seu agendamento está garantido.</p>
+              <div className="flex justify-center gap-3">
+                <a
+                  href={`/${slug}/minha-conta`}
+                  className="inline-block mt-4 px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
+                >
+                  Ver meus agendamentos
+                </a>
+                <a
+                  href={`/${slug}`}
+                  className="inline-block mt-4 px-6 py-2 border border-gray-200 text-gray-600 rounded-lg hover:bg-gray-50"
+                >
+                  Voltar ao início
+                </a>
+              </div>
             </div>
           ) : (
             <div className="space-y-4">
               <h2 className="text-xl font-semibold">Pague via PIX</h2>
-              <p className="text-gray-500">Escaneie o QR code ou copie o codigo abaixo</p>
+              <p className="text-gray-500">Escaneie o QR code ou copie o código abaixo</p>
               {payment.pix_qr_code_base64 && (
                 <div className="flex justify-center">
                   <img
@@ -629,7 +668,7 @@ export default function BookingPage() {
               )}
               {payment.pix_qr_code && (
                 <div className="space-y-2">
-                  <p className="text-sm font-medium text-gray-600">Codigo PIX (copia e cola):</p>
+                  <p className="text-sm font-medium text-gray-600">Código PIX (copia e cola):</p>
                   <div className="flex items-center gap-2">
                     <input
                       readOnly
@@ -645,7 +684,7 @@ export default function BookingPage() {
                   </div>
                 </div>
               )}
-              <p className="text-sm text-gray-400 animate-pulse">Aguardando confirmacao do pagamento...</p>
+              <p className="text-sm text-gray-400 animate-pulse">Aguardando confirmação do pagamento...</p>
               <p className="text-xs text-gray-300">Verificando a cada 5 segundos</p>
             </div>
           )}
