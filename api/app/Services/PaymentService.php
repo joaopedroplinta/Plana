@@ -6,6 +6,9 @@ use App\Models\Appointment;
 use App\Models\Payment;
 use App\Models\Subscription;
 use App\Models\User;
+use App\Notifications\PaymentApproved;
+use App\Notifications\SubscriptionActivated;
+use Illuminate\Support\Facades\Notification;
 use MercadoPago\Client\Payment\PaymentClient;
 use MercadoPago\Client\Preference\PreferenceClient;
 use MercadoPago\MercadoPagoConfig;
@@ -14,7 +17,11 @@ class PaymentService
 {
     public function __construct()
     {
-        MercadoPagoConfig::setAccessToken(config('services.mercadopago.access_token'));
+        $token = config('services.mercadopago.access_token');
+
+        if ($token) {
+            MercadoPagoConfig::setAccessToken($token);
+        }
     }
 
     public function createPix(Appointment $appointment, User $payer): Payment
@@ -25,6 +32,7 @@ class PaymentService
             'description' => 'Agendamento '.$appointment->id,
             'payment_method_id' => 'pix',
             'payer' => ['email' => $payer->email],
+            'external_reference' => $appointment->id,
         ]);
 
         return Payment::create([
@@ -75,15 +83,21 @@ class PaymentService
             return $payment;
         }
 
-        $client = new PaymentClient;
-        $result = $client->get((int) $payment->external_id);
+        $result = $this->fetchPayment($payment->external_id);
 
-        $payment->update([
-            'status' => $result->status,
-            'paid_at' => $result->status === 'approved' ? now() : null,
-        ]);
+        $this->applyStatus($payment, (string) $result->status);
 
         return $payment->fresh();
+    }
+
+    /**
+     * Busca um pagamento na API do MercadoPago (extraído para permitir mock em testes).
+     */
+    protected function fetchPayment(string $externalId): object
+    {
+        $client = new PaymentClient;
+
+        return $client->get((int) $externalId);
     }
 
     public function handleWebhook(array $data): void
@@ -98,33 +112,87 @@ class PaymentService
             return;
         }
 
+        $result = $this->fetchPayment($externalId);
+        $status = (string) $result->status;
+        $reference = (string) ($result->external_reference ?? '');
+
+        // 1. PIX payments store the MP payment id upfront.
         $payment = Payment::withoutTenantScope()->where('external_id', $externalId)->first();
 
-        $client = new PaymentClient;
-        $result = $client->get((int) $externalId);
+        // 2. Checkout Pro payments only know the preference id — match the
+        //    pending payment through the appointment in external_reference.
+        if (! $payment && $reference && ! str_starts_with($reference, 'subscription_')) {
+            $payment = Payment::withoutTenantScope()
+                ->where('appointment_id', $reference)
+                ->whereNotNull('preference_id')
+                ->where('status', 'pending')
+                ->latest()
+                ->first();
+
+            $payment?->update(['external_id' => $externalId]);
+        }
 
         if ($payment) {
-            $payment->update([
-                'status' => $result->status,
-                'paid_at' => $result->status === 'approved' ? now() : null,
-            ]);
-
-            if ($result->status === 'approved') {
-                $payment->appointment->update(['status' => 'confirmed']);
-            }
+            $this->applyStatus($payment, $status);
 
             return;
         }
 
-        // If no appointment payment found, try subscription
+        $this->handleSubscriptionWebhook($externalId, $reference, $status);
+    }
+
+    private function applyStatus(Payment $payment, string $status): void
+    {
+        $becameApproved = $status === 'approved' && $payment->status !== 'approved';
+
+        $payment->update([
+            'status' => $status,
+            'paid_at' => $status === 'approved' ? ($payment->paid_at ?? now()) : $payment->paid_at,
+        ]);
+
+        if (! $becameApproved) {
+            return;
+        }
+
+        if ($payment->appointment && $payment->appointment->status === 'pending') {
+            $payment->appointment->update(['status' => 'confirmed']);
+        }
+
+        $payment->appointment?->client?->notify(new PaymentApproved($payment));
+    }
+
+    private function handleSubscriptionWebhook(string $externalId, string $reference, string $status): void
+    {
         $subscription = Subscription::withoutTenantScope()->where('mp_payment_id', $externalId)->first();
-        if ($subscription && $result->status === 'approved') {
+
+        // Checkout Pro subscriptions carry "subscription_{tenant_id}_{plan}".
+        if (! $subscription && str_starts_with($reference, 'subscription_')) {
+            $parts = explode('_', substr($reference, strlen('subscription_')));
+            $plan = array_pop($parts);
+            $tenantId = implode('_', $parts);
+
+            $subscription = Subscription::withoutTenantScope()
+                ->where('tenant_id', $tenantId)
+                ->where('plan', $plan)
+                ->where('status', 'pending')
+                ->whereNotNull('mp_preference_id')
+                ->latest()
+                ->first();
+
+            $subscription?->update(['mp_payment_id' => $externalId]);
+        }
+
+        if ($subscription && $status === 'approved' && $subscription->status !== 'approved') {
             $subscription->update([
                 'status' => 'approved',
                 'paid_at' => now(),
-                'expires_at' => now()->addYear(),
+                'expires_at' => now()->addMonth(),
             ]);
             $subscription->tenant->update(['plan' => $subscription->plan]);
+
+            Notification::send($subscription->tenant->owner, new SubscriptionActivated($subscription));
+        } elseif ($subscription && $subscription->status !== 'approved') {
+            $subscription->update(['status' => $status]);
         }
     }
 }

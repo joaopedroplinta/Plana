@@ -6,6 +6,9 @@ export interface RegisterData {
   email: string
   password: string
   password_confirmation: string
+  account_type?: 'owner' | 'client'
+  salon_name?: string
+  tenant_slug?: string
 }
 
 export const authService = {

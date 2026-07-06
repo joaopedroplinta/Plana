@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Tenant;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Auth;
@@ -151,4 +152,59 @@ it('me retorna user autenticado com tenant', function () {
 
     expect($response->json('data.email'))->toBe('joao@teste.com');
     expect($response->json('data.roles'))->toContain('salon_owner');
+});
+
+// --- Registro de cliente ---
+
+it('registra cliente sem criar tenant e vincula ao salao informado', function () {
+    $tenant = Tenant::factory()->create();
+    $before = Tenant::count();
+
+    $response = $this->postJson('/api/v1/auth/register', [
+        'name' => 'Cliente Final',
+        'email' => 'cliente@example.com',
+        'password' => 'password123',
+        'password_confirmation' => 'password123',
+        'account_type' => 'client',
+        'tenant_slug' => $tenant->slug,
+    ]);
+
+    $response->assertCreated();
+    expect(Tenant::count())->toBe($before);
+
+    $user = User::where('email', 'cliente@example.com')->first();
+    expect($user->hasRole('client'))->toBeTrue();
+
+    $this->assertDatabaseHas('tenant_user', [
+        'tenant_id' => $tenant->id,
+        'user_id' => $user->id,
+        'role' => 'client',
+    ]);
+});
+
+it('registra cliente sem tenant_slug sem criar salao', function () {
+    $before = Tenant::count();
+
+    $this->postJson('/api/v1/auth/register', [
+        'name' => 'Cliente Solto',
+        'email' => 'solto@example.com',
+        'password' => 'password123',
+        'password_confirmation' => 'password123',
+        'account_type' => 'client',
+    ])->assertCreated();
+
+    expect(Tenant::count())->toBe($before);
+});
+
+it('registro de owner usa salon_name para o salao quando informado', function () {
+    $response = $this->postJson('/api/v1/auth/register', [
+        'name' => 'Maria Dona',
+        'email' => 'maria@example.com',
+        'password' => 'password123',
+        'password_confirmation' => 'password123',
+        'salon_name' => 'Studio Beleza Pura',
+    ]);
+
+    $response->assertCreated()
+        ->assertJsonPath('data.tenant.name', 'Studio Beleza Pura');
 });

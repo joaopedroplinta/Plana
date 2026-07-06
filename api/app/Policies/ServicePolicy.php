@@ -23,34 +23,29 @@ class ServicePolicy
         /** @var Tenant $currentTenant */
         $currentTenant = app('currentTenant');
 
-        return $user->hasRole(['salon_owner', 'salon_staff'])
-            && $user->belongsToTenant($currentTenant);
+        return $user->isStaffOfTenant($currentTenant);
     }
 
     public function update(User $user, Service $service): bool
     {
+        /** @var Tenant $currentTenant */
         $currentTenant = app('currentTenant');
 
-        return $user->hasRole(['salon_owner', 'salon_staff'])
-            && $user->belongsToTenant($currentTenant)
+        return $user->isStaffOfTenant($currentTenant)
             && $service->tenant_id === $currentTenant->id;
     }
 
     public function delete(User $user, Service $service): bool
     {
+        /** @var Tenant $currentTenant */
         $currentTenant = app('currentTenant');
 
-        return $user->hasRole('salon_owner')
-            && $user->belongsToTenant($currentTenant)
+        return $user->ownsTenant($currentTenant)
             && $service->tenant_id === $currentTenant->id;
     }
 
     public function uploadImage(User $user, Service $service): bool
     {
-        $currentTenant = app('currentTenant');
-
-        return $user->hasRole(['salon_owner', 'salon_staff'])
-            && $user->belongsToTenant($currentTenant)
-            && $service->tenant_id === $currentTenant->id;
+        return $this->update($user, $service);
     }
 }

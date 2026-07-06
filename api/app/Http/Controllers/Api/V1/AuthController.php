@@ -22,25 +22,39 @@ class AuthController extends Controller
 {
     public function register(RegisterRequest $request): JsonResponse
     {
-        $slug = $this->generateUniqueSlug($request->string('name')->toString());
-
-        $tenant = Tenant::create([
-            'name' => $request->string('name')->toString(),
-            'slug' => $slug,
-            'plan' => 'starter',
-            'active' => true,
-        ]);
-
         $user = User::create([
             'name' => $request->string('name')->toString(),
             'email' => $request->string('email')->toString(),
             'password' => $request->string('password')->toString(),
         ]);
 
-        $tenant->users()->attach($user->id, ['role' => 'owner']);
+        if ($request->input('account_type', 'owner') === 'client') {
+            $tenant = null;
 
-        Role::firstOrCreate(['name' => 'salon_owner', 'guard_name' => 'web']);
-        $user->assignRole('salon_owner');
+            // Cliente pode já sair vinculado a um salão (fluxo de agendamento).
+            $slug = $request->string('tenant_slug')->toString();
+            if ($slug) {
+                $tenant = Tenant::where('slug', $slug)->first();
+                $tenant?->users()->attach($user->id, ['role' => 'client']);
+            }
+
+            Role::firstOrCreate(['name' => 'client', 'guard_name' => 'web']);
+            $user->assignRole('client');
+        } else {
+            $salonName = $request->string('salon_name')->toString() ?: $request->string('name')->toString();
+
+            $tenant = Tenant::create([
+                'name' => $salonName,
+                'slug' => $this->generateUniqueSlug($salonName),
+                'plan' => 'starter',
+                'active' => true,
+            ]);
+
+            $tenant->users()->attach($user->id, ['role' => 'owner']);
+
+            Role::firstOrCreate(['name' => 'salon_owner', 'guard_name' => 'web']);
+            $user->assignRole('salon_owner');
+        }
 
         $token = $user->createToken('auth')->plainTextToken;
 
@@ -61,8 +75,12 @@ class AuthController extends Controller
 
         $slug = $request->string('tenant_slug')->toString();
         $tenant = $slug
-            ? $user->tenants()->where('slug', $slug)->firstOrFail()
-            : $user->tenants()->first();
+            ? $user->tenants()->where('slug', $slug)->first()
+            : $user->tenants()->wherePivot('role', 'owner')->first() ?? $user->tenants()->first();
+
+        if ($slug && ! $tenant) {
+            return response()->json(['message' => 'Você não tem acesso a este salão.'], 403);
+        }
 
         $token = $user->createToken('auth')->plainTextToken;
 

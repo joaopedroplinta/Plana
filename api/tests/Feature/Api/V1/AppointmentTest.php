@@ -7,7 +7,12 @@ use App\Models\Schedule;
 use App\Models\Service;
 use App\Models\Tenant;
 use App\Models\User;
+use App\Notifications\AppointmentBooked;
+use App\Notifications\AppointmentCancelled;
+use App\Notifications\AppointmentConfirmed;
+use App\Notifications\NewAppointmentReceived;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Notification;
 use Spatie\Permission\Models\Role;
 
 uses(RefreshDatabase::class);
@@ -44,6 +49,19 @@ function apptClient(Tenant $tenant): User
     return $user;
 }
 
+function apptFullWeekSchedule(Tenant $tenant, Professional $professional): void
+{
+    foreach (range(0, 6) as $day) {
+        Schedule::factory()->create([
+            'tenant_id' => $tenant->id,
+            'professional_id' => $professional->id,
+            'day_of_week' => $day,
+            'start_time' => '08:00:00',
+            'end_time' => '20:00:00',
+        ]);
+    }
+}
+
 // --- Criar agendamento ---
 
 it('cria agendamento com slot valido e retorna 201', function () {
@@ -51,6 +69,7 @@ it('cria agendamento com slot valido e retorna 201', function () {
     $client = apptClient($tenant);
     $professional = Professional::factory()->create(['tenant_id' => $tenant->id]);
     $service = Service::factory()->create(['tenant_id' => $tenant->id, 'duration_minutes' => 60, 'price' => 5000]);
+    apptFullWeekSchedule($tenant, $professional);
 
     $startsAt = now()->addDay()->setHour(10)->setMinute(0)->setSecond(0)->toIso8601String();
 
@@ -79,6 +98,7 @@ it('rejeita agendamento em slot ocupado com 422', function () {
     $client = apptClient($tenant);
     $professional = Professional::factory()->create(['tenant_id' => $tenant->id]);
     $service = Service::factory()->create(['tenant_id' => $tenant->id, 'duration_minutes' => 60, 'price' => 5000]);
+    apptFullWeekSchedule($tenant, $professional);
 
     $startsAt = now()->addDay()->setHour(10)->setMinute(0)->setSecond(0);
 
@@ -354,4 +374,269 @@ it('slot ocupado por agendamento existente nao aparece na disponibilidade', func
 
     $response->assertJsonFragment(['starts_at' => '10:00', 'ends_at' => '11:00']);
     $response->assertJsonFragment(['starts_at' => '11:00', 'ends_at' => '12:00']);
+});
+
+// --- Regras de negócio: horário de atendimento ---
+
+it('rejeita agendamento fora do expediente do profissional com 422', function () {
+    $tenant = Tenant::factory()->create();
+    $client = apptClient($tenant);
+    $professional = Professional::factory()->create(['tenant_id' => $tenant->id]);
+    $service = Service::factory()->create(['tenant_id' => $tenant->id, 'duration_minutes' => 60, 'price' => 5000]);
+
+    $date = now()->addDay();
+    Schedule::factory()->create([
+        'tenant_id' => $tenant->id,
+        'professional_id' => $professional->id,
+        'day_of_week' => $date->dayOfWeek,
+        'start_time' => '09:00:00',
+        'end_time' => '12:00:00',
+    ]);
+
+    $response = $this->actingAs($client)->postJson("/api/v1/salao/{$tenant->slug}/appointments", [
+        'professional_id' => $professional->id,
+        'service_id' => $service->id,
+        'starts_at' => $date->copy()->setTime(15, 0)->toIso8601String(),
+    ]);
+
+    $response->assertUnprocessable()->assertJsonValidationErrors(['starts_at']);
+});
+
+it('rejeita agendamento em dia sem schedule com 422', function () {
+    $tenant = Tenant::factory()->create();
+    $client = apptClient($tenant);
+    $professional = Professional::factory()->create(['tenant_id' => $tenant->id]);
+    $service = Service::factory()->create(['tenant_id' => $tenant->id, 'duration_minutes' => 60, 'price' => 5000]);
+
+    $response = $this->actingAs($client)->postJson("/api/v1/salao/{$tenant->slug}/appointments", [
+        'professional_id' => $professional->id,
+        'service_id' => $service->id,
+        'starts_at' => now()->addDay()->setTime(10, 0)->toIso8601String(),
+    ]);
+
+    $response->assertUnprocessable()->assertJsonValidationErrors(['starts_at']);
+});
+
+it('rejeita agendamento em data bloqueada com 422', function () {
+    $tenant = Tenant::factory()->create();
+    $client = apptClient($tenant);
+    $professional = Professional::factory()->create(['tenant_id' => $tenant->id]);
+    $service = Service::factory()->create(['tenant_id' => $tenant->id, 'duration_minutes' => 60, 'price' => 5000]);
+    apptFullWeekSchedule($tenant, $professional);
+
+    $date = now()->addDay();
+    BlockedDate::factory()->create([
+        'tenant_id' => $tenant->id,
+        'professional_id' => $professional->id,
+        'date' => $date->format('Y-m-d'),
+    ]);
+
+    $response = $this->actingAs($client)->postJson("/api/v1/salao/{$tenant->slug}/appointments", [
+        'professional_id' => $professional->id,
+        'service_id' => $service->id,
+        'starts_at' => $date->copy()->setTime(10, 0)->toIso8601String(),
+    ]);
+
+    $response->assertUnprocessable()->assertJsonValidationErrors(['starts_at']);
+});
+
+// --- Regras de negócio: vínculo automático de cliente ---
+
+it('usuario de outro tenant pode agendar e vira cliente do salao', function () {
+    $tenantA = Tenant::factory()->create();
+    $tenantB = Tenant::factory()->create();
+    $clientOfA = apptClient($tenantA);
+    $professional = Professional::factory()->create(['tenant_id' => $tenantB->id]);
+    $service = Service::factory()->create(['tenant_id' => $tenantB->id, 'duration_minutes' => 60, 'price' => 5000]);
+    apptFullWeekSchedule($tenantB, $professional);
+
+    $response = $this->actingAs($clientOfA)->postJson("/api/v1/salao/{$tenantB->slug}/appointments", [
+        'professional_id' => $professional->id,
+        'service_id' => $service->id,
+        'starts_at' => now()->addDay()->setTime(10, 0)->toIso8601String(),
+    ]);
+
+    $response->assertCreated();
+
+    $this->assertDatabaseHas('tenant_user', [
+        'tenant_id' => $tenantB->id,
+        'user_id' => $clientOfA->id,
+        'role' => 'client',
+    ]);
+});
+
+it('salon_owner de outro salao que agenda vira client e nao ve agendamentos alheios', function () {
+    $tenantA = Tenant::factory()->create();
+    $tenantB = Tenant::factory()->create();
+    $ownerOfA = apptOwner($tenantA);
+    $otherClient = apptClient($tenantB);
+    $professional = Professional::factory()->create(['tenant_id' => $tenantB->id]);
+    $service = Service::factory()->create(['tenant_id' => $tenantB->id, 'duration_minutes' => 60, 'price' => 5000]);
+    apptFullWeekSchedule($tenantB, $professional);
+
+    Appointment::factory(3)->create([
+        'tenant_id' => $tenantB->id,
+        'client_id' => $otherClient->id,
+        'professional_id' => $professional->id,
+        'service_id' => $service->id,
+    ]);
+
+    $this->actingAs($ownerOfA)->postJson("/api/v1/salao/{$tenantB->slug}/appointments", [
+        'professional_id' => $professional->id,
+        'service_id' => $service->id,
+        'starts_at' => now()->addDay()->setTime(10, 0)->toIso8601String(),
+    ])->assertCreated();
+
+    // No salão B ele é apenas client: lista só o próprio agendamento.
+    $response = $this->actingAs($ownerOfA)->getJson("/api/v1/salao/{$tenantB->slug}/appointments");
+
+    $response->assertOk()->assertJsonCount(1, 'data');
+});
+
+// --- Regras de negócio: transições de status ---
+
+it('nao confirma agendamento cancelado', function () {
+    $tenant = Tenant::factory()->create();
+    $owner = apptOwner($tenant);
+    $professional = Professional::factory()->create(['tenant_id' => $tenant->id]);
+    $service = Service::factory()->create(['tenant_id' => $tenant->id]);
+    $appointment = Appointment::factory()->create([
+        'tenant_id' => $tenant->id,
+        'professional_id' => $professional->id,
+        'service_id' => $service->id,
+        'status' => 'cancelled',
+    ]);
+
+    $this->actingAs($owner)
+        ->patchJson("/api/v1/salao/{$tenant->slug}/appointments/{$appointment->id}/confirm")
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors(['status']);
+});
+
+it('nao cancela agendamento concluido', function () {
+    $tenant = Tenant::factory()->create();
+    $owner = apptOwner($tenant);
+    $professional = Professional::factory()->create(['tenant_id' => $tenant->id]);
+    $service = Service::factory()->create(['tenant_id' => $tenant->id]);
+    $appointment = Appointment::factory()->create([
+        'tenant_id' => $tenant->id,
+        'professional_id' => $professional->id,
+        'service_id' => $service->id,
+        'status' => 'completed',
+    ]);
+
+    $this->actingAs($owner)
+        ->patchJson("/api/v1/salao/{$tenant->slug}/appointments/{$appointment->id}/cancel")
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors(['status']);
+});
+
+// --- Regras de negócio: limite do plano starter ---
+
+it('bloqueia agendamento acima do limite mensal do plano starter', function () {
+    $tenant = Tenant::factory()->create(['plan' => 'starter']);
+    $client = apptClient($tenant);
+    $professional = Professional::factory()->create(['tenant_id' => $tenant->id]);
+    $service = Service::factory()->create(['tenant_id' => $tenant->id, 'duration_minutes' => 60, 'price' => 5000]);
+    apptFullWeekSchedule($tenant, $professional);
+
+    $startsAt = now()->addMonthNoOverflow()->startOfMonth()->addDays(3)->setTime(10, 0);
+
+    foreach (range(0, 49) as $i) {
+        Appointment::factory()->create([
+            'tenant_id' => $tenant->id,
+            'client_id' => $client->id,
+            'professional_id' => $professional->id,
+            'service_id' => $service->id,
+            'starts_at' => $startsAt->copy()->startOfMonth()->addMinutes($i * 30),
+            'ends_at' => $startsAt->copy()->startOfMonth()->addMinutes($i * 30 + 30),
+            'status' => 'confirmed',
+        ]);
+    }
+
+    $response = $this->actingAs($client)->postJson("/api/v1/salao/{$tenant->slug}/appointments", [
+        'professional_id' => $professional->id,
+        'service_id' => $service->id,
+        'starts_at' => $startsAt->toIso8601String(),
+    ]);
+
+    $response->assertUnprocessable()->assertJsonValidationErrors(['starts_at']);
+});
+
+it('plano pro nao tem limite mensal de agendamentos', function () {
+    $tenant = Tenant::factory()->create(['plan' => 'pro']);
+    $client = apptClient($tenant);
+    $professional = Professional::factory()->create(['tenant_id' => $tenant->id]);
+    $service = Service::factory()->create(['tenant_id' => $tenant->id, 'duration_minutes' => 60, 'price' => 5000]);
+    apptFullWeekSchedule($tenant, $professional);
+
+    $startsAt = now()->addMonthNoOverflow()->startOfMonth()->addDays(3)->setTime(10, 0);
+
+    foreach (range(0, 49) as $i) {
+        Appointment::factory()->create([
+            'tenant_id' => $tenant->id,
+            'client_id' => $client->id,
+            'professional_id' => $professional->id,
+            'service_id' => $service->id,
+            'starts_at' => $startsAt->copy()->startOfMonth()->addMinutes($i * 30),
+            'ends_at' => $startsAt->copy()->startOfMonth()->addMinutes($i * 30 + 30),
+            'status' => 'confirmed',
+        ]);
+    }
+
+    $this->actingAs($client)->postJson("/api/v1/salao/{$tenant->slug}/appointments", [
+        'professional_id' => $professional->id,
+        'service_id' => $service->id,
+        'starts_at' => $startsAt->toIso8601String(),
+    ])->assertCreated();
+});
+
+// --- Notificações ---
+
+it('envia emails ao criar agendamento (cliente e owner)', function () {
+    Notification::fake();
+
+    $tenant = Tenant::factory()->create();
+    $owner = apptOwner($tenant);
+    $client = apptClient($tenant);
+    $professional = Professional::factory()->create(['tenant_id' => $tenant->id]);
+    $service = Service::factory()->create(['tenant_id' => $tenant->id, 'duration_minutes' => 60, 'price' => 5000]);
+    apptFullWeekSchedule($tenant, $professional);
+
+    $this->actingAs($client)->postJson("/api/v1/salao/{$tenant->slug}/appointments", [
+        'professional_id' => $professional->id,
+        'service_id' => $service->id,
+        'starts_at' => now()->addDay()->setTime(10, 0)->toIso8601String(),
+    ])->assertCreated();
+
+    Notification::assertSentTo($client, AppointmentBooked::class);
+    Notification::assertSentTo($owner, NewAppointmentReceived::class);
+});
+
+it('envia email ao confirmar e ao cancelar agendamento', function () {
+    Notification::fake();
+
+    $tenant = Tenant::factory()->create();
+    $owner = apptOwner($tenant);
+    $client = apptClient($tenant);
+    $professional = Professional::factory()->create(['tenant_id' => $tenant->id]);
+    $service = Service::factory()->create(['tenant_id' => $tenant->id]);
+    $appointment = Appointment::factory()->pending()->create([
+        'tenant_id' => $tenant->id,
+        'client_id' => $client->id,
+        'professional_id' => $professional->id,
+        'service_id' => $service->id,
+    ]);
+
+    $this->actingAs($owner)
+        ->patchJson("/api/v1/salao/{$tenant->slug}/appointments/{$appointment->id}/confirm")
+        ->assertOk();
+
+    Notification::assertSentTo($client, AppointmentConfirmed::class);
+
+    $this->actingAs($owner)
+        ->patchJson("/api/v1/salao/{$tenant->slug}/appointments/{$appointment->id}/cancel")
+        ->assertOk();
+
+    Notification::assertSentTo($client, AppointmentCancelled::class);
 });

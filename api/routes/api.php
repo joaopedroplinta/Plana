@@ -42,8 +42,8 @@ Route::prefix('v1')->group(function () {
         Route::apiResource('services', ServiceController::class)->only(['index', 'show']);
         Route::apiResource('packages', ServicePackageController::class)->only(['index', 'show']);
         Route::apiResource('professionals', ProfessionalController::class)->only(['index', 'show']);
-        Route::apiResource('professionals/{professional}/schedules', ScheduleController::class)->only(['index', 'show']);
-        Route::apiResource('professionals/{professional}/blocked-dates', BlockedDateController::class)->only(['index', 'show']);
+        Route::apiResource('professionals/{professional}/schedules', ScheduleController::class)->only(['index', 'show'])->scoped();
+        Route::apiResource('professionals/{professional}/blocked-dates', BlockedDateController::class)->only(['index', 'show'])->scoped();
     });
 
     // Rotas autenticadas do tenant
@@ -56,9 +56,9 @@ Route::prefix('v1')->group(function () {
             Route::apiResource('packages', ServicePackageController::class)->except(['index', 'show']);
 
             Route::apiResource('professionals', ProfessionalController::class)->except(['index', 'show']);
-            Route::apiResource('professionals/{professional}/schedules', ScheduleController::class)->except(['index', 'show']);
+            Route::apiResource('professionals/{professional}/schedules', ScheduleController::class)->except(['index', 'show'])->scoped();
             Route::apiResource('professionals/{professional}/blocked-dates', BlockedDateController::class)
-                ->except(['index', 'show', 'update']);
+                ->except(['index', 'show', 'update'])->scoped();
 
             Route::get('appointments', [AppointmentController::class, 'index']);
             Route::post('appointments', [AppointmentController::class, 'store']);

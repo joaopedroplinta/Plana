@@ -3,6 +3,7 @@
 namespace App\Policies;
 
 use App\Models\BlockedDate;
+use App\Models\Tenant;
 use App\Models\User;
 
 class BlockedDatePolicy
@@ -19,16 +20,18 @@ class BlockedDatePolicy
 
     public function create(User $user): bool
     {
-        return $user->hasRole(['salon_owner', 'salon_staff'])
-            && $user->belongsToTenant(app('currentTenant'));
+        /** @var Tenant $currentTenant */
+        $currentTenant = app('currentTenant');
+
+        return $user->isStaffOfTenant($currentTenant);
     }
 
     public function delete(User $user, BlockedDate $blockedDate): bool
     {
+        /** @var Tenant $currentTenant */
         $currentTenant = app('currentTenant');
 
-        return $user->hasRole(['salon_owner', 'salon_staff'])
-            && $user->belongsToTenant($currentTenant)
+        return $user->isStaffOfTenant($currentTenant)
             && $blockedDate->tenant_id === $currentTenant->id;
     }
 }

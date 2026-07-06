@@ -10,7 +10,9 @@ class AppointmentPolicy
 {
     public function viewAny(User $user): bool
     {
-        return $user->hasAnyRole(['salon_owner', 'salon_staff', 'client']);
+        // Qualquer usuário autenticado pode listar; o controller
+        // restringe não-staff aos próprios agendamentos.
+        return true;
     }
 
     public function view(User $user, Appointment $appointment): bool
@@ -22,16 +24,14 @@ class AppointmentPolicy
             return false;
         }
 
-        if ($user->hasAnyRole(['salon_owner', 'salon_staff'])) {
-            return $user->belongsToTenant($tenant);
-        }
-
-        return $user->hasRole('client') && $appointment->client_id === $user->id;
+        return $user->isStaffOfTenant($tenant) || $appointment->client_id === $user->id;
     }
 
     public function create(User $user): bool
     {
-        return $user->belongsToTenant(app('currentTenant'));
+        // Qualquer usuário autenticado pode agendar — o vínculo de
+        // cliente com o salão é criado no primeiro agendamento.
+        return true;
     }
 
     public function confirm(User $user, Appointment $appointment): bool
@@ -39,9 +39,8 @@ class AppointmentPolicy
         /** @var Tenant $tenant */
         $tenant = app('currentTenant');
 
-        return $user->hasAnyRole(['salon_owner', 'salon_staff'])
-            && $user->belongsToTenant($tenant)
-            && $appointment->tenant_id === $tenant->id;
+        return $appointment->tenant_id === $tenant->id
+            && $user->isStaffOfTenant($tenant);
     }
 
     public function cancel(User $user, Appointment $appointment): bool
@@ -53,11 +52,7 @@ class AppointmentPolicy
             return false;
         }
 
-        if ($user->hasAnyRole(['salon_owner', 'salon_staff'])) {
-            return $user->belongsToTenant($tenant);
-        }
-
-        return $user->hasRole('client') && $appointment->client_id === $user->id;
+        return $user->isStaffOfTenant($tenant) || $appointment->client_id === $user->id;
     }
 
     public function complete(User $user, Appointment $appointment): bool
@@ -70,8 +65,7 @@ class AppointmentPolicy
         /** @var Tenant $tenant */
         $tenant = app('currentTenant');
 
-        return $user->hasRole('salon_owner')
-            && $user->belongsToTenant($tenant)
-            && $appointment->tenant_id === $tenant->id;
+        return $appointment->tenant_id === $tenant->id
+            && $user->ownsTenant($tenant);
     }
 }

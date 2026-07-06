@@ -9,7 +9,7 @@ class StoreAppointmentRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user() !== null && $this->user()->belongsToTenant(app('currentTenant'));
+        return $this->user() !== null;
     }
 
     /** @return array<string, array<mixed>> */

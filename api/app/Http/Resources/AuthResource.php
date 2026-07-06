@@ -13,7 +13,9 @@ class AuthResource extends JsonResource
         return [
             'token' => $this->resource['token'],
             'user' => new UserResource($this->resource['user']),
-            'tenant' => new TenantResource($this->resource['tenant']),
+            'tenant' => $this->resource['tenant']
+                ? new TenantResource($this->resource['tenant'])
+                : null,
         ];
     }
 }

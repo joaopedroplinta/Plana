@@ -6,6 +6,7 @@ use Database\Factories\TenantFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Str;
 
 class Tenant extends Model
@@ -64,6 +65,14 @@ class Tenant extends Model
                 $tenant->id = (string) Str::uuid();
             }
         });
+    }
+
+    /**
+     * Professionals of this tenant (used by scoped route bindings).
+     */
+    public function professionals(): HasMany
+    {
+        return $this->hasMany(Professional::class);
     }
 
     /**

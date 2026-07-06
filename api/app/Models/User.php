@@ -50,4 +50,32 @@ class User extends Authenticatable
     {
         return $this->tenants()->where('tenant_id', $tenant->id)->exists();
     }
+
+    /**
+     * The user's role inside a specific tenant (owner|staff|client), from the pivot.
+     * Roles are per-tenant: a user can own salon A and be a client at salon B.
+     */
+    public function roleInTenant(Tenant $tenant): ?string
+    {
+        /** @var Tenant|null $membership */
+        $membership = $this->tenants()->where('tenant_id', $tenant->id)->first();
+
+        return $membership?->pivot->role;
+    }
+
+    /**
+     * Whether the user is owner or staff of the given tenant.
+     */
+    public function isStaffOfTenant(Tenant $tenant): bool
+    {
+        return in_array($this->roleInTenant($tenant), ['owner', 'staff'], true);
+    }
+
+    /**
+     * Whether the user is the owner of the given tenant.
+     */
+    public function ownsTenant(Tenant $tenant): bool
+    {
+        return $this->roleInTenant($tenant) === 'owner';
+    }
 }

@@ -5,6 +5,8 @@ namespace App\Services;
 use App\Models\Subscription;
 use App\Models\Tenant;
 use App\Models\User;
+use App\Notifications\SubscriptionActivated;
+use Illuminate\Support\Facades\Notification;
 use MercadoPago\Client\Payment\PaymentClient;
 use MercadoPago\Client\Preference\PreferenceClient;
 use MercadoPago\MercadoPagoConfig;
@@ -17,6 +19,8 @@ class SubscriptionService
             'key' => 'starter',
             'name' => 'Starter',
             'price' => 0,
+            'max_professionals' => 1,
+            'max_appointments_per_month' => 50,
             'professionals' => '1 profissional',
             'appointments' => '50 agendamentos/mês',
             'features' => ['1 profissional', '50 agendamentos/mês', 'Suporte básico'],
@@ -25,6 +29,8 @@ class SubscriptionService
             'key' => 'pro',
             'name' => 'Pro',
             'price' => 9700,
+            'max_professionals' => 5,
+            'max_appointments_per_month' => null,
             'professionals' => '5 profissionais',
             'appointments' => 'Agendamentos ilimitados',
             'features' => ['5 profissionais', 'Agendamentos ilimitados', 'Suporte prioritário', 'Relatórios avançados'],
@@ -33,15 +39,31 @@ class SubscriptionService
             'key' => 'enterprise',
             'name' => 'Enterprise',
             'price' => 19700,
+            'max_professionals' => null,
+            'max_appointments_per_month' => null,
             'professionals' => 'Profissionais ilimitados',
             'appointments' => 'Agendamentos ilimitados',
             'features' => ['Profissionais ilimitados', 'Agendamentos ilimitados', 'Suporte dedicado', 'Relatórios avançados', 'API access'],
         ],
     ];
 
+    public static function maxProfessionals(string $plan): ?int
+    {
+        return (self::PLANS[$plan] ?? self::PLANS['starter'])['max_professionals'];
+    }
+
+    public static function maxAppointmentsPerMonth(string $plan): ?int
+    {
+        return (self::PLANS[$plan] ?? self::PLANS['starter'])['max_appointments_per_month'];
+    }
+
     public function __construct()
     {
-        MercadoPagoConfig::setAccessToken(config('services.mercadopago.access_token'));
+        $token = config('services.mercadopago.access_token');
+
+        if ($token) {
+            MercadoPagoConfig::setAccessToken($token);
+        }
     }
 
     /**
@@ -128,17 +150,20 @@ class SubscriptionService
         $client = new PaymentClient;
         $result = $client->get((int) $subscription->mp_payment_id);
 
+        $becameApproved = $result->status === 'approved' && $subscription->status !== 'approved';
+
         $updates = ['status' => $result->status];
 
-        if ($result->status === 'approved') {
+        if ($becameApproved) {
             $updates['paid_at'] = now();
-            $updates['expires_at'] = now()->addYear();
+            $updates['expires_at'] = now()->addMonth();
         }
 
         $subscription->update($updates);
 
-        if ($result->status === 'approved') {
+        if ($becameApproved) {
             $subscription->tenant->update(['plan' => $subscription->plan]);
+            Notification::send($subscription->tenant->owner, new SubscriptionActivated($subscription));
         }
 
         return $subscription->fresh();
