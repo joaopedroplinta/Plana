@@ -11,6 +11,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Validation\ValidationException;
 
 class PaymentController extends Controller
 {
@@ -30,6 +31,18 @@ class PaymentController extends Controller
         $data = $request->validate([
             'method' => ['required', 'in:pix,credit_card'],
         ]);
+
+        if ($appointment->status === 'cancelled') {
+            throw ValidationException::withMessages([
+                'method' => ['Não é possível pagar um agendamento cancelado.'],
+            ]);
+        }
+
+        if ($appointment->payments()->where('status', 'approved')->exists()) {
+            throw ValidationException::withMessages([
+                'method' => ['Este agendamento já foi pago.'],
+            ]);
+        }
 
         $currentTenant = app('currentTenant');
         $payment = $data['method'] === 'pix'
@@ -58,7 +71,8 @@ class PaymentController extends Controller
         if ($secret) {
             $xSignature = $request->header('x-signature', '');
             $xRequestId = $request->header('x-request-id', '');
-            $dataId = $request->query('data_id', $request->input('data.id', ''));
+            // MercadoPago exige o data.id alfanumérico em minúsculas no manifest.
+            $dataId = strtolower((string) $request->query('data_id', $request->input('data.id', '')));
 
             preg_match('/ts=(\d+)/', $xSignature, $tsMatch);
             $ts = $tsMatch[1] ?? '';

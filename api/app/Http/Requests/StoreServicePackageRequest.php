@@ -9,7 +9,7 @@ class StoreServicePackageRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()->hasRole(['salon_owner', 'salon_staff']);
+        return $this->user()->isStaffOfTenant(app('currentTenant'));
     }
 
     /** @return array<string, array<string>> */

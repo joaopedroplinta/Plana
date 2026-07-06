@@ -23,25 +23,24 @@ class ProfessionalPolicy
         /** @var Tenant $currentTenant */
         $currentTenant = app('currentTenant');
 
-        return $user->hasRole(['salon_owner', 'salon_staff'])
-            && $user->belongsToTenant($currentTenant);
+        return $user->isStaffOfTenant($currentTenant);
     }
 
     public function update(User $user, Professional $professional): bool
     {
+        /** @var Tenant $currentTenant */
         $currentTenant = app('currentTenant');
 
-        return $user->hasRole(['salon_owner', 'salon_staff'])
-            && $user->belongsToTenant($currentTenant)
+        return $user->isStaffOfTenant($currentTenant)
             && $professional->tenant_id === $currentTenant->id;
     }
 
     public function delete(User $user, Professional $professional): bool
     {
+        /** @var Tenant $currentTenant */
         $currentTenant = app('currentTenant');
 
-        return $user->hasRole('salon_owner')
-            && $user->belongsToTenant($currentTenant)
+        return $user->ownsTenant($currentTenant)
             && $professional->tenant_id === $currentTenant->id;
     }
 }

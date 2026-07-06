@@ -17,7 +17,13 @@ class ServiceController extends Controller
 {
     public function index(Request $request): AnonymousResourceCollection
     {
-        $services = Service::where('active', true)->paginate(15);
+        // Staff do salão vê todos os serviços; público vê só os ativos.
+        $user = $request->user('sanctum');
+        $showAll = $user?->isStaffOfTenant(app('currentTenant')) ?? false;
+
+        $services = Service::query()
+            ->when(! $showAll, fn ($q) => $q->where('active', true))
+            ->paginate(15);
 
         return ServiceResource::collection($services);
     }

@@ -3,6 +3,7 @@
 namespace App\Policies;
 
 use App\Models\Schedule;
+use App\Models\Tenant;
 use App\Models\User;
 
 class SchedulePolicy
@@ -19,25 +20,27 @@ class SchedulePolicy
 
     public function create(User $user): bool
     {
-        return $user->hasRole(['salon_owner', 'salon_staff'])
-            && $user->belongsToTenant(app('currentTenant'));
+        /** @var Tenant $currentTenant */
+        $currentTenant = app('currentTenant');
+
+        return $user->isStaffOfTenant($currentTenant);
     }
 
     public function update(User $user, Schedule $schedule): bool
     {
+        /** @var Tenant $currentTenant */
         $currentTenant = app('currentTenant');
 
-        return $user->hasRole(['salon_owner', 'salon_staff'])
-            && $user->belongsToTenant($currentTenant)
+        return $user->isStaffOfTenant($currentTenant)
             && $schedule->tenant_id === $currentTenant->id;
     }
 
     public function delete(User $user, Schedule $schedule): bool
     {
+        /** @var Tenant $currentTenant */
         $currentTenant = app('currentTenant');
 
-        return $user->hasRole(['salon_owner', 'salon_staff'])
-            && $user->belongsToTenant($currentTenant)
+        return $user->isStaffOfTenant($currentTenant)
             && $schedule->tenant_id === $currentTenant->id;
     }
 }

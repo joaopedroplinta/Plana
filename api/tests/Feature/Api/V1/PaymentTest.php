@@ -4,6 +4,7 @@ use App\Models\Appointment;
 use App\Models\Payment;
 use App\Models\Professional;
 use App\Models\Service;
+use App\Models\Subscription;
 use App\Models\Tenant;
 use App\Models\User;
 use App\Services\PaymentService;
@@ -196,4 +197,133 @@ it('webhook approved updates payment status and confirms appointment', function 
         'type' => 'payment',
         'data' => ['id' => '123456789'],
     ])->assertOk();
+});
+
+// --- Webhook ---
+
+it('webhook aprova pagamento pix via external_id e confirma o agendamento', function () {
+    [$tenant, $client] = payTenantWithClient();
+    $appointment = payAppointmentForClient($tenant, $client);
+
+    $payment = Payment::factory()->pix()->create([
+        'tenant_id' => $tenant->id,
+        'appointment_id' => $appointment->id,
+        'external_id' => '99887766',
+        'status' => 'pending',
+    ]);
+
+    $this->partialMock(PaymentService::class, function ($mock) use ($appointment) {
+        $mock->shouldAllowMockingProtectedMethods()
+            ->shouldReceive('fetchPayment')
+            ->once()
+            ->andReturn((object) ['status' => 'approved', 'external_reference' => $appointment->id]);
+    });
+
+    $this->postJson('/api/v1/payments/webhook', [
+        'type' => 'payment',
+        'data' => ['id' => '99887766'],
+    ])->assertOk();
+
+    expect($payment->fresh()->status)->toBe('approved')
+        ->and($payment->fresh()->paid_at)->not->toBeNull()
+        ->and($appointment->fresh()->status)->toBe('confirmed');
+});
+
+it('webhook aprova pagamento checkout pro via external_reference', function () {
+    [$tenant, $client] = payTenantWithClient();
+    $appointment = payAppointmentForClient($tenant, $client);
+
+    // Checkout Pro: só temos preference_id no momento da criação.
+    $payment = Payment::factory()->creditCard()->create([
+        'tenant_id' => $tenant->id,
+        'appointment_id' => $appointment->id,
+        'external_id' => null,
+        'preference_id' => 'pref-123',
+        'status' => 'pending',
+    ]);
+
+    $this->partialMock(PaymentService::class, function ($mock) use ($appointment) {
+        $mock->shouldAllowMockingProtectedMethods()
+            ->shouldReceive('fetchPayment')
+            ->once()
+            ->andReturn((object) ['status' => 'approved', 'external_reference' => $appointment->id]);
+    });
+
+    $this->postJson('/api/v1/payments/webhook', [
+        'type' => 'payment',
+        'data' => ['id' => '55443322'],
+    ])->assertOk();
+
+    $fresh = $payment->fresh();
+    expect($fresh->status)->toBe('approved')
+        ->and($fresh->external_id)->toBe('55443322')
+        ->and($appointment->fresh()->status)->toBe('confirmed');
+});
+
+it('webhook aprova assinatura checkout pro e atualiza o plano do tenant', function () {
+    [$tenant] = payTenantWithClient();
+    $tenant->update(['plan' => 'starter']);
+
+    $subscription = Subscription::create([
+        'tenant_id' => $tenant->id,
+        'plan' => 'pro',
+        'amount' => 9700,
+        'method' => 'credit_card',
+        'status' => 'pending',
+        'mp_preference_id' => 'pref-sub-1',
+    ]);
+
+    $this->partialMock(PaymentService::class, function ($mock) use ($tenant) {
+        $mock->shouldAllowMockingProtectedMethods()
+            ->shouldReceive('fetchPayment')
+            ->once()
+            ->andReturn((object) [
+                'status' => 'approved',
+                'external_reference' => "subscription_{$tenant->id}_pro",
+            ]);
+    });
+
+    $this->postJson('/api/v1/payments/webhook', [
+        'type' => 'payment',
+        'data' => ['id' => '11223344'],
+    ])->assertOk();
+
+    $fresh = $subscription->fresh();
+    expect($fresh->status)->toBe('approved')
+        ->and($fresh->mp_payment_id)->toBe('11223344')
+        ->and($fresh->expires_at->diffInDays(now()->addMonth()))->toBeLessThan(2)
+        ->and($tenant->fresh()->plan)->toBe('pro');
+});
+
+// --- Regras de pagamento ---
+
+it('nao permite pagar agendamento cancelado', function () {
+    [$tenant, $client] = payTenantWithClient();
+    $appointment = payAppointmentForClient($tenant, $client);
+    $appointment->update(['status' => 'cancelled']);
+
+    $this->actingAs($client)
+        ->postJson("/api/v1/salao/{$tenant->slug}/appointments/{$appointment->id}/payments", [
+            'method' => 'pix',
+        ])
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors(['method']);
+});
+
+it('nao permite pagar agendamento que ja tem pagamento aprovado', function () {
+    [$tenant, $client] = payTenantWithClient();
+    $appointment = payAppointmentForClient($tenant, $client);
+
+    Payment::factory()->pix()->create([
+        'tenant_id' => $tenant->id,
+        'appointment_id' => $appointment->id,
+        'status' => 'approved',
+    ]);
+
+    $this->actingAs($client)
+        ->postJson("/api/v1/salao/{$tenant->slug}/appointments/{$appointment->id}/payments", [
+            'method' => 'pix',
+        ])
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors(['method']);
 });

@@ -293,3 +293,77 @@ it('nao vaza horarios entre tenants', function () {
 
     $response->assertOk()->assertJsonCount(2, 'data');
 });
+
+// --- Limites do plano ---
+
+it('plano starter bloqueia segundo profissional com 422', function () {
+    $tenant = Tenant::factory()->create(['plan' => 'starter']);
+    $owner = profOwner($tenant);
+    Professional::factory()->create(['tenant_id' => $tenant->id]);
+
+    $response = $this->actingAs($owner)->postJson("/api/v1/salao/{$tenant->slug}/professionals", [
+        'name' => 'Segundo Profissional',
+    ]);
+
+    $response->assertUnprocessable()->assertJsonValidationErrors(['name']);
+});
+
+it('plano pro permite ate cinco profissionais', function () {
+    $tenant = Tenant::factory()->create(['plan' => 'pro']);
+    $owner = profOwner($tenant);
+    Professional::factory(4)->create(['tenant_id' => $tenant->id]);
+
+    $this->actingAs($owner)->postJson("/api/v1/salao/{$tenant->slug}/professionals", [
+        'name' => 'Quinto Profissional',
+    ])->assertCreated();
+
+    $this->actingAs($owner)->postJson("/api/v1/salao/{$tenant->slug}/professionals", [
+        'name' => 'Sexto Profissional',
+    ])->assertUnprocessable();
+});
+
+// --- Visibilidade de inativos ---
+
+it('staff do salao ve profissionais inativos na listagem', function () {
+    $tenant = Tenant::factory()->create();
+    $owner = profOwner($tenant);
+    Professional::factory(2)->create(['tenant_id' => $tenant->id, 'active' => true]);
+    Professional::factory(1)->create(['tenant_id' => $tenant->id, 'active' => false]);
+
+    $response = $this->actingAs($owner)->getJson("/api/v1/salao/{$tenant->slug}/professionals");
+
+    $response->assertOk()->assertJsonCount(3, 'data');
+});
+
+// --- Escopo de rotas aninhadas ---
+
+it('retorna 404 para schedule de outro profissional do mesmo tenant', function () {
+    $tenant = Tenant::factory()->create();
+    $profA = Professional::factory()->create(['tenant_id' => $tenant->id]);
+    $profB = Professional::factory()->create(['tenant_id' => $tenant->id]);
+    $scheduleB = Schedule::factory()->create([
+        'tenant_id' => $tenant->id,
+        'professional_id' => $profB->id,
+        'day_of_week' => 1,
+    ]);
+
+    $this->getJson("/api/v1/salao/{$tenant->slug}/professionals/{$profA->id}/schedules/{$scheduleB->id}")
+        ->assertNotFound();
+});
+
+it('rejeita schedule duplicado para o mesmo dia com 422', function () {
+    $tenant = Tenant::factory()->create();
+    $owner = profOwner($tenant);
+    $professional = Professional::factory()->create(['tenant_id' => $tenant->id]);
+    Schedule::factory()->create([
+        'tenant_id' => $tenant->id,
+        'professional_id' => $professional->id,
+        'day_of_week' => 2,
+    ]);
+
+    $this->actingAs($owner)->postJson("/api/v1/salao/{$tenant->slug}/professionals/{$professional->id}/schedules", [
+        'day_of_week' => 2,
+        'start_time' => '09:00',
+        'end_time' => '18:00',
+    ])->assertUnprocessable()->assertJsonValidationErrors(['day_of_week']);
+});

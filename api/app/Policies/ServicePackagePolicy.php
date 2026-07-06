@@ -23,25 +23,24 @@ class ServicePackagePolicy
         /** @var Tenant $currentTenant */
         $currentTenant = app('currentTenant');
 
-        return $user->hasRole(['salon_owner', 'salon_staff'])
-            && $user->belongsToTenant($currentTenant);
+        return $user->isStaffOfTenant($currentTenant);
     }
 
     public function update(User $user, ServicePackage $servicePackage): bool
     {
+        /** @var Tenant $currentTenant */
         $currentTenant = app('currentTenant');
 
-        return $user->hasRole(['salon_owner', 'salon_staff'])
-            && $user->belongsToTenant($currentTenant)
+        return $user->isStaffOfTenant($currentTenant)
             && $servicePackage->tenant_id === $currentTenant->id;
     }
 
     public function delete(User $user, ServicePackage $servicePackage): bool
     {
+        /** @var Tenant $currentTenant */
         $currentTenant = app('currentTenant');
 
-        return $user->hasRole('salon_owner')
-            && $user->belongsToTenant($currentTenant)
+        return $user->ownsTenant($currentTenant)
             && $servicePackage->tenant_id === $currentTenant->id;
     }
 }
