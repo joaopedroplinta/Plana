@@ -34,6 +34,29 @@ Plataforma SaaS de agendamentos para salões de beleza. Cada salão opera como u
 | `salon_staff` | Visualiza agenda, confirma e cancela agendamentos |
 | `client` | Agenda serviços, paga e consulta histórico |
 
+> O papel dentro de um salão vem do vínculo `tenant_user.role` (`owner`/`staff`/`client`) — um usuário pode ser dono do salão A e cliente do salão B ao mesmo tempo.
+
+## Regras de negócio
+
+**Agendamento**
+- Só é possível agendar dentro do expediente do profissional (`schedules` por dia da semana), em data não bloqueada e em horário livre — o conflito é verificado com lock em transação (sem double booking)
+- Qualquer usuário autenticado pode agendar em qualquer salão; no primeiro agendamento ele é vinculado como `client` daquele tenant
+- Ciclo de vida: `pending` → `confirmed` → `completed`; `pending`/`confirmed` podem ser cancelados. Transições inválidas retornam 422
+- Cliente cancela apenas os próprios agendamentos; owner/staff gerenciam todos os do salão
+
+**Pagamento (MercadoPago)**
+- PIX (QR Code + polling) ou cartão (Checkout Pro); pagamento aprovado confirma o agendamento automaticamente via webhook
+- Não é possível pagar agendamento cancelado nem pagar duas vezes
+- Também é possível pagar no local — o agendamento fica `pending` até o salão confirmar
+
+**Planos e assinatura**
+- Starter (grátis): 1 profissional, 50 agendamentos/mês · Pro (R$ 97/mês): 5 profissionais · Enterprise (R$ 197/mês): ilimitado
+- Limites aplicados na API (criação de profissional e de agendamento retornam 422 ao exceder)
+- Assinatura paga vale por 1 mês (`expires_at`); a aprovação via webhook atualiza o plano do tenant
+
+**Contas**
+- Registro como dono cria o salão (slug único gerado do nome do salão); registro como cliente não cria salão e pode já vincular a um salão existente
+
 ## Estrutura
 
 ```
