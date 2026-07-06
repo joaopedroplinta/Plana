@@ -1,3 +1,7 @@
+---
+description: Audita isolamento multi-tenant em todo o codebase via tenant-guard agent
+---
+
 Run the tenant-guard agent to audit multi-tenant isolation across the entire codebase.
 
 Scan:

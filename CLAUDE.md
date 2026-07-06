@@ -11,8 +11,9 @@ sistema-agendamentos/
 ├── api/        # Laravel 13, PHP 8.5, PostgreSQL
 ├── web/        # Next.js 15, TypeScript, Tailwind CSS
 └── .claude/
-    ├── agents/ # Subagentes especializados
-    └── commands/ # Slash commands
+    ├── agents/   # Subagentes especializados
+    ├── commands/ # Slash commands
+    └── rules/    # Convenções por escopo de arquivo (api/** e web/**)
 ```
 
 ## Stack

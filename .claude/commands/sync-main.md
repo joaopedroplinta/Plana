@@ -1,3 +1,7 @@
+---
+description: Faz rebase da branch atual em cima de main e push com force-with-lease
+---
+
 Rebase the current branch on top of main and push: $ARGUMENTS
 
 Execute the following steps:

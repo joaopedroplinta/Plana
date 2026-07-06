@@ -1,3 +1,8 @@
+---
+description: Gera scaffold de feature frontend via web-agent (page, types, service, components)
+argument-hint: <descrição da feature>
+---
+
 Use the web-agent to scaffold the following frontend feature: $ARGUMENTS
 
 The agent must create:

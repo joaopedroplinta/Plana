@@ -1,3 +1,8 @@
+---
+description: Roda a suite de testes completa (Pest + TypeScript/ESLint) e reporta resultado
+argument-hint: [filtro de teste]
+---
+
 Run the test suite locally and report results: $ARGUMENTS
 
 Optional argument: a filter string to run specific tests (ex: `/run-tests AuthTest`).
@@ -5,13 +10,11 @@ Optional argument: a filter string to run specific tests (ex: `/run-tests AuthTe
 ## API tests (Pest)
 
 ```bash
-cd /home/pinguasnote/Documentos/codes/sistema-agendamentos/api
-
 # Com filtro (se $ARGUMENTS foi passado)
-php artisan test --compact --filter="$ARGUMENTS"
+cd api && php artisan test --compact --filter="$ARGUMENTS"
 
 # Sem filtro (todos os testes)
-php artisan test --compact
+cd api && php artisan test --compact
 ```
 
 ## Web (TypeScript check + lint)
@@ -19,9 +22,8 @@ php artisan test --compact
 If $ARGUMENTS is empty (running all), also check the web package:
 
 ```bash
-cd /home/pinguasnote/Documentos/codes/sistema-agendamentos/web
-npm run build 2>&1 | tail -20
-npm run lint 2>&1 | tail -20
+cd web && npm run build 2>&1 | tail -20
+cd web && npm run lint 2>&1 | tail -20
 ```
 
 ## Report
