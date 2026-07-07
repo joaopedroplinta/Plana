@@ -21,9 +21,15 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401 && typeof window !== 'undefined') {
+    // 401 em rota de auth (login errado, /me com token expirado) é tratado
+    // pela própria página — redirecionar aqui apagaria a mensagem de erro.
+    const isAuthRoute = error.config?.url?.includes('/auth/') ?? false
+
+    if (error.response?.status === 401 && typeof window !== 'undefined' && !isAuthRoute) {
       localStorage.removeItem('token')
-      window.location.href = '/login'
+      document.cookie = 'token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT'
+      const current = window.location.pathname + window.location.search
+      window.location.href = `/login?redirect=${encodeURIComponent(current)}`
     }
     return Promise.reject(error)
   }
