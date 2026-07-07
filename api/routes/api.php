@@ -14,6 +14,7 @@ use App\Http\Controllers\Api\V1\ServiceController;
 use App\Http\Controllers\Api\V1\ServicePackageController;
 use App\Http\Controllers\Api\V1\SubscriptionController;
 use App\Http\Controllers\Api\V1\TeamController;
+use App\Http\Controllers\Api\V1\TenantSettingsController;
 use App\Http\Resources\TenantResource;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -71,6 +72,8 @@ Route::prefix('v1')->middleware('throttle:api')->group(function () {
             Route::patch('appointments/{appointment}/complete', [AppointmentController::class, 'complete']);
 
             Route::get('dashboard', DashboardController::class);
+
+            Route::patch('settings', [TenantSettingsController::class, 'update']);
 
             Route::get('team', [TeamController::class, 'index']);
             Route::post('team', [TeamController::class, 'store']);

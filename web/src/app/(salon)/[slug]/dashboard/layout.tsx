@@ -15,6 +15,7 @@ import {
   CreditCard,
   LogOut,
   Menu,
+  Store,
   X,
 } from 'lucide-react'
 
@@ -80,6 +81,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       label: 'Agenda',
       href: `/${slug}/dashboard/schedule`,
       icon: <Calendar className="h-4 w-4" />,
+    },
+    {
+      label: 'Meu salão',
+      href: `/${slug}/dashboard/settings`,
+      icon: <Store className="h-4 w-4" />,
     },
     {
       label: 'Planos',
