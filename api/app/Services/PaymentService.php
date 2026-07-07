@@ -138,7 +138,7 @@ class PaymentService
             return;
         }
 
-        $this->handleSubscriptionWebhook($externalId, $reference, $status);
+        $this->handleSubscriptionWebhook($externalId, $reference, $status, $result->metadata ?? null);
     }
 
     private function applyStatus(Payment $payment, string $status): void
@@ -161,27 +161,60 @@ class PaymentService
         $payment->appointment?->client?->notify(new PaymentApproved($payment));
     }
 
-    private function handleSubscriptionWebhook(string $externalId, string $reference, string $status): void
+    private function handleSubscriptionWebhook(string $externalId, string $reference, string $status, ?object $metadata = null): void
     {
         $subscription = Subscription::withoutTenantScope()->where('mp_payment_id', $externalId)->first();
 
-        // Checkout Pro subscriptions carry "subscription_{tenant_id}_{plan}".
-        if (! $subscription && str_starts_with($reference, 'subscription_')) {
-            $parts = explode('_', substr($reference, strlen('subscription_')));
-            $plan = array_pop($parts);
-            $tenantId = implode('_', $parts);
+        if (! $subscription) {
+            // Fonte primária: metadata estruturado enviado na criação
+            // (propagado pelo MP ao pagamento). Fallback: parse do
+            // external_reference "subscription_{tenant_id}_{plan}".
+            [$tenantId, $plan] = $this->subscriptionIdentity($metadata, $reference);
 
-            $subscription = Subscription::withoutTenantScope()
-                ->where('tenant_id', $tenantId)
-                ->where('plan', $plan)
-                ->where('status', 'pending')
-                ->whereNotNull('mp_preference_id')
-                ->latest()
-                ->first();
+            if ($tenantId && $plan) {
+                $subscription = Subscription::withoutTenantScope()
+                    ->where('tenant_id', $tenantId)
+                    ->where('plan', $plan)
+                    ->where('status', 'pending')
+                    ->whereNotNull('mp_preference_id')
+                    ->latest()
+                    ->first();
 
-            $subscription?->update(['mp_payment_id' => $externalId]);
+                $subscription?->update(['mp_payment_id' => $externalId]);
+            }
         }
 
+        $this->applySubscriptionStatus($subscription, $status);
+    }
+
+    /**
+     * Extrai (tenant_id, plan) do metadata do MP ou, na falta dele,
+     * do external_reference "subscription_{tenant_id}_{plan}".
+     *
+     * @return array{0: ?string, 1: ?string}
+     */
+    private function subscriptionIdentity(?object $metadata, string $reference): array
+    {
+        if ($metadata && ($metadata->type ?? null) === 'subscription') {
+            return [
+                $metadata->tenant_id ?? null,
+                $metadata->plan ?? null,
+            ];
+        }
+
+        if (! str_starts_with($reference, 'subscription_')) {
+            return [null, null];
+        }
+
+        $parts = explode('_', substr($reference, strlen('subscription_')));
+        $plan = array_pop($parts);
+        $tenantId = implode('_', $parts);
+
+        return [$tenantId ?: null, $plan ?: null];
+    }
+
+    private function applySubscriptionStatus(?Subscription $subscription, string $status): void
+    {
         if ($subscription && $status === 'approved' && $subscription->status !== 'approved') {
             $subscription->update([
                 'status' => 'approved',
