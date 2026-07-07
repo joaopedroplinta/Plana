@@ -12,6 +12,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 
 class PaymentController extends Controller
@@ -69,6 +70,15 @@ class PaymentController extends Controller
     public function webhook(Request $request): JsonResponse
     {
         $secret = config('services.mercadopago.webhook_secret');
+
+        // Sem secret configurado, qualquer POST forjaria "pagamento aprovado".
+        // Em produção isso é um erro de configuração — rejeitar sempre.
+        if (! $secret && app()->isProduction()) {
+            Log::error('MERCADOPAGO_WEBHOOK_SECRET não configurado — webhook rejeitado.');
+
+            return response()->json(['message' => 'Webhook não configurado.'], 503);
+        }
+
         if ($secret) {
             $xSignature = $request->header('x-signature', '');
             $xRequestId = $request->header('x-request-id', '');
