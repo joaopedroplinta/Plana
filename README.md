@@ -161,6 +161,10 @@ POST   /api/v1/salao/{slug}/subscription
 
 GET    /api/v1/salao/{slug}/dashboard
 
+GET    /api/v1/salao/{slug}/team
+POST   /api/v1/salao/{slug}/team
+DELETE /api/v1/salao/{slug}/team/{userId}
+
 GET    /api/v1/admin/metrics
 GET    /api/v1/admin/tenants
 PATCH  /api/v1/admin/tenants/{id}
@@ -169,7 +173,7 @@ PATCH  /api/v1/admin/tenants/{id}
 ## Testes
 
 ```bash
-cd api && php artisan test --compact   # 129 testes Pest
+cd api && php artisan test --compact   # 146 testes Pest
 cd web && npm run build                # TypeScript check
 cd web && npm run lint                 # ESLint
 ```

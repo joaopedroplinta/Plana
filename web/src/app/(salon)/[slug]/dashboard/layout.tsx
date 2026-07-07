@@ -10,6 +10,7 @@ import {
   Scissors,
   Package,
   Users,
+  UserPlus,
   Calendar,
   CreditCard,
   LogOut,
@@ -69,6 +70,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       label: 'Profissionais',
       href: `/${slug}/dashboard/professionals`,
       icon: <Users className="h-4 w-4" />,
+    },
+    {
+      label: 'Equipe',
+      href: `/${slug}/dashboard/team`,
+      icon: <UserPlus className="h-4 w-4" />,
     },
     {
       label: 'Agenda',

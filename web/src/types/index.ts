@@ -113,6 +113,13 @@ export interface CreateAppointmentData {
   notes?: string
 }
 
+export interface TeamMember {
+  id: number
+  name: string
+  email: string
+  role: 'owner' | 'staff'
+}
+
 export interface AdminTenantOwner {
   name: string
   email: string
