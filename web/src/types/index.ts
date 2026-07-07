@@ -4,6 +4,20 @@ export interface Tenant {
   slug: string
   plan: 'starter' | 'pro' | 'enterprise'
   active: boolean
+  description: string | null
+  phone: string | null
+  whatsapp: string | null
+  address: string | null
+  instagram: string | null
+}
+
+export interface UpdateTenantSettingsData {
+  name?: string
+  description?: string | null
+  phone?: string | null
+  whatsapp?: string | null
+  address?: string | null
+  instagram?: string | null
 }
 
 export interface Role {
