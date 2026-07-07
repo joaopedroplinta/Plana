@@ -41,7 +41,8 @@ Plataforma SaaS de agendamentos para salões de beleza. Cada salão opera como u
 **Agendamento**
 - Só é possível agendar dentro do expediente do profissional (`schedules` por dia da semana), em data não bloqueada e em horário livre — o conflito é verificado com lock em transação (sem double booking)
 - Qualquer usuário autenticado pode agendar em qualquer salão; no primeiro agendamento ele é vinculado como `client` daquele tenant
-- Ciclo de vida: `pending` → `confirmed` → `completed`; `pending`/`confirmed` podem ser cancelados. Transições inválidas retornam 422
+- Ciclo de vida: `pending` → `confirmed` → `completed`; `pending`/`confirmed` podem ser cancelados, remarcados ou marcados como falta (`no_show`, só staff e só após o horário). Transições inválidas retornam 422
+- Remarcação valida o novo slot (sem conflitar consigo mesma), zera o lembrete e, feita pelo cliente, volta o status para `pending`
 - Cliente cancela apenas os próprios agendamentos; owner/staff gerenciam todos os do salão
 
 **Pagamento (MercadoPago)**
@@ -151,6 +152,8 @@ POST   /api/v1/salao/{slug}/appointments
 PATCH  /api/v1/salao/{slug}/appointments/{id}/confirm
 PATCH  /api/v1/salao/{slug}/appointments/{id}/cancel
 PATCH  /api/v1/salao/{slug}/appointments/{id}/complete
+PATCH  /api/v1/salao/{slug}/appointments/{id}/no-show
+PATCH  /api/v1/salao/{slug}/appointments/{id}/reschedule
 
 POST   /api/v1/salao/{slug}/appointments/{id}/payments
 GET    /api/v1/salao/{slug}/payments/{id}
@@ -173,7 +176,7 @@ PATCH  /api/v1/admin/tenants/{id}
 ## Testes
 
 ```bash
-cd api && php artisan test --compact   # 156 testes Pest
+cd api && php artisan test --compact   # 167 testes Pest
 cd web && npm run build                # TypeScript check
 cd web && npm run lint                 # ESLint
 ```

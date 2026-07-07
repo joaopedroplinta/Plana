@@ -60,6 +60,17 @@ class AppointmentPolicy
         return $this->confirm($user, $appointment);
     }
 
+    public function noShow(User $user, Appointment $appointment): bool
+    {
+        return $this->confirm($user, $appointment);
+    }
+
+    public function reschedule(User $user, Appointment $appointment): bool
+    {
+        // Mesma regra do cancelamento: staff do salão ou o próprio cliente.
+        return $this->cancel($user, $appointment);
+    }
+
     public function delete(User $user, Appointment $appointment): bool
     {
         /** @var Tenant $tenant */

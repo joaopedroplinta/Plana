@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 import { isAxiosError } from 'axios'
-import { Calendar, Check, CheckCheck, X } from 'lucide-react'
+import { Calendar, Check, CheckCheck, UserX, X } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -12,7 +12,7 @@ import { appointmentsService } from '@/services/appointments'
 import type { ApiError, Appointment } from '@/types/index'
 import { formatPrice, formatTime } from '@/lib/format'
 
-type StatusFilter = '' | 'pending' | 'confirmed' | 'completed' | 'cancelled'
+type StatusFilter = '' | 'pending' | 'confirmed' | 'completed' | 'cancelled' | 'no_show'
 
 const STATUS_FILTERS: Array<{ value: StatusFilter; label: string }> = [
   { value: '', label: 'Todos' },
@@ -20,6 +20,7 @@ const STATUS_FILTERS: Array<{ value: StatusFilter; label: string }> = [
   { value: 'confirmed', label: 'Confirmados' },
   { value: 'completed', label: 'Concluídos' },
   { value: 'cancelled', label: 'Cancelados' },
+  { value: 'no_show', label: 'Faltas' },
 ]
 
 const STATUS_BADGE: Record<string, { label: string; className: string }> = {
@@ -78,7 +79,7 @@ export default function SchedulePage() {
 
   async function handleAction(
     appointment: Appointment,
-    action: 'confirm' | 'cancel' | 'complete',
+    action: 'confirm' | 'cancel' | 'complete' | 'noShow',
   ) {
     setActingId(appointment.id)
     setError('')
@@ -243,6 +244,19 @@ export default function SchedulePage() {
                                   <CheckCheck className="h-4 w-4" />
                                   Concluir
                                 </Button>
+                                {new Date(appt.starts_at) < new Date() && (
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    disabled={isActing}
+                                    onClick={() => handleAction(appt, 'noShow')}
+                                    className="text-red-600 hover:bg-red-50"
+                                    title="Cliente não compareceu"
+                                  >
+                                    <UserX className="h-4 w-4" />
+                                    Falta
+                                  </Button>
+                                )}
                                 <Button
                                   size="sm"
                                   variant="ghost"

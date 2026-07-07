@@ -7,9 +7,18 @@ import { CalendarX, Clock } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import { useAuth } from '@/hooks/useAuth'
 import { appointmentsService } from '@/services/appointments'
-import type { ApiError, Appointment } from '@/types/index'
+import type { ApiError, Appointment, TimeSlot } from '@/types/index'
 import { formatDate, formatPrice, formatTime } from '@/lib/format'
 
 const STATUS_BADGE: Record<string, { label: string; className: string }> = {
@@ -30,6 +39,16 @@ export default function MinhaContaPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState('')
   const [cancellingId, setCancellingId] = useState<string | null>(null)
+
+  // Estado do diálogo de remarcação
+  const [rescheduling, setRescheduling] = useState<Appointment | null>(null)
+  const [newDate, setNewDate] = useState('')
+  const [slots, setSlots] = useState<TimeSlot[]>([])
+  const [slotsLoaded, setSlotsLoaded] = useState(false)
+  const [dialogLoading, setDialogLoading] = useState(false)
+  const [dialogError, setDialogError] = useState('')
+
+  const today = new Date().toISOString().split('T')[0]
 
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
@@ -66,6 +85,56 @@ export default function MinhaContaPage() {
       }
     } finally {
       setCancellingId(null)
+    }
+  }
+
+  function openReschedule(appointment: Appointment) {
+    setRescheduling(appointment)
+    setNewDate('')
+    setSlots([])
+    setSlotsLoaded(false)
+    setDialogError('')
+  }
+
+  async function loadSlots() {
+    if (!rescheduling || !newDate) return
+    setDialogLoading(true)
+    setDialogError('')
+    try {
+      const res = await appointmentsService.availability(
+        slug,
+        rescheduling.professional.id,
+        rescheduling.service.id,
+        newDate,
+      )
+      setSlots(res.data.data)
+      setSlotsLoaded(true)
+    } catch {
+      setDialogError('Erro ao buscar horários. Tente novamente.')
+    } finally {
+      setDialogLoading(false)
+    }
+  }
+
+  async function handleReschedule(slot: TimeSlot) {
+    if (!rescheduling || !newDate) return
+    setDialogLoading(true)
+    setDialogError('')
+    try {
+      await appointmentsService.reschedule(slug, rescheduling.id, `${newDate}T${slot.starts_at}:00`)
+      setRescheduling(null)
+      loadAppointments()
+    } catch (err) {
+      if (isAxiosError(err)) {
+        const apiError = err.response?.data as ApiError | undefined
+        setDialogError(
+          apiError?.errors?.starts_at?.[0] ?? apiError?.message ?? 'Erro ao remarcar.',
+        )
+      } else {
+        setDialogError('Erro inesperado. Tente novamente.')
+      }
+    } finally {
+      setDialogLoading(false)
     }
   }
 
@@ -132,15 +201,25 @@ export default function MinhaContaPage() {
                       {formatPrice(appt.price)}
                     </p>
                     {canCancel && (
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="text-red-600 hover:bg-red-50 hover:text-red-700"
-                        disabled={cancellingId === appt.id}
-                        onClick={() => handleCancel(appt)}
-                      >
-                        {cancellingId === appt.id ? 'Cancelando...' : 'Cancelar'}
-                      </Button>
+                      <div className="flex gap-1">
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="text-indigo-600 hover:bg-indigo-50 hover:text-indigo-700"
+                          onClick={() => openReschedule(appt)}
+                        >
+                          Remarcar
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="text-red-600 hover:bg-red-50 hover:text-red-700"
+                          disabled={cancellingId === appt.id}
+                          onClick={() => handleCancel(appt)}
+                        >
+                          {cancellingId === appt.id ? 'Cancelando...' : 'Cancelar'}
+                        </Button>
+                      </div>
                     )}
                   </div>
                 </div>
@@ -149,6 +228,72 @@ export default function MinhaContaPage() {
           })}
         </div>
       )}
+
+      <Dialog open={rescheduling !== null} onOpenChange={(open) => !open && setRescheduling(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Remarcar agendamento</DialogTitle>
+            <DialogDescription>
+              {rescheduling
+                ? `${rescheduling.service.name} com ${rescheduling.professional.name}`
+                : ''}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div className="flex items-end gap-3">
+              <div className="flex-1 space-y-1.5">
+                <Label htmlFor="reschedule-date">Nova data</Label>
+                <Input
+                  id="reschedule-date"
+                  type="date"
+                  min={today}
+                  value={newDate}
+                  onChange={(e) => {
+                    setNewDate(e.target.value)
+                    setSlotsLoaded(false)
+                    setSlots([])
+                  }}
+                  disabled={dialogLoading}
+                />
+              </div>
+              <Button onClick={loadSlots} disabled={!newDate || dialogLoading}>
+                {dialogLoading && !slotsLoaded ? 'Buscando...' : 'Ver horários'}
+              </Button>
+            </div>
+
+            {dialogError && (
+              <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">
+                {dialogError}
+              </p>
+            )}
+
+            {slotsLoaded &&
+              (slots.length === 0 ? (
+                <p className="rounded-lg bg-gray-50 py-6 text-center text-sm text-gray-500">
+                  Nenhum horário disponível nesta data.
+                </p>
+              ) : (
+                <div className="grid max-h-56 grid-cols-3 gap-2 overflow-y-auto">
+                  {slots.map((slot) => (
+                    <button
+                      key={`${slot.starts_at}-${slot.ends_at}`}
+                      onClick={() => handleReschedule(slot)}
+                      disabled={dialogLoading}
+                      className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-700 transition-all hover:border-indigo-400 hover:bg-indigo-50 disabled:opacity-50"
+                    >
+                      {slot.starts_at}
+                    </button>
+                  ))}
+                </div>
+              ))}
+
+            <p className="text-xs text-gray-400">
+              Ao remarcar, o salão precisa confirmar o novo horário.
+            </p>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
