@@ -57,7 +57,7 @@ Plataforma SaaS de agendamentos para salões de beleza. Cada salão opera como u
 - Assinatura expirada: o scheduler diário (`subscriptions:downgrade-expired`, 03:00) rebaixa o tenant para Starter e avisa o owner por e-mail. Planos concedidos manualmente pelo super admin (sem assinatura) não são rebaixados
 
 **Notificações por e-mail** (enfileiradas)
-- Cliente: agendamento recebido, confirmado, cancelado e pagamento aprovado
+- Cliente: agendamento recebido, confirmado, cancelado, pagamento aprovado e lembrete ~24h antes do horário (scheduler de hora em hora, idempotente via `reminder_sent_at`)
 - Owner: novo agendamento, agendamento cancelado, plano ativado e assinatura expirada
 
 **Contas**
@@ -173,7 +173,7 @@ PATCH  /api/v1/admin/tenants/{id}
 ## Testes
 
 ```bash
-cd api && php artisan test --compact   # 146 testes Pest
+cd api && php artisan test --compact   # 156 testes Pest
 cd web && npm run build                # TypeScript check
 cd web && npm run lint                 # ESLint
 ```

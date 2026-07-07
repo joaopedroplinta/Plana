@@ -30,6 +30,7 @@ class Appointment extends Model
         'status',
         'price',
         'notes',
+        'reminder_sent_at',
     ];
 
     /**
@@ -41,6 +42,7 @@ class Appointment extends Model
             'starts_at' => 'datetime',
             'ends_at' => 'datetime',
             'price' => 'integer',
+            'reminder_sent_at' => 'datetime',
         ];
     }
 
