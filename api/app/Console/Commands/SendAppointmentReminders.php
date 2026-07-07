@@ -21,12 +21,15 @@ class SendAppointmentReminders extends Command
     {
         $sent = 0;
 
+        // get() em vez de each()/chunk(): o loop atualiza reminder_sent_at,
+        // que faz parte do filtro — paginar aqui pularia registros.
         Appointment::withoutTenantScope()
             ->with(['client', 'service', 'professional'])
             ->whereIn('status', ['pending', 'confirmed'])
             ->whereNull('reminder_sent_at')
             ->whereBetween('starts_at', [now()->addHours(22), now()->addHours(24)])
             ->orderBy('starts_at')
+            ->get()
             ->each(function (Appointment $appointment) use (&$sent) {
                 if (! $appointment->client) {
                     return;
