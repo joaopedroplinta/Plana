@@ -34,7 +34,7 @@ class AuthController extends Controller
             // Cliente pode já sair vinculado a um salão (fluxo de agendamento).
             $slug = $request->string('tenant_slug')->toString();
             if ($slug) {
-                $tenant = Tenant::where('slug', $slug)->first();
+                $tenant = Tenant::where('slug', $slug)->where('active', true)->first();
                 $tenant?->users()->attach($user->id, ['role' => 'client']);
             }
 

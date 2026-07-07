@@ -371,3 +371,40 @@ it('webhook enfileira o job ProcessPaymentWebhook', function () {
 
     Queue::assertPushed(ProcessPaymentWebhook::class);
 });
+
+it('webhook aprova assinatura via metadata mesmo sem external_reference', function () {
+    [$tenant] = payTenantWithClient();
+    $tenant->update(['plan' => 'starter']);
+
+    $subscription = Subscription::create([
+        'tenant_id' => $tenant->id,
+        'plan' => 'enterprise',
+        'amount' => 19700,
+        'method' => 'credit_card',
+        'status' => 'pending',
+        'mp_preference_id' => 'pref-sub-2',
+    ]);
+
+    $this->partialMock(PaymentService::class, function ($mock) use ($tenant) {
+        $mock->shouldAllowMockingProtectedMethods()
+            ->shouldReceive('fetchPayment')
+            ->once()
+            ->andReturn((object) [
+                'status' => 'approved',
+                'external_reference' => null,
+                'metadata' => (object) [
+                    'type' => 'subscription',
+                    'tenant_id' => $tenant->id,
+                    'plan' => 'enterprise',
+                ],
+            ]);
+    });
+
+    $this->postJson('/api/v1/payments/webhook', [
+        'type' => 'payment',
+        'data' => ['id' => '77665544'],
+    ])->assertOk();
+
+    expect($subscription->fresh()->status)->toBe('approved')
+        ->and($tenant->fresh()->plan)->toBe('enterprise');
+});
