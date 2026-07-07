@@ -173,3 +173,25 @@ it('remover usuario de fora do tenant retorna 404', function () {
         ->deleteJson("/api/v1/salao/{$tenant->slug}/team/{$stranger->id}")
         ->assertNotFound();
 });
+
+it('cliente do salao convidado para a equipe e promovido a staff', function () {
+    Notification::fake();
+
+    $tenant = Tenant::factory()->create();
+    $owner = teamOwner($tenant);
+    $client = User::factory()->create();
+    $tenant->users()->attach($client->id, ['role' => 'client']);
+
+    $this->actingAs($owner)->postJson("/api/v1/salao/{$tenant->slug}/team", [
+        'name' => $client->name,
+        'email' => $client->email,
+    ])->assertCreated();
+
+    $this->assertDatabaseHas('tenant_user', [
+        'tenant_id' => $tenant->id,
+        'user_id' => $client->id,
+        'role' => 'staff',
+    ]);
+
+    Notification::assertSentTo($client, StaffInvited::class);
+});

@@ -45,10 +45,11 @@ class TeamController extends Controller
         $email = $request->string('email')->toString();
         $user = User::where('email', $email)->first();
         $isNewUser = $user === null;
+        $membership = $user?->roleInTenant($tenant);
 
-        if ($user && $user->belongsToTenant($tenant)) {
+        if (in_array($membership, ['owner', 'staff'], true)) {
             throw ValidationException::withMessages([
-                'email' => ['Este usuário já faz parte do salão.'],
+                'email' => ['Este usuário já faz parte da equipe do salão.'],
             ]);
         }
 
@@ -60,7 +61,12 @@ class TeamController extends Controller
             ]);
         }
 
-        $tenant->users()->attach($user->id, ['role' => 'staff']);
+        // Cliente do salão convidado para a equipe é promovido a staff.
+        if ($membership === 'client') {
+            $tenant->users()->updateExistingPivot($user->id, ['role' => 'staff']);
+        } else {
+            $tenant->users()->attach($user->id, ['role' => 'staff']);
+        }
 
         Role::firstOrCreate(['name' => 'salon_staff', 'guard_name' => 'web']);
         $user->assignRole('salon_staff');
