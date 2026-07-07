@@ -14,10 +14,12 @@ class SchedulingService
      * Validate every business rule for a new appointment slot.
      * Must run inside a transaction — the conflict check locks
      * the professional's appointments to prevent double booking.
+     * Pass $ignoreAppointmentId when rescheduling so the appointment
+     * doesn't conflict with its own current slot.
      *
      * @throws ValidationException
      */
-    public function assertSlotAvailable(string $professionalId, Carbon $startsAt, Carbon $endsAt): void
+    public function assertSlotAvailable(string $professionalId, Carbon $startsAt, Carbon $endsAt, ?string $ignoreAppointmentId = null): void
     {
         $schedule = Schedule::query()
             ->where('professional_id', $professionalId)
@@ -53,6 +55,7 @@ class SchedulingService
         $conflict = Appointment::query()
             ->where('professional_id', $professionalId)
             ->whereNotIn('status', ['cancelled'])
+            ->when($ignoreAppointmentId, fn ($q) => $q->where('id', '!=', $ignoreAppointmentId))
             ->where('starts_at', '<', $endsAt)
             ->where('ends_at', '>', $startsAt)
             ->lockForUpdate()

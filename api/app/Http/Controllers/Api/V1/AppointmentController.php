@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\RescheduleAppointmentRequest;
 use App\Http\Requests\StoreAppointmentRequest;
 use App\Http\Resources\AppointmentResource;
 use App\Models\Appointment;
@@ -12,6 +13,7 @@ use App\Models\User;
 use App\Notifications\AppointmentBooked;
 use App\Notifications\AppointmentCancelled;
 use App\Notifications\AppointmentConfirmed;
+use App\Notifications\AppointmentRescheduled;
 use App\Notifications\NewAppointmentReceived;
 use App\Services\SchedulingService;
 use App\Services\SubscriptionService;
@@ -32,6 +34,7 @@ class AppointmentController extends Controller
         'confirm' => ['pending'],
         'cancel' => ['pending', 'confirmed'],
         'complete' => ['pending', 'confirmed'],
+        'no_show' => ['pending', 'confirmed'],
     ];
 
     public function __construct(private readonly SchedulingService $schedulingService) {}
@@ -119,6 +122,61 @@ class AppointmentController extends Controller
         Gate::authorize('complete', $appointment);
 
         return $this->transition($appointment, 'complete', 'completed');
+    }
+
+    public function noShow(Request $request, string $tenant, Appointment $appointment): AppointmentResource
+    {
+        Gate::authorize('noShow', $appointment);
+
+        // Só faz sentido marcar falta depois do horário marcado.
+        if ($appointment->starts_at->isFuture()) {
+            throw ValidationException::withMessages([
+                'status' => ['Só é possível marcar falta após o horário do agendamento.'],
+            ]);
+        }
+
+        return $this->transition($appointment, 'no_show', 'no_show');
+    }
+
+    public function reschedule(RescheduleAppointmentRequest $request, string $tenant, Appointment $appointment): AppointmentResource
+    {
+        Gate::authorize('reschedule', $appointment);
+
+        if (! in_array($appointment->status, ['pending', 'confirmed'], true)) {
+            throw ValidationException::withMessages([
+                'status' => ["Não é possível remarcar um agendamento com status '{$appointment->status}'."],
+            ]);
+        }
+
+        $startsAt = Carbon::parse($request->starts_at);
+        $endsAt = $startsAt->copy()->addMinutes($appointment->service->duration_minutes);
+
+        // Remarcação feita pelo cliente volta para pending (o salão
+        // reconfirma); staff remarcando mantém o status atual.
+        $isStaff = $request->user()->isStaffOfTenant(app('currentTenant'));
+
+        DB::transaction(function () use ($appointment, $startsAt, $endsAt, $isStaff) {
+            $this->schedulingService->assertSlotAvailable(
+                $appointment->professional_id,
+                $startsAt,
+                $endsAt,
+                $appointment->id,
+            );
+
+            $appointment->update([
+                'starts_at' => $startsAt,
+                'ends_at' => $endsAt,
+                'status' => $isStaff ? $appointment->status : 'pending',
+                'reminder_sent_at' => null,
+            ]);
+        });
+
+        $appointment->load(['client', 'professional', 'service']);
+
+        $appointment->client?->notify(new AppointmentRescheduled($appointment));
+        Notification::send(app('currentTenant')->owner, new AppointmentRescheduled($appointment));
+
+        return new AppointmentResource($appointment);
     }
 
     private function transition(Appointment $appointment, string $action, string $newStatus): AppointmentResource

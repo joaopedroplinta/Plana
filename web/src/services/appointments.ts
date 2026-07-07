@@ -25,4 +25,12 @@ export const appointmentsService = {
 
   complete: (slug: string, id: string) =>
     api.patch<{ data: Appointment }>(`/salao/${slug}/appointments/${id}/complete`),
+
+  noShow: (slug: string, id: string) =>
+    api.patch<{ data: Appointment }>(`/salao/${slug}/appointments/${id}/no-show`),
+
+  reschedule: (slug: string, id: string, startsAt: string) =>
+    api.patch<{ data: Appointment }>(`/salao/${slug}/appointments/${id}/reschedule`, {
+      starts_at: startsAt,
+    }),
 }

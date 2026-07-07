@@ -70,6 +70,8 @@ Route::prefix('v1')->middleware('throttle:api')->group(function () {
             Route::patch('appointments/{appointment}/confirm', [AppointmentController::class, 'confirm']);
             Route::patch('appointments/{appointment}/cancel', [AppointmentController::class, 'cancel']);
             Route::patch('appointments/{appointment}/complete', [AppointmentController::class, 'complete']);
+            Route::patch('appointments/{appointment}/no-show', [AppointmentController::class, 'noShow']);
+            Route::patch('appointments/{appointment}/reschedule', [AppointmentController::class, 'reschedule']);
 
             Route::get('dashboard', DashboardController::class);
 
