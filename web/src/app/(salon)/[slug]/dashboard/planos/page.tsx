@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
+import { toast } from 'sonner'
 import { useAuth } from '@/hooks/useAuth'
 import { subscriptionService } from '@/services/subscription'
 import type { Subscription, SubscriptionPlan, SubscriptionResponse } from '@/types'
@@ -106,7 +107,7 @@ export default function PlanosPage() {
         startPolling(plan)
       }
     } catch {
-      setError('Erro ao processar pagamento. Tente novamente.')
+      toast.error('Erro ao processar pagamento. Tente novamente.')
     } finally {
       setIsSubmitting(false)
     }

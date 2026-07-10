@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
 import { isAxiosError } from 'axios'
 import { Plus, Pencil, Trash2 } from 'lucide-react'
+import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -166,9 +167,9 @@ export default function PackagesPage() {
     } catch (err) {
       if (isAxiosError(err)) {
         const apiError = err.response?.data as ApiError | undefined
-        setFormError(apiError?.message ?? 'Erro ao salvar pacote.')
+        toast.error(apiError?.message ?? 'Erro ao salvar pacote.')
       } else {
-        setFormError('Erro inesperado. Tente novamente.')
+        toast.error('Erro inesperado. Tente novamente.')
       }
     } finally {
       setIsSubmitting(false)
@@ -183,7 +184,7 @@ export default function PackagesPage() {
       setDeleteTarget(null)
       refresh()
     } catch {
-      // Error handled silently — list will not change
+      toast.error('Erro ao excluir pacote.')
     } finally {
       setIsDeleting(false)
     }
