@@ -272,6 +272,45 @@ it('client nao pode cancelar agendamento de outro cliente', function () {
     $response->assertForbidden();
 });
 
+// --- Concluir agendamento ---
+
+it('salon_owner conclui agendamento confirmado com sucesso', function () {
+    $tenant = Tenant::factory()->create();
+    $owner = apptOwner($tenant);
+    $professional = Professional::factory()->create(['tenant_id' => $tenant->id]);
+    $service = Service::factory()->create(['tenant_id' => $tenant->id, 'duration_minutes' => 60]);
+    $appointment = Appointment::factory()->confirmed()->create([
+        'tenant_id' => $tenant->id,
+        'professional_id' => $professional->id,
+        'service_id' => $service->id,
+    ]);
+
+    $response = $this->actingAs($owner)
+        ->patchJson("/api/v1/salao/{$tenant->slug}/appointments/{$appointment->id}/complete");
+
+    $response->assertOk()
+        ->assertJsonPath('data.status', 'completed');
+
+    $this->assertDatabaseHas('appointments', ['id' => $appointment->id, 'status' => 'completed']);
+});
+
+it('nao conclui agendamento ja concluido', function () {
+    $tenant = Tenant::factory()->create();
+    $owner = apptOwner($tenant);
+    $professional = Professional::factory()->create(['tenant_id' => $tenant->id]);
+    $service = Service::factory()->create(['tenant_id' => $tenant->id, 'duration_minutes' => 60]);
+    $appointment = Appointment::factory()->completed()->create([
+        'tenant_id' => $tenant->id,
+        'professional_id' => $professional->id,
+        'service_id' => $service->id,
+    ]);
+
+    $this->actingAs($owner)
+        ->patchJson("/api/v1/salao/{$tenant->slug}/appointments/{$appointment->id}/complete")
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors(['status']);
+});
+
 // --- Disponibilidade ---
 
 it('retorna slots corretos para profissional com schedule', function () {

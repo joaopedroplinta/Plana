@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\AppointmentStatus;
 use App\Traits\BelongsToTenant;
 use Database\Factories\AppointmentFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -43,6 +44,7 @@ class Appointment extends Model
             'ends_at' => 'datetime',
             'price' => 'integer',
             'reminder_sent_at' => 'datetime',
+            'status' => AppointmentStatus::class,
         ];
     }
 

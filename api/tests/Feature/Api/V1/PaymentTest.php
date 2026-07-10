@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\AppointmentStatus;
 use App\Jobs\ProcessPaymentWebhook;
 use App\Models\Appointment;
 use App\Models\Payment;
@@ -230,7 +231,63 @@ it('webhook aprova pagamento pix via external_id e confirma o agendamento', func
 
     expect($payment->fresh()->status)->toBe('approved')
         ->and($payment->fresh()->paid_at)->not->toBeNull()
-        ->and($appointment->fresh()->status)->toBe('confirmed');
+        ->and($appointment->fresh()->status)->toBe(AppointmentStatus::Confirmed);
+});
+
+it('webhook aprova pagamento mas ignora confirmacao de agendamento ja cancelado', function () {
+    [$tenant, $client] = payTenantWithClient();
+    $appointment = payAppointmentForClient($tenant, $client);
+    $appointment->update(['status' => 'cancelled']);
+
+    $payment = Payment::factory()->pix()->create([
+        'tenant_id' => $tenant->id,
+        'appointment_id' => $appointment->id,
+        'external_id' => '11112222',
+        'status' => 'pending',
+    ]);
+
+    $this->partialMock(PaymentService::class, function ($mock) use ($appointment) {
+        $mock->shouldAllowMockingProtectedMethods()
+            ->shouldReceive('fetchPayment')
+            ->once()
+            ->andReturn((object) ['status' => 'approved', 'external_reference' => $appointment->id]);
+    });
+
+    $this->postJson('/api/v1/payments/webhook', [
+        'type' => 'payment',
+        'data' => ['id' => '11112222'],
+    ])->assertOk();
+
+    expect($payment->fresh()->status)->toBe('approved')
+        ->and($appointment->fresh()->status)->toBe(AppointmentStatus::Cancelled);
+});
+
+it('webhook aprova pagamento mas ignora confirmacao de agendamento ja concluido', function () {
+    [$tenant, $client] = payTenantWithClient();
+    $appointment = payAppointmentForClient($tenant, $client);
+    $appointment->update(['status' => 'completed']);
+
+    $payment = Payment::factory()->pix()->create([
+        'tenant_id' => $tenant->id,
+        'appointment_id' => $appointment->id,
+        'external_id' => '33334444',
+        'status' => 'pending',
+    ]);
+
+    $this->partialMock(PaymentService::class, function ($mock) use ($appointment) {
+        $mock->shouldAllowMockingProtectedMethods()
+            ->shouldReceive('fetchPayment')
+            ->once()
+            ->andReturn((object) ['status' => 'approved', 'external_reference' => $appointment->id]);
+    });
+
+    $this->postJson('/api/v1/payments/webhook', [
+        'type' => 'payment',
+        'data' => ['id' => '33334444'],
+    ])->assertOk();
+
+    expect($payment->fresh()->status)->toBe('approved')
+        ->and($appointment->fresh()->status)->toBe(AppointmentStatus::Completed);
 });
 
 it('webhook aprova pagamento checkout pro via external_reference', function () {
@@ -261,7 +318,7 @@ it('webhook aprova pagamento checkout pro via external_reference', function () {
     $fresh = $payment->fresh();
     expect($fresh->status)->toBe('approved')
         ->and($fresh->external_id)->toBe('55443322')
-        ->and($appointment->fresh()->status)->toBe('confirmed');
+        ->and($appointment->fresh()->status)->toBe(AppointmentStatus::Confirmed);
 });
 
 it('webhook aprova assinatura checkout pro e atualiza o plano do tenant', function () {

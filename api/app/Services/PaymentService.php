@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\AppointmentStatus;
 use App\Models\Appointment;
 use App\Models\Payment;
 use App\Models\Subscription;
@@ -154,8 +155,8 @@ class PaymentService
             return;
         }
 
-        if ($payment->appointment && $payment->appointment->status === 'pending') {
-            $payment->appointment->update(['status' => 'confirmed']);
+        if ($payment->appointment && $payment->appointment->status->allows('confirm')) {
+            $payment->appointment->update(['status' => AppointmentStatus::Confirmed]);
         }
 
         $payment->appointment?->client?->notify(new PaymentApproved($payment));
