@@ -188,6 +188,42 @@ it('salon_owner from another tenant cannot subscribe for a different tenant', fu
         ->assertForbidden();
 });
 
+it('owner of one tenant who is staff at another cannot change that tenant subscription', function () {
+    $tenantA = Tenant::factory()->create();
+    $tenantB = Tenant::factory()->create();
+
+    $user = subOwner($tenantA);
+    $tenantB->users()->attach($user->id, ['role' => 'staff']);
+
+    $this->actingAs($user)
+        ->postJson("/api/v1/salao/{$tenantB->slug}/subscription", [
+            'plan' => 'pro',
+            'method' => 'pix',
+        ])
+        ->assertForbidden();
+
+    $tenantB->refresh();
+    expect($tenantB->plan)->not->toBe('pro');
+});
+
+it('owner can change the subscription of their own tenant', function () {
+    $tenant = Tenant::factory()->create(['plan' => 'pro']);
+    $owner = subOwner($tenant);
+
+    $response = $this->actingAs($owner)
+        ->postJson("/api/v1/salao/{$tenant->slug}/subscription", [
+            'plan' => 'starter',
+            'method' => 'pix',
+        ]);
+
+    $response->assertCreated()
+        ->assertJsonPath('data.plan', 'starter')
+        ->assertJsonPath('data.status', 'approved');
+
+    $tenant->refresh();
+    expect($tenant->plan)->toBe('starter');
+});
+
 it('subscription records do not leak across tenants', function () {
     $tenantA = Tenant::factory()->create();
     $tenantB = Tenant::factory()->create();

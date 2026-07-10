@@ -38,7 +38,7 @@ class SubscriptionController extends Controller
         /** @var Tenant $tenant */
         $tenant = app('currentTenant');
 
-        if (! $request->user()->hasRole('salon_owner') || ! $request->user()->belongsToTenant($tenant)) {
+        if (! $request->user()->ownsTenant($tenant)) {
             return response()->json(['message' => 'This action is unauthorized.'], 403);
         }
 
