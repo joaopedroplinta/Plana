@@ -4,6 +4,17 @@ import { useCallback, useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { isAxiosError } from 'axios'
 import { CalendarX, Clock } from 'lucide-react'
+import { toast } from 'sonner'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
@@ -39,6 +50,7 @@ export default function MinhaContaPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState('')
   const [cancellingId, setCancellingId] = useState<string | null>(null)
+  const [appointmentToCancel, setAppointmentToCancel] = useState<Appointment | null>(null)
 
   // Estado do diálogo de remarcação
   const [rescheduling, setRescheduling] = useState<Appointment | null>(null)
@@ -46,7 +58,6 @@ export default function MinhaContaPage() {
   const [slots, setSlots] = useState<TimeSlot[]>([])
   const [slotsLoaded, setSlotsLoaded] = useState(false)
   const [dialogLoading, setDialogLoading] = useState(false)
-  const [dialogError, setDialogError] = useState('')
 
   const today = new Date().toISOString().split('T')[0]
 
@@ -69,19 +80,20 @@ export default function MinhaContaPage() {
     if (isAuthenticated) loadAppointments()
   }, [isAuthenticated, loadAppointments])
 
-  async function handleCancel(appointment: Appointment) {
-    if (!window.confirm('Tem certeza que deseja cancelar este agendamento?')) return
+  async function handleCancel() {
+    if (!appointmentToCancel) return
+    const appointment = appointmentToCancel
+    setAppointmentToCancel(null)
     setCancellingId(appointment.id)
-    setError('')
     try {
       await appointmentsService.cancel(slug, appointment.id)
       loadAppointments()
     } catch (err) {
       if (isAxiosError(err)) {
         const apiError = err.response?.data as ApiError | undefined
-        setError(apiError?.message ?? 'Erro ao cancelar agendamento.')
+        toast.error(apiError?.message ?? 'Erro ao cancelar agendamento.')
       } else {
-        setError('Erro inesperado. Tente novamente.')
+        toast.error('Erro inesperado. Tente novamente.')
       }
     } finally {
       setCancellingId(null)
@@ -93,13 +105,11 @@ export default function MinhaContaPage() {
     setNewDate('')
     setSlots([])
     setSlotsLoaded(false)
-    setDialogError('')
   }
 
   async function loadSlots() {
     if (!rescheduling || !newDate) return
     setDialogLoading(true)
-    setDialogError('')
     try {
       const res = await appointmentsService.availability(
         slug,
@@ -110,7 +120,7 @@ export default function MinhaContaPage() {
       setSlots(res.data.data)
       setSlotsLoaded(true)
     } catch {
-      setDialogError('Erro ao buscar horários. Tente novamente.')
+      toast.error('Erro ao buscar horários. Tente novamente.')
     } finally {
       setDialogLoading(false)
     }
@@ -119,7 +129,6 @@ export default function MinhaContaPage() {
   async function handleReschedule(slot: TimeSlot) {
     if (!rescheduling || !newDate) return
     setDialogLoading(true)
-    setDialogError('')
     try {
       await appointmentsService.reschedule(slug, rescheduling.id, `${newDate}T${slot.starts_at}:00`)
       setRescheduling(null)
@@ -127,11 +136,11 @@ export default function MinhaContaPage() {
     } catch (err) {
       if (isAxiosError(err)) {
         const apiError = err.response?.data as ApiError | undefined
-        setDialogError(
+        toast.error(
           apiError?.errors?.starts_at?.[0] ?? apiError?.message ?? 'Erro ao remarcar.',
         )
       } else {
-        setDialogError('Erro inesperado. Tente novamente.')
+        toast.error('Erro inesperado. Tente novamente.')
       }
     } finally {
       setDialogLoading(false)
@@ -215,7 +224,7 @@ export default function MinhaContaPage() {
                           variant="ghost"
                           className="text-red-600 hover:bg-red-50 hover:text-red-700"
                           disabled={cancellingId === appt.id}
-                          onClick={() => handleCancel(appt)}
+                          onClick={() => setAppointmentToCancel(appt)}
                         >
                           {cancellingId === appt.id ? 'Cancelando...' : 'Cancelar'}
                         </Button>
@@ -262,12 +271,6 @@ export default function MinhaContaPage() {
               </Button>
             </div>
 
-            {dialogError && (
-              <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">
-                {dialogError}
-              </p>
-            )}
-
             {slotsLoaded &&
               (slots.length === 0 ? (
                 <p className="rounded-lg bg-gray-50 py-6 text-center text-sm text-gray-500">
@@ -294,6 +297,29 @@ export default function MinhaContaPage() {
           </div>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog
+        open={appointmentToCancel !== null}
+        onOpenChange={(open) => !open && setAppointmentToCancel(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Cancelar agendamento</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja cancelar este agendamento?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Voltar</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-red-600 text-white hover:bg-red-700"
+              onClick={handleCancel}
+            >
+              Cancelar agendamento
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

@@ -4,6 +4,17 @@ import { useCallback, useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 import { isAxiosError } from 'axios'
 import { UserPlus, Users, X } from 'lucide-react'
+import { toast } from 'sonner'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
@@ -23,10 +34,9 @@ export default function TeamPage() {
   const [error, setError] = useState('')
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
-  const [inviteError, setInviteError] = useState('')
-  const [inviteSuccess, setInviteSuccess] = useState('')
   const [isInviting, setIsInviting] = useState(false)
   const [removingId, setRemovingId] = useState<number | null>(null)
+  const [memberToRemove, setMemberToRemove] = useState<TeamMember | null>(null)
 
   const isOwner = user?.roles?.some((r) => r.name === 'salon_owner') ?? false
 
@@ -45,38 +55,39 @@ export default function TeamPage() {
 
   async function handleInvite(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
-    setInviteError('')
-    setInviteSuccess('')
     setIsInviting(true)
     try {
       await teamService.invite(slug, { name: name.trim(), email: email.trim() })
-      setInviteSuccess(`Convite enviado para ${email.trim()}.`)
+      toast.success(
+        `Convite enviado para ${email.trim()}. A pessoa receberá um e-mail para definir a senha.`,
+      )
       setName('')
       setEmail('')
       loadMembers()
     } catch (err) {
       if (isAxiosError(err)) {
         const apiError = err.response?.data as ApiError | undefined
-        setInviteError(
+        toast.error(
           apiError?.errors?.email?.[0] ?? apiError?.message ?? 'Erro ao enviar convite.',
         )
       } else {
-        setInviteError('Erro inesperado. Tente novamente.')
+        toast.error('Erro inesperado. Tente novamente.')
       }
     } finally {
       setIsInviting(false)
     }
   }
 
-  async function handleRemove(member: TeamMember) {
-    if (!window.confirm(`Remover ${member.name} da equipe?`)) return
+  async function handleRemove() {
+    if (!memberToRemove) return
+    const member = memberToRemove
     setRemovingId(member.id)
-    setError('')
+    setMemberToRemove(null)
     try {
       await teamService.remove(slug, member.id)
       loadMembers()
     } catch {
-      setError('Erro ao remover membro da equipe.')
+      toast.error('Erro ao remover membro da equipe.')
     } finally {
       setRemovingId(null)
     }
@@ -125,16 +136,6 @@ export default function TeamPage() {
               {isInviting ? 'Enviando...' : 'Convidar'}
             </Button>
           </form>
-          {inviteError && (
-            <p className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">
-              {inviteError}
-            </p>
-          )}
-          {inviteSuccess && (
-            <p className="mt-3 rounded-lg bg-green-50 px-3 py-2 text-sm text-green-700">
-              {inviteSuccess} A pessoa receberá um e-mail para definir a senha.
-            </p>
-          )}
         </Card>
       )}
 
@@ -181,7 +182,7 @@ export default function TeamPage() {
                     variant="ghost"
                     className="text-red-600 hover:bg-red-50 hover:text-red-700"
                     disabled={removingId === member.id}
-                    onClick={() => handleRemove(member)}
+                    onClick={() => setMemberToRemove(member)}
                     title="Remover da equipe"
                   >
                     <X className="h-4 w-4" />
@@ -192,6 +193,29 @@ export default function TeamPage() {
           </ul>
         </div>
       )}
+
+      <AlertDialog
+        open={memberToRemove !== null}
+        onOpenChange={(open) => !open && setMemberToRemove(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remover da equipe</AlertDialogTitle>
+            <AlertDialogDescription>
+              Remover {memberToRemove?.name} da equipe?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-red-600 text-white hover:bg-red-700"
+              onClick={handleRemove}
+            >
+              Remover
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }
