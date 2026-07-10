@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Enums\AppointmentStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\PaymentResource;
 use App\Jobs\ProcessPaymentWebhook;
@@ -34,7 +35,7 @@ class PaymentController extends Controller
             'method' => ['required', 'in:pix,credit_card'],
         ]);
 
-        if ($appointment->status === 'cancelled') {
+        if ($appointment->status === AppointmentStatus::Cancelled) {
             throw ValidationException::withMessages([
                 'method' => ['Não é possível pagar um agendamento cancelado.'],
             ]);

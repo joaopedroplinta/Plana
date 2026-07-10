@@ -29,14 +29,6 @@ use Spatie\Permission\Models\Role;
 
 class AppointmentController extends Controller
 {
-    /** Transições de status permitidas. */
-    private const TRANSITIONS = [
-        'confirm' => ['pending'],
-        'cancel' => ['pending', 'confirmed'],
-        'complete' => ['pending', 'confirmed'],
-        'no_show' => ['pending', 'confirmed'],
-    ];
-
     public function __construct(private readonly SchedulingService $schedulingService) {}
 
     public function index(Request $request): AnonymousResourceCollection
@@ -142,9 +134,9 @@ class AppointmentController extends Controller
     {
         Gate::authorize('reschedule', $appointment);
 
-        if (! in_array($appointment->status, ['pending', 'confirmed'], true)) {
+        if (! $appointment->status->allows('reschedule')) {
             throw ValidationException::withMessages([
-                'status' => ["Não é possível remarcar um agendamento com status '{$appointment->status}'."],
+                'status' => ["Não é possível remarcar um agendamento com status '{$appointment->status->value}'."],
             ]);
         }
 
@@ -181,9 +173,9 @@ class AppointmentController extends Controller
 
     private function transition(Appointment $appointment, string $action, string $newStatus): AppointmentResource
     {
-        if (! in_array($appointment->status, self::TRANSITIONS[$action], true)) {
+        if (! $appointment->status->allows($action)) {
             throw ValidationException::withMessages([
-                'status' => ["Não é possível alterar um agendamento com status '{$appointment->status}'."],
+                'status' => ["Não é possível alterar um agendamento com status '{$appointment->status->value}'."],
             ]);
         }
 
