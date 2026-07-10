@@ -196,6 +196,22 @@ it('registra cliente sem tenant_slug sem criar salao', function () {
     expect(Tenant::count())->toBe($before);
 });
 
+it('me nao quebra para usuario sem nenhum tenant vinculado', function () {
+    $response = $this->postJson('/api/v1/auth/register', [
+        'name' => 'Cliente Solto',
+        'email' => 'solto2@example.com',
+        'password' => 'password123',
+        'password_confirmation' => 'password123',
+        'account_type' => 'client',
+    ]);
+    $token = $response->json('data.token');
+
+    $meResponse = $this->withToken($token)->getJson('/api/v1/auth/me');
+
+    $meResponse->assertOk()
+        ->assertJsonPath('data.tenant', null);
+});
+
 it('registro de owner usa salon_name para o salao quando informado', function () {
     $response = $this->postJson('/api/v1/auth/register', [
         'name' => 'Maria Dona',
