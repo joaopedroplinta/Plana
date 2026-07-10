@@ -20,14 +20,14 @@ import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { useAuth } from '@/hooks/useAuth'
+import { useTenant } from '@/hooks/useTenant'
 import { teamService } from '@/services/team'
 import type { ApiError, TeamMember } from '@/types/index'
 
 export default function TeamPage() {
   const params = useParams()
   const slug = typeof params.slug === 'string' ? params.slug : ''
-  const { user } = useAuth()
+  const { tenant } = useTenant(slug)
 
   const [members, setMembers] = useState<TeamMember[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -38,7 +38,7 @@ export default function TeamPage() {
   const [removingId, setRemovingId] = useState<number | null>(null)
   const [memberToRemove, setMemberToRemove] = useState<TeamMember | null>(null)
 
-  const isOwner = user?.roles?.some((r) => r.name === 'salon_owner') ?? false
+  const isOwner = tenant?.current_tenant_role === 'owner'
 
   const loadMembers = useCallback(() => {
     if (!slug) return
