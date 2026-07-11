@@ -87,6 +87,37 @@ it('salon_owner cria profissional com 201', function () {
     ]);
 });
 
+it('rejeita user_id de usuario que nao pertence ao tenant', function () {
+    $tenant = Tenant::factory()->create();
+    $owner = profOwner($tenant);
+    $outsider = User::factory()->create();
+
+    $response = $this->actingAs($owner)->postJson("/api/v1/salao/{$tenant->slug}/professionals", [
+        'name' => 'Ana Silva',
+        'user_id' => $outsider->id,
+    ]);
+
+    $response->assertUnprocessable()
+        ->assertJsonValidationErrors('user_id');
+});
+
+it('aceita user_id de usuario que pertence ao tenant', function () {
+    $tenant = Tenant::factory()->create();
+    $owner = profOwner($tenant);
+    $staff = profStaff($tenant);
+
+    $response = $this->actingAs($owner)->postJson("/api/v1/salao/{$tenant->slug}/professionals", [
+        'name' => 'Ana Silva',
+        'user_id' => $staff->id,
+    ]);
+
+    $response->assertCreated();
+    $this->assertDatabaseHas('professionals', [
+        'tenant_id' => $tenant->id,
+        'user_id' => $staff->id,
+    ]);
+});
+
 it('salon_owner edita profissional', function () {
     $tenant = Tenant::factory()->create();
     $owner = profOwner($tenant);
