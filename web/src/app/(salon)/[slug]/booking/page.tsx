@@ -367,6 +367,7 @@ export default function BookingPage() {
                 .map((service) => (
                   <Card
                     key={service.id}
+                    data-testid="service-option"
                     className={`cursor-pointer p-4 transition-all hover:border-indigo-400 hover:shadow-sm ${
                       selectedService?.id === service.id
                         ? 'border-indigo-500 ring-2 ring-indigo-200'
@@ -423,6 +424,7 @@ export default function BookingPage() {
                 .map((professional) => (
                   <Card
                     key={professional.id}
+                    data-testid="professional-option"
                     className={`cursor-pointer p-4 transition-all hover:border-indigo-400 hover:shadow-sm ${
                       selectedProfessional?.id === professional.id
                         ? 'border-indigo-500 ring-2 ring-indigo-200'
