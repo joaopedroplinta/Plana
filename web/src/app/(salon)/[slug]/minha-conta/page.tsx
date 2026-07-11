@@ -15,6 +15,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
+import { MinhaContaTabs } from '@/components/shared/MinhaContaTabs'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
@@ -158,6 +159,8 @@ export default function MinhaContaPage() {
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-8">
+      <MinhaContaTabs slug={slug} />
+
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-gray-900">Meus agendamentos</h1>
         <p className="mt-1 text-sm text-gray-500">

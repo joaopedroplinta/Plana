@@ -3,6 +3,7 @@
 use App\Enums\AppointmentStatus;
 use App\Jobs\ProcessPaymentWebhook;
 use App\Models\Appointment;
+use App\Models\PackagePurchase;
 use App\Models\Payment;
 use App\Models\Professional;
 use App\Models\Service;
@@ -134,6 +135,28 @@ it('client can view own payment status', function () {
         'tenant_id' => $tenant->id,
         'appointment_id' => $appointment->id,
     ]);
+
+    $this->mock(PaymentService::class, fn ($mock) => $mock->shouldReceive('syncStatus')->once()->andReturn($payment->fresh()));
+
+    $this->actingAs($client)
+        ->getJson("/api/v1/salao/{$tenant->slug}/payments/{$payment->id}")
+        ->assertOk()
+        ->assertJsonPath('data.id', $payment->id);
+});
+
+it('client can view own package purchase payment', function () {
+    [$tenant, $client] = payTenantWithClient();
+
+    $purchase = PackagePurchase::factory()->create([
+        'tenant_id' => $tenant->id,
+        'client_id' => $client->id,
+    ]);
+
+    $payment = Payment::factory()->pix()->create([
+        'tenant_id' => $tenant->id,
+        'appointment_id' => null,
+    ]);
+    $purchase->update(['payment_id' => $payment->id]);
 
     $this->mock(PaymentService::class, fn ($mock) => $mock->shouldReceive('syncStatus')->once()->andReturn($payment->fresh()));
 

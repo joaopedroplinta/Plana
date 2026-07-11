@@ -21,6 +21,7 @@ class AppointmentResource extends JsonResource
             'status' => $this->status->value,
             'price' => $this->price,
             'notes' => $this->notes,
+            'package_purchase_id' => $this->package_purchase_id,
             'client' => $this->whenLoaded('client', fn () => [
                 'id' => $this->client?->id,
                 'name' => $this->client?->name,

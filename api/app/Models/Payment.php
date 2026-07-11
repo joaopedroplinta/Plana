@@ -7,6 +7,7 @@ use Database\Factories\PaymentFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Str;
 
 class Payment extends Model
@@ -58,5 +59,16 @@ class Payment extends Model
     public function appointment(): BelongsTo
     {
         return $this->belongsTo(Appointment::class);
+    }
+
+    /**
+     * Compra de pacote paga por este pagamento — inverso de
+     * PackagePurchase::payment() (FK vive em package_purchases.payment_id).
+     *
+     * @return HasOne<PackagePurchase, $this>
+     */
+    public function packagePurchase(): HasOne
+    {
+        return $this->hasOne(PackagePurchase::class, 'payment_id');
     }
 }

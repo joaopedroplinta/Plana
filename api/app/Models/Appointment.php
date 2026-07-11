@@ -26,6 +26,7 @@ class Appointment extends Model
         'client_id',
         'professional_id',
         'service_id',
+        'package_purchase_id',
         'starts_at',
         'ends_at',
         'status',
@@ -81,5 +82,11 @@ class Appointment extends Model
     public function payments(): HasMany
     {
         return $this->hasMany(Payment::class);
+    }
+
+    /** @return BelongsTo<PackagePurchase, $this> */
+    public function packagePurchase(): BelongsTo
+    {
+        return $this->belongsTo(PackagePurchase::class);
     }
 }

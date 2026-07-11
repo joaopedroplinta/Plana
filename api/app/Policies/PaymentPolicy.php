@@ -28,7 +28,8 @@ class PaymentPolicy
         }
 
         return $user->isStaffOfTenant($tenant)
-            || $payment->appointment->client_id === $user->id;
+            || $payment->appointment?->client_id === $user->id
+            || $payment->packagePurchase?->client_id === $user->id;
     }
 
     public function viewAny(User $user): bool

@@ -3,7 +3,9 @@
 namespace App\Services;
 
 use App\Enums\AppointmentStatus;
+use App\Enums\PackagePurchaseStatus;
 use App\Models\Appointment;
+use App\Models\PackagePurchase;
 use App\Models\Payment;
 use App\Models\Subscription;
 use App\Models\User;
@@ -78,6 +80,75 @@ class PaymentService
         ]);
     }
 
+    public function createPixForPackagePurchase(PackagePurchase $purchase, User $payer): Payment
+    {
+        $client = new PaymentClient;
+        $result = $client->create([
+            'transaction_amount' => round($purchase->price_paid / 100, 2),
+            'description' => 'Pacote '.$purchase->servicePackage->name,
+            'payment_method_id' => 'pix',
+            'payer' => ['email' => $payer->email],
+            'external_reference' => "package_purchase_{$purchase->id}",
+            'metadata' => [
+                'type' => 'package_purchase',
+                'package_purchase_id' => $purchase->id,
+            ],
+        ]);
+
+        $payment = Payment::create([
+            'tenant_id' => $purchase->tenant_id,
+            'amount' => $purchase->price_paid,
+            'method' => 'pix',
+            'external_id' => (string) $result->id,
+            'status' => $result->status ?? 'pending',
+            'pix_qr_code' => $result->point_of_interaction->transaction_data->qr_code ?? null,
+            'pix_qr_code_base64' => $result->point_of_interaction->transaction_data->qr_code_base64 ?? null,
+        ]);
+
+        $purchase->update(['payment_id' => $payment->id]);
+
+        return $payment;
+    }
+
+    public function createCheckoutProForPackagePurchase(PackagePurchase $purchase, User $payer, string $slug): Payment
+    {
+        $client = new PreferenceClient;
+        $frontendUrl = rtrim(config('app.frontend_url', 'http://localhost:3000'), '/');
+
+        $result = $client->create([
+            'items' => [[
+                'title' => 'Pacote '.$purchase->servicePackage->name,
+                'quantity' => 1,
+                'unit_price' => round($purchase->price_paid / 100, 2),
+            ]],
+            'payer' => ['email' => $payer->email],
+            'external_reference' => "package_purchase_{$purchase->id}",
+            'back_urls' => [
+                'success' => "{$frontendUrl}/{$slug}/payment-success",
+                'failure' => "{$frontendUrl}/{$slug}/payment-failure",
+                'pending' => "{$frontendUrl}/{$slug}/payment-success",
+            ],
+            'auto_return' => 'approved',
+            'notification_url' => config('app.url').'/api/v1/payments/webhook',
+            'metadata' => [
+                'type' => 'package_purchase',
+                'package_purchase_id' => $purchase->id,
+            ],
+        ]);
+
+        $payment = Payment::create([
+            'tenant_id' => $purchase->tenant_id,
+            'amount' => $purchase->price_paid,
+            'method' => 'credit_card',
+            'preference_id' => $result->id,
+            'status' => 'pending',
+        ]);
+
+        $purchase->update(['payment_id' => $payment->id]);
+
+        return $payment;
+    }
+
     public function syncStatus(Payment $payment): Payment
     {
         if (! $payment->external_id) {
@@ -122,7 +193,10 @@ class PaymentService
 
         // 2. Checkout Pro payments only know the preference id — match the
         //    pending payment through the appointment in external_reference.
-        if (! $payment && $reference && ! str_starts_with($reference, 'subscription_')) {
+        if (! $payment && $reference
+            && ! str_starts_with($reference, 'subscription_')
+            && ! str_starts_with($reference, 'package_purchase_')
+        ) {
             $payment = Payment::withoutTenantScope()
                 ->where('appointment_id', $reference)
                 ->whereNotNull('preference_id')
@@ -130,6 +204,16 @@ class PaymentService
                 ->latest()
                 ->first();
 
+            $payment?->update(['external_id' => $externalId]);
+        }
+
+        // 3. Checkout Pro package purchase payments: the reference carries
+        //    the purchase id directly, and the Payment hangs off of it via
+        //    package_purchases.payment_id.
+        if (! $payment && $reference && str_starts_with($reference, 'package_purchase_')) {
+            $purchaseId = substr($reference, strlen('package_purchase_'));
+            $purchase = PackagePurchase::withoutTenantScope()->find($purchaseId);
+            $payment = $purchase?->payment;
             $payment?->update(['external_id' => $externalId]);
         }
 
@@ -160,6 +244,29 @@ class PaymentService
         }
 
         $payment->appointment?->client?->notify(new PaymentApproved($payment));
+
+        $this->activatePackagePurchase($payment);
+    }
+
+    /**
+     * Reaproveitado tanto pelo webhook quanto por syncStatus (polling do
+     * PIX), assim a compra ativa mesmo sem depender do webhook em dev.
+     */
+    private function activatePackagePurchase(Payment $payment): void
+    {
+        $purchase = $payment->packagePurchase;
+
+        if (! $purchase || $purchase->status === PackagePurchaseStatus::Active) {
+            return;
+        }
+
+        $purchasedAt = now();
+
+        $purchase->update([
+            'status' => PackagePurchaseStatus::Active,
+            'purchased_at' => $purchasedAt,
+            'expires_at' => $purchasedAt->copy()->addDays($purchase->servicePackage->valid_days),
+        ]);
     }
 
     private function handleSubscriptionWebhook(string $externalId, string $reference, string $status, ?object $metadata = null): void
