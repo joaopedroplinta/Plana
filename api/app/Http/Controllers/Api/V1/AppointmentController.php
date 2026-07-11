@@ -61,7 +61,7 @@ class AppointmentController extends Controller
         $startsAt = Carbon::parse($request->starts_at);
         $endsAt = $startsAt->copy()->addMinutes($service->duration_minutes);
 
-        $this->assertPlanAllowsNewAppointment($tenant, $startsAt);
+        SubscriptionService::assertCanCreateAppointment($tenant, $startsAt);
 
         $appointment = DB::transaction(function () use ($request, $professional, $service, $startsAt, $endsAt) {
             $this->schedulingService->assertSlotAvailable($professional, $service, $startsAt);
@@ -201,29 +201,6 @@ class AppointmentController extends Controller
         if ($newStatus === 'cancelled') {
             $appointment->client?->notify(new AppointmentCancelled($appointment));
             Notification::send($tenant->owner, new AppointmentCancelled($appointment));
-        }
-    }
-
-    private function assertPlanAllowsNewAppointment(Tenant $tenant, Carbon $startsAt): void
-    {
-        $limit = SubscriptionService::maxAppointmentsPerMonth($tenant->plan);
-
-        if ($limit === null) {
-            return;
-        }
-
-        $count = Appointment::query()
-            ->whereNotIn('status', ['cancelled'])
-            ->whereBetween('starts_at', [
-                $startsAt->copy()->startOfMonth(),
-                $startsAt->copy()->endOfMonth(),
-            ])
-            ->count();
-
-        if ($count >= $limit) {
-            throw ValidationException::withMessages([
-                'starts_at' => ["O salão atingiu o limite de {$limit} agendamentos neste mês. Fale com o salão para mais informações."],
-            ]);
         }
     }
 
