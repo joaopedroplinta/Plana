@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useParams } from 'next/navigation'
 import { isAxiosError } from 'axios'
 import { Calendar, Check, CheckCheck, UserX, X } from 'lucide-react'
@@ -54,9 +54,17 @@ export default function SchedulePage() {
   const [error, setError] = useState('')
   const [actingId, setActingId] = useState<string | null>(null)
 
+  // Troca rápida de filtro (ex: preencher a data) pode disparar uma nova busca
+  // antes da anterior responder. Sem isso, se a resposta mais antiga chegar
+  // depois da mais nova (comum: payload maior demora mais pra parsear), ela
+  // sobrescreve a lista com dados desatualizados — guardamos um "número da
+  // vez" e ignoramos qualquer resposta que não seja da requisição mais recente.
+  const latestRequestId = useRef(0)
+
   const loadAppointments = useCallback(() => {
     if (!slug) return
 
+    const requestId = ++latestRequestId.current
     const query: Record<string, string> = { page: String(page) }
     if (date) query.date = date
     if (status) query.status = status
@@ -64,13 +72,20 @@ export default function SchedulePage() {
     appointmentsService
       .list(slug, query)
       .then((res) => {
+        if (requestId !== latestRequestId.current) return
         setAppointments(res.data.data)
         setLastPage(res.data.meta.last_page)
         setTotal(res.data.meta.total)
         setError('')
       })
-      .catch(() => setError('Erro ao carregar agendamentos. Tente novamente.'))
-      .finally(() => setIsLoading(false))
+      .catch(() => {
+        if (requestId !== latestRequestId.current) return
+        setError('Erro ao carregar agendamentos. Tente novamente.')
+      })
+      .finally(() => {
+        if (requestId !== latestRequestId.current) return
+        setIsLoading(false)
+      })
   }, [slug, date, status, page])
 
   useEffect(() => {

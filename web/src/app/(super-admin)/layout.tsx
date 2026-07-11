@@ -32,7 +32,7 @@ export default function SuperAdminLayout({ children }: { children: React.ReactNo
 
   useEffect(() => {
     if (!isLoading && isAuthenticated && user) {
-      const hasAccess = user.roles?.some((r) => r.name === 'super_admin')
+      const hasAccess = user.roles?.includes('super_admin') ?? false
       if (!hasAccess) {
         router.push('/')
       }
