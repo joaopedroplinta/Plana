@@ -52,9 +52,15 @@ class PackagePurchaseController extends Controller
             'status' => PackagePurchaseStatus::Pending,
         ]);
 
-        $data['method'] === 'pix'
-            ? $this->paymentService->createPixForPackagePurchase($purchase, $request->user())
-            : $this->paymentService->createCheckoutProForPackagePurchase($purchase, $request->user(), $currentTenant->slug);
+        try {
+            $data['method'] === 'pix'
+                ? $this->paymentService->createPixForPackagePurchase($purchase, $request->user())
+                : $this->paymentService->createCheckoutProForPackagePurchase($purchase, $request->user(), $currentTenant->slug);
+        } catch (\Throwable $e) {
+            $purchase->delete();
+
+            throw $e;
+        }
 
         $purchase->load(['servicePackage.services', 'payment']);
 
