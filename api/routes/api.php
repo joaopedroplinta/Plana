@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\AvailabilityController;
 use App\Http\Controllers\Api\V1\BlockedDateController;
 use App\Http\Controllers\Api\V1\DashboardController;
+use App\Http\Controllers\Api\V1\PackagePurchaseController;
 use App\Http\Controllers\Api\V1\PaymentController;
 use App\Http\Controllers\Api\V1\ProfessionalController;
 use App\Http\Controllers\Api\V1\ScheduleController;
@@ -87,6 +88,10 @@ Route::prefix('v1')->middleware('throttle:api')->group(function () {
             Route::get('appointments/{appointment}/payments', [PaymentController::class, 'index']);
             Route::post('appointments/{appointment}/payments', [PaymentController::class, 'store']);
             Route::get('payments/{payment}', [PaymentController::class, 'show']);
+
+            Route::post('packages/{package}/purchase', [PackagePurchaseController::class, 'store']);
+            Route::get('package-purchases', [PackagePurchaseController::class, 'index']);
+            Route::get('package-purchases/{packagePurchase}', [PackagePurchaseController::class, 'show']);
         });
 
     // Rotas super admin
