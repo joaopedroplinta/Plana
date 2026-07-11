@@ -193,7 +193,7 @@ export default function MinhaContaPage() {
             }
             const canCancel = appt.status === 'pending' || appt.status === 'confirmed'
             return (
-              <Card key={appt.id} className="p-4">
+              <Card key={appt.id} data-testid="appointment-card" className="p-4">
                 <div className="flex items-start justify-between gap-4">
                   <div className="min-w-0">
                     <p className="font-semibold text-gray-900">{appt.service.name}</p>

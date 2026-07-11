@@ -41,10 +41,16 @@ class AppServiceProvider extends ServiceProvider
      * Rate limiting: endpoints de autenticação são o alvo de brute force,
      * então têm limite agressivo por IP; o restante da API limita por
      * usuário autenticado (ou IP quando anônimo).
+     *
+     * O limite de `auth` é configurável via env (default 5/min, igual produção)
+     * pra permitir afrouxar em ambientes de teste E2E — onde vários registros/
+     * logins saem do mesmo IP em pouco tempo — sem tocar no comportamento padrão.
      */
     private function configureRateLimiting(): void
     {
-        RateLimiter::for('auth', fn (Request $request) => Limit::perMinute(5)->by($request->ip()));
+        $authLimitPerMinute = (int) env('AUTH_RATE_LIMIT_PER_MINUTE', 5);
+
+        RateLimiter::for('auth', fn (Request $request) => Limit::perMinute($authLimitPerMinute)->by($request->ip()));
 
         RateLimiter::for('api', fn (Request $request) => Limit::perMinute(60)->by($request->user('sanctum')?->id ?? $request->ip()));
     }

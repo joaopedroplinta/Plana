@@ -21,18 +21,13 @@ export interface UpdateTenantSettingsData {
   instagram?: string | null
 }
 
-export interface Role {
-  id: number
-  name: string
-  guard_name: string
-}
-
 export interface User {
   id: string
   name: string
   email: string
   email_verified_at: string | null
-  roles: Role[]
+  // API retorna `getRoleNames()` do Spatie Permission — lista de strings, não de objetos.
+  roles: string[]
   tenant?: Tenant
 }
 

@@ -36,7 +36,7 @@ function LoginForm() {
         return
       }
 
-      const roleNames = user.roles?.map((r) => r.name) ?? []
+      const roleNames = user.roles ?? []
 
       if (roleNames.includes('super_admin')) {
         router.push('/super-admin')
