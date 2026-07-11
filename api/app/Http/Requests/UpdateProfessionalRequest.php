@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class UpdateProfessionalRequest extends FormRequest
 {
@@ -19,7 +20,11 @@ class UpdateProfessionalRequest extends FormRequest
             'bio' => ['nullable', 'string'],
             'avatar_url' => ['nullable', 'string', 'max:500'],
             'active' => ['boolean'],
-            'user_id' => ['nullable', 'integer', 'exists:users,id'],
+            'user_id' => [
+                'nullable',
+                'integer',
+                Rule::exists('tenant_user', 'user_id')->where('tenant_id', app('currentTenant')->id),
+            ],
         ];
     }
 }
