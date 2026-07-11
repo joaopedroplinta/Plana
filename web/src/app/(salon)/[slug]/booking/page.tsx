@@ -14,8 +14,9 @@ import { useAuth } from '@/hooks/useAuth'
 import { servicesService } from '@/services/services'
 import { professionalsService } from '@/services/professionals'
 import { appointmentsService } from '@/services/appointments'
+import { packagePurchasesService } from '@/services/packagePurchases'
 import { paymentsService } from '@/services/payments'
-import type { Service, Professional, TimeSlot, ApiError, Payment } from '@/types/index'
+import type { Service, Professional, TimeSlot, ApiError, Payment, PackagePurchase } from '@/types/index'
 import { formatPrice, formatDate, formatDuration } from '@/lib/format'
 
 const TOTAL_STEPS = 5
@@ -100,6 +101,10 @@ export default function BookingPage() {
   const [error, setError] = useState('')
   const [success, setSuccess] = useState(false)
 
+  // Pacotes de sessão do cliente logado, usáveis como forma de pagamento
+  const [packagePurchases, setPackagePurchases] = useState<PackagePurchase[]>([])
+  const [selectedPackagePurchaseId, setSelectedPackagePurchaseId] = useState<string | null>(null)
+
   // Payment state
   const [appointmentId, setAppointmentId] = useState<string | null>(null)
   const [payment, setPayment] = useState<Payment | null>(null)
@@ -127,6 +132,23 @@ export default function BookingPage() {
         setInitialLoading(false)
       })
   }, [slug])
+
+  useEffect(() => {
+    if (!slug || !isAuthenticated) return
+
+    packagePurchasesService
+      .list(slug)
+      .then((res) => {
+        setPackagePurchases(
+          res.data.data.filter((p) => p.status === 'active' && p.sessions_remaining > 0),
+        )
+      })
+      .catch(() => {})
+  }, [slug, isAuthenticated])
+
+  const usablePackagePurchases = packagePurchases.filter((purchase) =>
+    purchase.service_package.services.some((s) => s.id === selectedService?.id),
+  )
 
   // PIX polling
   useEffect(() => {
@@ -185,8 +207,16 @@ export default function BookingPage() {
         service_id: selectedService.id,
         starts_at: `${selectedDate}T${selectedSlot.starts_at}:00`,
         notes: notes.trim() || undefined,
+        package_purchase_id: selectedPackagePurchaseId ?? undefined,
       })
       setAppointmentId(result.data.data.id)
+
+      // Pago com pacote: sessão já foi consumida, nada a cobrar.
+      if (result.data.data.package_purchase_id) {
+        setSuccess(true)
+        return
+      }
+
       setSuccess(false)
       setStep(6)
     } catch (err) {
@@ -344,6 +374,7 @@ export default function BookingPage() {
                     }`}
                     onClick={() => {
                       setSelectedService(service)
+                      setSelectedPackagePurchaseId(null)
                       setStep(2)
                     }}
                   >
@@ -525,7 +556,11 @@ export default function BookingPage() {
                 )}
               </div>
               <p className="text-lg font-bold text-indigo-600">
-                {selectedService ? formatPrice(selectedService.price) : ''}
+                {selectedPackagePurchaseId
+                  ? 'Incluso no pacote'
+                  : selectedService
+                    ? formatPrice(selectedService.price)
+                    : ''}
               </p>
             </div>
 
@@ -556,6 +591,45 @@ export default function BookingPage() {
               </div>
             </div>
           </div>
+
+          {usablePackagePurchases.length > 0 && (
+            <div className="space-y-1.5">
+              <Label>Forma de pagamento</Label>
+              <div className="grid gap-2">
+                <button
+                  type="button"
+                  onClick={() => setSelectedPackagePurchaseId(null)}
+                  className={`rounded-lg border px-4 py-3 text-left text-sm transition-all ${
+                    selectedPackagePurchaseId === null
+                      ? 'border-indigo-500 bg-indigo-50'
+                      : 'border-gray-200 hover:border-indigo-300'
+                  }`}
+                >
+                  <p className="font-medium text-gray-900">Pagar agora</p>
+                  <p className="text-xs text-gray-500">PIX, cartão ou no local</p>
+                </button>
+                {usablePackagePurchases.map((purchase) => (
+                  <button
+                    key={purchase.id}
+                    type="button"
+                    onClick={() => setSelectedPackagePurchaseId(purchase.id)}
+                    className={`rounded-lg border px-4 py-3 text-left text-sm transition-all ${
+                      selectedPackagePurchaseId === purchase.id
+                        ? 'border-indigo-500 bg-indigo-50'
+                        : 'border-gray-200 hover:border-indigo-300'
+                    }`}
+                  >
+                    <p className="font-medium text-gray-900">
+                      Usar pacote: {purchase.service_package.name}
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      {purchase.sessions_remaining} sessões restantes
+                    </p>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
 
           <div className="space-y-1.5">
             <Label htmlFor="booking-notes">Observações (opcional)</Label>
