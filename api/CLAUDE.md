@@ -33,7 +33,6 @@ app/
 ├── Policies/                 # Autorização por recurso
 ├── Services/                 # Lógica de negócio
 │   ├── PaymentService.php
-│   ├── ClaudeService.php
 │   └── SchedulingService.php
 └── Jobs/                     # Jobs assíncronos (webhooks, etc.)
 database/

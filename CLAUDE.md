@@ -25,7 +25,6 @@ sistema-agendamentos/
 | Autorização | Spatie Laravel Permission |
 | Pagamento | MercadoPago SDK (PIX + cartão) |
 | Frontend | Next.js 15 · TypeScript · Tailwind CSS · shadcn/ui |
-| IA no produto | Claude API (claude-sonnet-4-6) |
 
 ## Roles (Spatie Permission)
 
@@ -82,7 +81,6 @@ sistema-agendamentos/
 | `db-agent` | Design de schema, índices, performance PostgreSQL |
 | `tenant-guard` | Auditoria de isolamento multi-tenant |
 | `payment-agent` | Integração MercadoPago (PIX, cartão, webhooks) |
-| `ai-features-agent` | Features com Claude API (assistente, insights) |
 | `github-agent` | Branch, PR, issue board — toda a gestão GitHub |
 
 ## Slash Commands

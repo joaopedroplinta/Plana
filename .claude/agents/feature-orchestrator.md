@@ -47,5 +47,4 @@ Once schema is approved, spawn both agents simultaneously with clear, self-conta
 - Never skip schema design — always present it first
 - Never implement on behalf of a subagent — delegate API work to api-agent, frontend to web-agent
 - If a feature touches payments, brief payment-agent separately before or after the main feature
-- If a feature includes AI capabilities, brief ai-features-agent separately
 - Always confirm with the user before spawning agents if the scope is unclear
