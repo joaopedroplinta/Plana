@@ -92,6 +92,25 @@ it('cliente compra pacote via cartao de credito', function () {
         ->assertJsonPath('data.status', 'pending');
 });
 
+it('nao deixa PackagePurchase orfao quando a criacao do pagamento falha', function () {
+    $tenant = Tenant::factory()->create();
+    $client = ppClient($tenant);
+    $package = ServicePackage::factory()->create(['tenant_id' => $tenant->id, 'price' => 20000]);
+
+    $this->mock(PaymentService::class, fn ($mock) => $mock
+        ->shouldReceive('createPixForPackagePurchase')
+        ->once()
+        ->andThrow(new RuntimeException('Falha simulada no MercadoPago')));
+
+    $response = $this->actingAs($client)
+        ->postJson("/api/v1/salao/{$tenant->slug}/packages/{$package->id}/purchase", [
+            'method' => 'pix',
+        ]);
+
+    $response->assertStatus(500);
+    $this->assertDatabaseCount('package_purchases', 0);
+});
+
 it('pacote copia sessions e price no momento da compra mesmo que o admin edite depois', function () {
     $tenant = Tenant::factory()->create();
     $client = ppClient($tenant);
