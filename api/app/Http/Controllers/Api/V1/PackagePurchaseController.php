@@ -22,7 +22,7 @@ class PackagePurchaseController extends Controller
     {
         Gate::authorize('viewAny', PackagePurchase::class);
 
-        $query = PackagePurchase::with(['servicePackage', 'payment'])
+        $query = PackagePurchase::with(['servicePackage.services', 'payment'])
             ->orderByDesc('created_at');
 
         if (! $request->user()->isStaffOfTenant(app('currentTenant'))) {
@@ -56,7 +56,7 @@ class PackagePurchaseController extends Controller
             ? $this->paymentService->createPixForPackagePurchase($purchase, $request->user())
             : $this->paymentService->createCheckoutProForPackagePurchase($purchase, $request->user(), $currentTenant->slug);
 
-        $purchase->load(['servicePackage', 'payment']);
+        $purchase->load(['servicePackage.services', 'payment']);
 
         return (new PackagePurchaseResource($purchase))
             ->response()
@@ -67,11 +67,11 @@ class PackagePurchaseController extends Controller
     {
         Gate::authorize('view', $packagePurchase);
 
-        $packagePurchase->load(['servicePackage', 'payment']);
+        $packagePurchase->load(['servicePackage.services', 'payment']);
 
         if ($packagePurchase->payment?->method === 'pix' && $packagePurchase->payment->status === 'pending') {
             $this->paymentService->syncStatus($packagePurchase->payment);
-            $packagePurchase->refresh()->load(['servicePackage', 'payment']);
+            $packagePurchase->refresh()->load(['servicePackage.services', 'payment']);
         }
 
         return (new PackagePurchaseResource($packagePurchase))

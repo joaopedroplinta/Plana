@@ -3,6 +3,7 @@
 use App\Enums\PackagePurchaseStatus;
 use App\Models\PackagePurchase;
 use App\Models\Payment;
+use App\Models\Service;
 use App\Models\ServicePackage;
 use App\Models\Tenant;
 use App\Models\User;
@@ -247,6 +248,26 @@ it('cliente lista apenas as proprias compras de pacote', function () {
     $response = $this->actingAs($clientA)->getJson("/api/v1/salao/{$tenant->slug}/package-purchases");
 
     $response->assertOk()->assertJsonCount(2, 'data');
+});
+
+it('inclui os servicos do pacote na listagem de compras (usado pelo booking para oferecer pagar com pacote)', function () {
+    $tenant = Tenant::factory()->create();
+    $client = ppClient($tenant);
+    $package = ServicePackage::factory()->create(['tenant_id' => $tenant->id]);
+    $service = Service::factory()->create(['tenant_id' => $tenant->id]);
+    $package->services()->sync([$service->id]);
+
+    PackagePurchase::factory()->active()->create([
+        'tenant_id' => $tenant->id,
+        'client_id' => $client->id,
+        'service_package_id' => $package->id,
+    ]);
+
+    $response = $this->actingAs($client)->getJson("/api/v1/salao/{$tenant->slug}/package-purchases");
+
+    $response->assertOk()
+        ->assertJsonStructure(['data' => [['service_package' => ['services']]]])
+        ->assertJsonPath('data.0.service_package.services.0.id', $service->id);
 });
 
 it('owner lista todas as compras de pacote do tenant', function () {
