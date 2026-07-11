@@ -57,6 +57,13 @@ Plataforma SaaS de agendamentos para salões de beleza. Cada salão opera como u
 - Assinatura paga vale por 1 mês (`expires_at`); a aprovação via webhook atualiza o plano do tenant
 - Assinatura expirada: o scheduler diário (`subscriptions:downgrade-expired`, 03:00) rebaixa o tenant para Starter e avisa o owner por e-mail. Planos concedidos manualmente pelo super admin (sem assinatura) não são rebaixados
 
+**Pacotes de sessões**
+- Cliente compra um `ServicePackage` (PIX ou cartão, reaproveitando a mesma integração MercadoPago/`PaymentService` do agendamento e da assinatura); a compra fica `pending` até o pagamento ser aprovado
+- `sessions_total` e `price_paid` são copiados do pacote no momento da compra — editar o pacote depois não afeta compras já feitas
+- Pagamento aprovado (webhook ou polling do PIX) ativa a compra: `status = active`, `purchased_at = now()`, `expires_at = purchased_at + valid_days` do pacote
+- No agendamento, o cliente pode pagar com um pacote ativo em vez de dinheiro: exige pacote próprio, não expirado, com sessões livres e serviço incluído no pacote — validado com lock em transação (mesma proteção contra concorrência do agendamento) para não deixar duas reservas consumirem a última sessão. Agendamento pago com pacote sai com `price = 0`
+- Cancelar um agendamento pago com pacote devolve a sessão (`sessions_used` nunca fica negativo); `no_show` não devolve
+
 **Notificações por e-mail** (enfileiradas)
 - Cliente: agendamento recebido, confirmado, cancelado, pagamento aprovado e lembrete ~24h antes do horário (scheduler de hora em hora, idempotente via `reminder_sent_at`)
 - Owner: novo agendamento, agendamento cancelado, plano ativado e assinatura expirada
