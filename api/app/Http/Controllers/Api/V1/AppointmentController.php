@@ -2,11 +2,13 @@
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Enums\PackagePurchaseStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\RescheduleAppointmentRequest;
 use App\Http\Requests\StoreAppointmentRequest;
 use App\Http\Resources\AppointmentResource;
 use App\Models\Appointment;
+use App\Models\PackagePurchase;
 use App\Models\Professional;
 use App\Models\Service;
 use App\Models\Tenant;
@@ -66,16 +68,32 @@ class AppointmentController extends Controller
         $appointment = DB::transaction(function () use ($request, $professional, $service, $startsAt, $endsAt) {
             $this->schedulingService->assertSlotAvailable($professional, $service, $startsAt);
 
-            return Appointment::create([
+            $packagePurchase = null;
+
+            if ($request->package_purchase_id) {
+                // Lock evita duas reservas simultâneas consumirem a última sessão.
+                $packagePurchase = PackagePurchase::where('id', $request->package_purchase_id)
+                    ->lockForUpdate()
+                    ->firstOrFail();
+
+                $this->assertPackagePurchaseUsable($packagePurchase, $service);
+            }
+
+            $appointment = Appointment::create([
                 'client_id' => $request->user()->id,
                 'professional_id' => $request->professional_id,
                 'service_id' => $request->service_id,
+                'package_purchase_id' => $packagePurchase?->id,
                 'starts_at' => $startsAt,
                 'ends_at' => $endsAt,
                 'status' => 'pending',
-                'price' => $service->price,
+                'price' => $packagePurchase ? 0 : $service->price,
                 'notes' => $request->notes,
             ]);
+
+            $packagePurchase?->increment('sessions_used');
+
+            return $appointment;
         });
 
         $this->attachClientToTenant($request->user(), $tenant);
@@ -181,12 +199,54 @@ class AppointmentController extends Controller
             ]);
         }
 
-        $appointment->update(['status' => $newStatus]);
+        if ($newStatus === 'cancelled' && $appointment->package_purchase_id) {
+            DB::transaction(function () use ($appointment, $newStatus) {
+                $purchase = PackagePurchase::where('id', $appointment->package_purchase_id)
+                    ->lockForUpdate()
+                    ->first();
+
+                if ($purchase && $purchase->sessions_used > 0) {
+                    $purchase->decrement('sessions_used');
+                }
+
+                $appointment->update(['status' => $newStatus]);
+            });
+        } else {
+            $appointment->update(['status' => $newStatus]);
+        }
+
         $appointment->load(['client', 'professional', 'service']);
 
         $this->notifyTransition($appointment, $newStatus);
 
         return new AppointmentResource($appointment);
+    }
+
+    private function assertPackagePurchaseUsable(PackagePurchase $purchase, Service $service): void
+    {
+        if ($purchase->status !== PackagePurchaseStatus::Active) {
+            throw ValidationException::withMessages([
+                'package_purchase_id' => ['Este pacote ainda não está ativo.'],
+            ]);
+        }
+
+        if (! $purchase->expires_at || $purchase->expires_at->isPast()) {
+            throw ValidationException::withMessages([
+                'package_purchase_id' => ['Este pacote está expirado.'],
+            ]);
+        }
+
+        if ($purchase->sessions_used >= $purchase->sessions_total) {
+            throw ValidationException::withMessages([
+                'package_purchase_id' => ['Este pacote não tem mais sessões disponíveis.'],
+            ]);
+        }
+
+        if (! $purchase->servicePackage->services()->where('services.id', $service->id)->exists()) {
+            throw ValidationException::withMessages([
+                'package_purchase_id' => ['Este serviço não está incluído no pacote.'],
+            ]);
+        }
     }
 
     private function notifyTransition(Appointment $appointment, string $newStatus): void

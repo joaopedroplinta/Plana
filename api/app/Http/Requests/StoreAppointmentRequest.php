@@ -30,6 +30,16 @@ class StoreAppointmentRequest extends FormRequest
             ],
             'starts_at' => ['required', 'date', 'after:now'],
             'notes' => ['nullable', 'string', 'max:1000'],
+            // Dono, tenant e status "utilizável" (ativa, não expirada, com
+            // sessões livres, serviço incluso) são checados na transação do
+            // controller — não são cleanly expressáveis como Rule::exists.
+            'package_purchase_id' => [
+                'nullable',
+                'uuid',
+                Rule::exists('package_purchases', 'id')
+                    ->where('tenant_id', $tenantId)
+                    ->where('client_id', $this->user()?->id),
+            ],
         ];
     }
 }
