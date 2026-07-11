@@ -1,10 +1,11 @@
 import { api } from '@/lib/api'
-import type { PackagePurchase, PaginatedResponse } from '@/types/index'
+import type { CardPaymentData, PackagePurchase, PaginatedResponse } from '@/types/index'
 
 export const packagePurchasesService = {
-  purchase: (slug: string, packageId: string, method: 'pix' | 'credit_card') =>
+  purchase: (slug: string, packageId: string, method: 'pix' | 'credit_card', card?: CardPaymentData) =>
     api.post<{ data: PackagePurchase }>(`/salao/${slug}/packages/${packageId}/purchase`, {
       method,
+      ...card,
     }),
 
   list: (slug: string) =>

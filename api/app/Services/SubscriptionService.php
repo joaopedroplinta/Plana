@@ -8,15 +8,17 @@ use App\Models\Subscription;
 use App\Models\Tenant;
 use App\Models\User;
 use App\Notifications\SubscriptionActivated;
+use App\Services\Concerns\InteractsWithMercadoPagoOrders;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Validation\ValidationException;
-use MercadoPago\Client\Payment\PaymentClient;
-use MercadoPago\Client\Preference\PreferenceClient;
+use MercadoPago\Client\Order\OrderClient;
 use MercadoPago\MercadoPagoConfig;
 
 class SubscriptionService
 {
+    use InteractsWithMercadoPagoOrders;
+
     /** @var array<string, array<string, mixed>> */
     private const PLANS = [
         'starter' => [
@@ -121,68 +123,58 @@ class SubscriptionService
     public function createPixSubscription(Tenant $tenant, User $payer, string $plan): Subscription
     {
         $planData = self::PLANS[$plan];
-        $client = new PaymentClient;
+        $reference = "subscription_{$tenant->id}_{$plan}";
 
-        $result = $client->create([
-            'transaction_amount' => round($planData['price'] / 100, 2),
-            'description' => "Assinatura plano {$planData['name']}",
-            'payment_method_id' => 'pix',
-            'payer' => ['email' => $payer->email],
-            'metadata' => [
-                'type' => 'subscription',
-                'tenant_id' => $tenant->id,
-                'plan' => $plan,
-            ],
-        ]);
+        $order = $this->createMercadoPagoOrder(
+            amountInCents: $planData['price'],
+            reference: $reference,
+            paymentMethod: ['id' => 'pix', 'type' => 'bank_transfer'],
+            payer: ['email' => $payer->email],
+        );
 
-        return Subscription::create([
+        $subscription = Subscription::create([
             'tenant_id' => $tenant->id,
             'plan' => $plan,
             'amount' => $planData['price'],
             'method' => 'pix',
-            'status' => $result->status ?? 'pending',
-            'mp_payment_id' => (string) $result->id,
-            'pix_qr_code' => $result->point_of_interaction->transaction_data->qr_code ?? null,
-            'pix_qr_code_base64' => $result->point_of_interaction->transaction_data->qr_code_base64 ?? null,
+            'status' => 'pending',
+            'mp_payment_id' => $order->id,
+            'pix_qr_code' => $this->orderPaymentMethodField($order, 'qr_code'),
+            'pix_qr_code_base64' => $this->orderPaymentMethodField($order, 'qr_code_base64'),
         ]);
+
+        return $this->applyStatus($subscription, $this->mapMercadoPagoStatus($order));
     }
 
-    public function createCheckoutProSubscription(Tenant $tenant, User $payer, string $plan): Subscription
+    /**
+     * Cartão via Checkout Transparente (Card Payment Brick) — assim como no
+     * agendamento, a Order API processa de forma síncrona, então aplicamos
+     * o status já na criação em vez de depender só do webhook.
+     *
+     * @param  array{token: string, payment_method_id: string, installments: int, issuer_id?: ?string, payer?: array<string, mixed>}  $card
+     */
+    public function createCheckoutProSubscription(Tenant $tenant, User $payer, string $plan, array $card): Subscription
     {
         $planData = self::PLANS[$plan];
-        $client = new PreferenceClient;
-        $frontendUrl = rtrim(config('app.frontend_url', 'http://localhost:3000'), '/');
+        $reference = "subscription_{$tenant->id}_{$plan}";
 
-        $result = $client->create([
-            'items' => [[
-                'title' => "Assinatura plano {$planData['name']}",
-                'quantity' => 1,
-                'unit_price' => round($planData['price'] / 100, 2),
-            ]],
-            'payer' => ['email' => $payer->email],
-            'external_reference' => "subscription_{$tenant->id}_{$plan}",
-            'back_urls' => [
-                'success' => "{$frontendUrl}/{$tenant->slug}/subscription-success",
-                'failure' => "{$frontendUrl}/{$tenant->slug}/subscription-success",
-                'pending' => "{$frontendUrl}/{$tenant->slug}/subscription-success",
-            ],
-            'auto_return' => 'approved',
-            'notification_url' => config('app.url').'/api/v1/payments/webhook',
-            'metadata' => [
-                'type' => 'subscription',
-                'tenant_id' => $tenant->id,
-                'plan' => $plan,
-            ],
-        ]);
+        $order = $this->createMercadoPagoOrder(
+            amountInCents: $planData['price'],
+            reference: $reference,
+            paymentMethod: $this->cardPaymentMethod($card),
+            payer: $card['payer'] ?? ['email' => $payer->email],
+        );
 
-        return Subscription::create([
+        $subscription = Subscription::create([
             'tenant_id' => $tenant->id,
             'plan' => $plan,
             'amount' => $planData['price'],
             'method' => 'credit_card',
             'status' => 'pending',
-            'mp_preference_id' => $result->id,
+            'mp_payment_id' => $order->id,
         ]);
+
+        return $this->applyStatus($subscription, $this->mapMercadoPagoStatus($order));
     }
 
     public function syncStatus(Subscription $subscription): Subscription
@@ -191,12 +183,17 @@ class SubscriptionService
             return $subscription;
         }
 
-        $client = new PaymentClient;
-        $result = $client->get((int) $subscription->mp_payment_id);
+        $client = new OrderClient;
+        $order = $client->get($subscription->mp_payment_id);
 
-        $becameApproved = $result->status === 'approved' && $subscription->status !== 'approved';
+        return $this->applyStatus($subscription, $this->mapMercadoPagoStatus($order));
+    }
 
-        $updates = ['status' => $result->status];
+    private function applyStatus(Subscription $subscription, string $status): Subscription
+    {
+        $becameApproved = $status === 'approved' && $subscription->status !== 'approved';
+
+        $updates = ['status' => $status];
 
         if ($becameApproved) {
             $updates['paid_at'] = now();

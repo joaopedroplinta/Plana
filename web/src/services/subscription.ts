@@ -1,5 +1,5 @@
 import { api } from '@/lib/api'
-import type { Subscription, SubscriptionResponse } from '@/types'
+import type { CardPaymentData, Subscription, SubscriptionResponse } from '@/types'
 
 export const subscriptionService = {
   get: (slug: string) =>
@@ -8,5 +8,6 @@ export const subscriptionService = {
   create: (
     slug: string,
     data: { plan: string; method: 'pix' | 'credit_card' },
-  ) => api.post<{ data: Subscription }>(`/salao/${slug}/subscription`, data),
+    card?: CardPaymentData,
+  ) => api.post<{ data: Subscription }>(`/salao/${slug}/subscription`, { ...data, ...card }),
 }

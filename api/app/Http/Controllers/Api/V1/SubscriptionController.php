@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Http\Controllers\Api\V1\Concerns\HandlesCardPaymentData;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\SubscriptionResource;
 use App\Models\Subscription;
@@ -12,6 +13,8 @@ use Illuminate\Http\Request;
 
 class SubscriptionController extends Controller
 {
+    use HandlesCardPaymentData;
+
     public function __construct(private readonly SubscriptionService $subscriptionService) {}
 
     public function index(Request $request): JsonResponse
@@ -42,10 +45,10 @@ class SubscriptionController extends Controller
             return response()->json(['message' => 'This action is unauthorized.'], 403);
         }
 
-        $validated = $request->validate([
-            'plan' => ['required', 'string', 'in:starter,pro,enterprise'],
-            'method' => ['required', 'string', 'in:pix,credit_card'],
-        ]);
+        $validated = $request->validate(array_merge(
+            ['plan' => ['required', 'string', 'in:starter,pro,enterprise']],
+            $this->paymentValidationRules(),
+        ));
 
         // Starter is free — update the plan directly without payment
         if ($validated['plan'] === 'starter') {
@@ -70,7 +73,8 @@ class SubscriptionController extends Controller
             $subscription = $this->subscriptionService->createCheckoutProSubscription(
                 $tenant,
                 $request->user(),
-                $validated['plan']
+                $validated['plan'],
+                $this->cardData($validated)
             );
         }
 

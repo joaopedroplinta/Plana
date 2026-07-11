@@ -10,13 +10,14 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
 import { Card } from '@/components/ui/card'
+import { CardPaymentBrick } from '@/components/shared/CardPaymentBrick'
 import { useAuth } from '@/hooks/useAuth'
 import { servicesService } from '@/services/services'
 import { professionalsService } from '@/services/professionals'
 import { appointmentsService } from '@/services/appointments'
 import { packagePurchasesService } from '@/services/packagePurchases'
 import { paymentsService } from '@/services/payments'
-import type { Service, Professional, TimeSlot, ApiError, Payment, PackagePurchase } from '@/types/index'
+import type { Service, Professional, TimeSlot, ApiError, Payment, PackagePurchase, CardPaymentData } from '@/types/index'
 import { formatPrice, formatDate, formatDuration } from '@/lib/format'
 
 const TOTAL_STEPS = 5
@@ -85,7 +86,7 @@ export default function BookingPage() {
   const params = useParams()
   const router = useRouter()
   const slug = typeof params.slug === 'string' ? params.slug : ''
-  const { isLoading: authLoading, isAuthenticated } = useAuth()
+  const { isLoading: authLoading, isAuthenticated, user } = useAuth()
 
   const [step, setStep] = useState(1)
   const [selectedService, setSelectedService] = useState<Service | null>(null)
@@ -246,16 +247,36 @@ export default function BookingPage() {
     }
   }
 
-  async function handlePayCard() {
+  function handleShowCardForm() {
+    setPaymentError('')
+    setStep(8)
+  }
+
+  async function handleCardSubmit(cardData: CardPaymentData) {
     if (!appointmentId) return
     setPaymentLoading(true)
     setPaymentError('')
     try {
-      const res = await paymentsService.create(slug, appointmentId, 'credit_card')
-      const url = res.data.data.preference_url
-      if (url) window.location.href = url
-    } catch {
-      setPaymentError('Erro ao iniciar pagamento. Tente novamente.')
+      const res = await paymentsService.create(slug, appointmentId, 'credit_card', cardData)
+      setPayment(res.data.data)
+
+      if (res.data.data.status === 'approved') {
+        setSuccess(true)
+      } else if (res.data.data.status === 'rejected' || res.data.data.status === 'cancelled') {
+        setPaymentError('Pagamento recusado pela operadora do cartão. Verifique os dados e tente novamente.')
+      } else {
+        // pending/in_process — incomum para cartão (normalmente síncrono),
+        // mas tratamos como sucesso: o agendamento já está reservado e o
+        // pagamento será confirmado em instantes.
+        setSuccess(true)
+      }
+    } catch (err) {
+      if (isAxiosError(err)) {
+        const apiError = err.response?.data as ApiError | undefined
+        setPaymentError(apiError?.message ?? 'Erro ao processar pagamento.')
+      } else {
+        setPaymentError('Erro inesperado. Tente novamente.')
+      }
     } finally {
       setPaymentLoading(false)
     }
@@ -684,13 +705,13 @@ export default function BookingPage() {
               <div className="text-sm text-gray-500">Pagamento imediato</div>
             </button>
             <button
-              onClick={handlePayCard}
+              onClick={handleShowCardForm}
               disabled={paymentLoading}
               className="border-2 border-blue-500 rounded-lg p-6 text-center hover:bg-blue-50 transition-colors disabled:opacity-50"
             >
               <div className="text-3xl mb-2">💳</div>
               <div className="font-semibold text-blue-700">Cartão de crédito</div>
-              <div className="text-sm text-gray-500">Redirecionado para o MercadoPago</div>
+              <div className="text-sm text-gray-500">Pague sem sair daqui</div>
             </button>
           </div>
           <button
@@ -701,6 +722,40 @@ export default function BookingPage() {
             Pagar no local — finalizar sem pagamento online
           </button>
           {paymentLoading && <p className="text-center text-gray-400 animate-pulse">Aguarde...</p>}
+        </div>
+      )}
+
+      {/* Step 8: Cartão de crédito (Card Payment Brick — Checkout Transparente) */}
+      {step === 8 && (
+        <div className="space-y-6">
+          <div>
+            <h2 className="text-xl font-bold text-gray-900">Pagamento com cartão</h2>
+            <p className="mt-1 text-sm text-gray-500">
+              Seus dados são enviados com segurança diretamente ao MercadoPago.
+            </p>
+          </div>
+          <p className="text-gray-600">
+            {selectedService?.name} —{' '}
+            <span className="font-semibold text-indigo-600">
+              {formatPrice(selectedService?.price ?? 0)}
+            </span>
+          </p>
+          {paymentError && (
+            <p className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-600">{paymentError}</p>
+          )}
+          <CardPaymentBrick
+            amount={(selectedService?.price ?? 0) / 100}
+            payerEmail={user?.email}
+            onApprove={handleCardSubmit}
+          />
+          <button
+            onClick={() => setStep(6)}
+            disabled={paymentLoading}
+            className="w-full rounded-lg border border-gray-200 px-4 py-3 text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors disabled:opacity-50"
+          >
+            Voltar
+          </button>
+          {paymentLoading && <p className="text-center text-gray-400 animate-pulse">Processando pagamento...</p>}
         </div>
       )}
 

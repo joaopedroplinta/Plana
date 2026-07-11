@@ -11,13 +11,15 @@ use App\Models\Subscription;
 use App\Models\User;
 use App\Notifications\PaymentApproved;
 use App\Notifications\SubscriptionActivated;
+use App\Services\Concerns\InteractsWithMercadoPagoOrders;
 use Illuminate\Support\Facades\Notification;
-use MercadoPago\Client\Payment\PaymentClient;
-use MercadoPago\Client\Preference\PreferenceClient;
+use MercadoPago\Client\Order\OrderClient;
 use MercadoPago\MercadoPagoConfig;
 
 class PaymentService
 {
+    use InteractsWithMercadoPagoOrders;
+
     public function __construct()
     {
         $token = config('services.mercadopago.access_token');
@@ -29,124 +31,111 @@ class PaymentService
 
     public function createPix(Appointment $appointment, User $payer): Payment
     {
-        $client = new PaymentClient;
-        $result = $client->create([
-            'transaction_amount' => round($appointment->price / 100, 2),
-            'description' => 'Agendamento '.$appointment->id,
-            'payment_method_id' => 'pix',
-            'payer' => ['email' => $payer->email],
-            'external_reference' => $appointment->id,
-        ]);
+        $order = $this->createMercadoPagoOrder(
+            amountInCents: $appointment->price,
+            reference: $appointment->id,
+            paymentMethod: ['id' => 'pix', 'type' => 'bank_transfer'],
+            payer: ['email' => $payer->email],
+        );
 
-        return Payment::create([
+        $payment = Payment::create([
             'appointment_id' => $appointment->id,
             'amount' => $appointment->price,
             'method' => 'pix',
-            'external_id' => (string) $result->id,
-            'status' => $result->status ?? 'pending',
-            'pix_qr_code' => $result->point_of_interaction->transaction_data->qr_code ?? null,
-            'pix_qr_code_base64' => $result->point_of_interaction->transaction_data->qr_code_base64 ?? null,
+            'external_id' => $order->id,
+            'status' => 'pending',
+            'pix_qr_code' => $this->orderPaymentMethodField($order, 'qr_code'),
+            'pix_qr_code_base64' => $this->orderPaymentMethodField($order, 'qr_code_base64'),
         ]);
+
+        $this->applyStatus($payment, $this->mapMercadoPagoStatus($order));
+
+        return $payment->fresh();
     }
 
-    public function createCheckoutPro(Appointment $appointment, User $payer, string $slug): Payment
+    /**
+     * Cartão de crédito via Checkout Transparente (Card Payment Brick no
+     * frontend gera o token — nunca recebemos os dados crus do cartão).
+     * Diferente do antigo Checkout Pro, a Order API processa o pagamento de
+     * forma síncrona: o resultado (aprovado/recusado) já vem na resposta do
+     * create(), então aplicamos o status imediatamente em vez de esperar o
+     * webhook.
+     *
+     * @param  array{token: string, payment_method_id: string, installments: int, issuer_id?: ?string, payer?: array<string, mixed>}  $card
+     */
+    public function createCheckoutPro(Appointment $appointment, User $payer, array $card): Payment
     {
-        $client = new PreferenceClient;
-        $frontendUrl = rtrim(config('app.frontend_url', 'http://localhost:3000'), '/');
+        $order = $this->createMercadoPagoOrder(
+            amountInCents: $appointment->price,
+            reference: $appointment->id,
+            paymentMethod: $this->cardPaymentMethod($card),
+            payer: $card['payer'] ?? ['email' => $payer->email],
+        );
 
-        $result = $client->create([
-            'items' => [[
-                'title' => 'Agendamento '.$appointment->id,
-                'quantity' => 1,
-                'unit_price' => round($appointment->price / 100, 2),
-            ]],
-            'payer' => ['email' => $payer->email],
-            'external_reference' => $appointment->id,
-            'back_urls' => [
-                'success' => "{$frontendUrl}/{$slug}/payment-success",
-                'failure' => "{$frontendUrl}/{$slug}/payment-failure",
-                'pending' => "{$frontendUrl}/{$slug}/payment-success",
-            ],
-            'auto_return' => 'approved',
-            'notification_url' => config('app.url').'/api/v1/payments/webhook',
-        ]);
-
-        return Payment::create([
+        $payment = Payment::create([
             'appointment_id' => $appointment->id,
             'amount' => $appointment->price,
             'method' => 'credit_card',
-            'preference_id' => $result->id,
+            'external_id' => $order->id,
             'status' => 'pending',
         ]);
+
+        $this->applyStatus($payment, $this->mapMercadoPagoStatus($order));
+
+        return $payment->fresh();
     }
 
     public function createPixForPackagePurchase(PackagePurchase $purchase, User $payer): Payment
     {
-        $client = new PaymentClient;
-        $result = $client->create([
-            'transaction_amount' => round($purchase->price_paid / 100, 2),
-            'description' => 'Pacote '.$purchase->servicePackage->name,
-            'payment_method_id' => 'pix',
-            'payer' => ['email' => $payer->email],
-            'external_reference' => "package_purchase_{$purchase->id}",
-            'metadata' => [
-                'type' => 'package_purchase',
-                'package_purchase_id' => $purchase->id,
-            ],
-        ]);
+        $order = $this->createMercadoPagoOrder(
+            amountInCents: $purchase->price_paid,
+            reference: "package_purchase_{$purchase->id}",
+            paymentMethod: ['id' => 'pix', 'type' => 'bank_transfer'],
+            payer: ['email' => $payer->email],
+        );
 
         $payment = Payment::create([
             'tenant_id' => $purchase->tenant_id,
             'amount' => $purchase->price_paid,
             'method' => 'pix',
-            'external_id' => (string) $result->id,
-            'status' => $result->status ?? 'pending',
-            'pix_qr_code' => $result->point_of_interaction->transaction_data->qr_code ?? null,
-            'pix_qr_code_base64' => $result->point_of_interaction->transaction_data->qr_code_base64 ?? null,
+            'external_id' => $order->id,
+            'status' => 'pending',
+            'pix_qr_code' => $this->orderPaymentMethodField($order, 'qr_code'),
+            'pix_qr_code_base64' => $this->orderPaymentMethodField($order, 'qr_code_base64'),
         ]);
 
         $purchase->update(['payment_id' => $payment->id]);
 
-        return $payment;
+        $this->applyStatus($payment, $this->mapMercadoPagoStatus($order));
+
+        return $payment->fresh();
     }
 
-    public function createCheckoutProForPackagePurchase(PackagePurchase $purchase, User $payer, string $slug): Payment
+    /**
+     * @param  array{token: string, payment_method_id: string, installments: int, issuer_id?: ?string, payer?: array<string, mixed>}  $card
+     */
+    public function createCheckoutProForPackagePurchase(PackagePurchase $purchase, User $payer, array $card): Payment
     {
-        $client = new PreferenceClient;
-        $frontendUrl = rtrim(config('app.frontend_url', 'http://localhost:3000'), '/');
-
-        $result = $client->create([
-            'items' => [[
-                'title' => 'Pacote '.$purchase->servicePackage->name,
-                'quantity' => 1,
-                'unit_price' => round($purchase->price_paid / 100, 2),
-            ]],
-            'payer' => ['email' => $payer->email],
-            'external_reference' => "package_purchase_{$purchase->id}",
-            'back_urls' => [
-                'success' => "{$frontendUrl}/{$slug}/payment-success",
-                'failure' => "{$frontendUrl}/{$slug}/payment-failure",
-                'pending' => "{$frontendUrl}/{$slug}/payment-success",
-            ],
-            'auto_return' => 'approved',
-            'notification_url' => config('app.url').'/api/v1/payments/webhook',
-            'metadata' => [
-                'type' => 'package_purchase',
-                'package_purchase_id' => $purchase->id,
-            ],
-        ]);
+        $order = $this->createMercadoPagoOrder(
+            amountInCents: $purchase->price_paid,
+            reference: "package_purchase_{$purchase->id}",
+            paymentMethod: $this->cardPaymentMethod($card),
+            payer: $card['payer'] ?? ['email' => $payer->email],
+        );
 
         $payment = Payment::create([
             'tenant_id' => $purchase->tenant_id,
             'amount' => $purchase->price_paid,
             'method' => 'credit_card',
-            'preference_id' => $result->id,
+            'external_id' => $order->id,
             'status' => 'pending',
         ]);
 
         $purchase->update(['payment_id' => $payment->id]);
 
-        return $payment;
+        $this->applyStatus($payment, $this->mapMercadoPagoStatus($order));
+
+        return $payment->fresh();
     }
 
     public function syncStatus(Payment $payment): Payment
@@ -157,25 +146,33 @@ class PaymentService
 
         $result = $this->fetchPayment($payment->external_id);
 
-        $this->applyStatus($payment, (string) $result->status);
+        $this->applyStatus($payment, $this->mapMercadoPagoStatus($result));
 
         return $payment->fresh();
     }
 
     /**
-     * Busca um pagamento na API do MercadoPago (extraído para permitir mock em testes).
+     * Busca uma Order na API do MercadoPago (extraído para permitir mock em
+     * testes). `$externalId` é o id da Order (payments.external_id) — não o
+     * id aninhado do pagamento dentro de transactions.payments[].
      */
     protected function fetchPayment(string $externalId): object
     {
-        $client = new PaymentClient;
+        $client = new OrderClient;
 
-        return $client->get((int) $externalId);
+        return $client->get($externalId);
     }
 
     public function handleWebhook(array $data): void
     {
         $type = $data['type'] ?? null;
-        if ($type !== 'payment') {
+
+        // Incerteza documentada: não conseguimos confirmar (sem acesso a um
+        // webhook real de produção) se a API Orders notifica com
+        // type=payment — igual à integração antiga, já que a Order ainda
+        // cria um pagamento "de verdade" por baixo dos panos — ou com um
+        // tópico próprio (ex.: 'order'). Aceitamos os dois por segurança.
+        if (! in_array($type, ['payment', 'order'], true)) {
             return;
         }
 
@@ -185,13 +182,14 @@ class PaymentService
         }
 
         $result = $this->fetchPayment($externalId);
-        $status = (string) $result->status;
+        $status = $this->mapMercadoPagoStatus($result);
         $reference = (string) ($result->external_reference ?? '');
 
-        // 1. PIX payments store the MP payment id upfront.
+        // 1. PIX payments store the MP order id upfront.
         $payment = Payment::withoutTenantScope()->where('external_id', $externalId)->first();
 
-        // 2. Checkout Pro payments only know the preference id — match the
+        // 2. Checkout Pro (legado — pagamentos criados antes desta
+        //    migração) payments only know the preference id — match the
         //    pending payment through the appointment in external_reference.
         if (! $payment && $reference
             && ! str_starts_with($reference, 'subscription_')
@@ -298,6 +296,13 @@ class PaymentService
     /**
      * Extrai (tenant_id, plan) do metadata do MP ou, na falta dele,
      * do external_reference "subscription_{tenant_id}_{plan}".
+     *
+     * A API Orders não tem um campo `metadata` livre equivalente ao do
+     * antigo PaymentClient (só `additional_info`, com schema fechado do MP)
+     * — por isso, a partir desta migração, toda subscription nova (pix ou
+     * cartão) grava `external_reference`, e o parse abaixo passa a ser o
+     * caminho principal. O parâmetro `$metadata` continua aceito para não
+     * quebrar assinaturas antigas/testes que ainda simulam esse formato.
      *
      * @return array{0: ?string, 1: ?string}
      */
