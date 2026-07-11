@@ -6,9 +6,20 @@ interface AvailabilityResponse {
 }
 
 export const appointmentsService = {
-  availability: (slug: string, professionalId: string, serviceId: string, date: string) =>
+  availability: (
+    slug: string,
+    professionalId: string,
+    serviceId: string,
+    date: string,
+    ignoreAppointmentId?: string,
+  ) =>
     api.get<AvailabilityResponse>(`/salao/${slug}/availability`, {
-      params: { professional_id: professionalId, service_id: serviceId, date },
+      params: {
+        professional_id: professionalId,
+        service_id: serviceId,
+        date,
+        ignore_appointment_id: ignoreAppointmentId,
+      },
     }),
 
   create: (slug: string, data: CreateAppointmentData) =>

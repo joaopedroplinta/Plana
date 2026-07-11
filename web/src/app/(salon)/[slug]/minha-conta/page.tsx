@@ -116,6 +116,7 @@ export default function MinhaContaPage() {
         rescheduling.professional.id,
         rescheduling.service.id,
         newDate,
+        rescheduling.id,
       )
       setSlots(res.data.data)
       setSlotsLoaded(true)
