@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { toast } from 'sonner'
-import { useAuth } from '@/hooks/useAuth'
+import { useTenant } from '@/hooks/useTenant'
 import { subscriptionService } from '@/services/subscription'
 import type { Subscription, SubscriptionPlan, SubscriptionResponse } from '@/types'
 import { formatPrice } from '@/lib/format'
@@ -30,7 +30,7 @@ export default function PlanosPage() {
   const params = useParams()
   const slug = typeof params.slug === 'string' ? params.slug : ''
   const router = useRouter()
-  const { user } = useAuth()
+  const { tenant } = useTenant(slug)
 
   const [data, setData] = useState<SubscriptionResponse | null>(null)
   const [isLoading, setIsLoading] = useState(true)
@@ -40,7 +40,7 @@ export default function PlanosPage() {
 
   const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
-  const isOwner = user?.roles?.some((r) => r.name === 'salon_owner') ?? false
+  const isOwner = tenant?.current_tenant_role === 'owner'
 
   useEffect(() => {
     if (!slug) return

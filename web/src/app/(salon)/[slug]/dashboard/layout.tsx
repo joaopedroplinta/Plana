@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useParams, useRouter, usePathname } from 'next/navigation'
 import Link from 'next/link'
 import { useAuth } from '@/hooks/useAuth'
+import { useTenant } from '@/hooks/useTenant'
 import { Button } from '@/components/ui/button'
 import {
   LayoutDashboard,
@@ -30,26 +31,27 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const slug = typeof params.slug === 'string' ? params.slug : ''
   const router = useRouter()
   const pathname = usePathname()
-  const { user, isLoading, isAuthenticated, logout } = useAuth()
+  const { user, isLoading: isAuthLoading, isAuthenticated, logout } = useAuth()
+  const { tenant, isLoading: isTenantLoading } = useTenant(slug)
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const isLoading = isAuthLoading || isTenantLoading
 
   useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
+    if (!isAuthLoading && !isAuthenticated) {
       router.replace('/login')
     }
-  }, [isLoading, isAuthenticated, router])
+  }, [isAuthLoading, isAuthenticated, router])
 
-  // Role guard: apenas salon_owner e salon_staff acessam o dashboard
+  // Role guard: apenas owner e staff do tenant atual acessam o dashboard
   useEffect(() => {
-    if (!isLoading && isAuthenticated && user) {
-      const hasAccess = user.roles?.some((r) =>
-        ['salon_owner', 'salon_staff'].includes(r.name),
-      )
+    if (!isLoading && isAuthenticated && tenant) {
+      const role = tenant.current_tenant_role
+      const hasAccess = role === 'owner' || role === 'staff'
       if (!hasAccess) {
         router.push(`/${slug}`)
       }
     }
-  }, [isLoading, isAuthenticated, user, router, slug])
+  }, [isLoading, isAuthenticated, tenant, router, slug])
 
   const navItems: NavItem[] = [
     {

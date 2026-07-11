@@ -14,10 +14,11 @@ export default function SalonLayout({ children, params }: SalonLayoutProps) {
   const { slug } = use(params)
   const pathname = usePathname()
   const { tenant, isLoading } = useTenant(slug)
-  const { user, isAuthenticated } = useAuth()
+  const { isAuthenticated } = useAuth()
 
   const displayName = isLoading ? '...' : (tenant?.name ?? slug)
-  const isStaff = user?.roles?.some((r) => ['salon_owner', 'salon_staff'].includes(r.name)) ?? false
+  const isStaff =
+    tenant?.current_tenant_role === 'owner' || tenant?.current_tenant_role === 'staff'
   const isDashboard = pathname?.includes('/dashboard')
 
   // O dashboard tem layout próprio com sidebar — não duplicar o header.

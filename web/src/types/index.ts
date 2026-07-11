@@ -9,6 +9,7 @@ export interface Tenant {
   whatsapp: string | null
   address: string | null
   instagram: string | null
+  current_tenant_role: 'owner' | 'staff' | 'client' | null
 }
 
 export interface UpdateTenantSettingsData {
