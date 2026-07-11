@@ -77,6 +77,7 @@ export interface Appointment {
   status: 'pending' | 'confirmed' | 'completed' | 'cancelled' | 'no_show'
   price: number
   notes: string | null
+  package_purchase_id: string | null
   service: Service
   professional: Professional
   client: User
@@ -85,7 +86,7 @@ export interface Appointment {
 
 export interface Payment {
   id: string
-  appointment_id: string
+  appointment_id: string | null
   amount: number
   method: 'pix' | 'credit_card'
   status: 'pending' | 'approved' | 'rejected' | 'refunded'
@@ -93,6 +94,20 @@ export interface Payment {
   pix_qr_code_base64: string | null
   preference_url: string | null
   paid_at: string | null
+}
+
+export interface PackagePurchase {
+  id: string
+  service_package: ServicePackage
+  sessions_total: number
+  sessions_used: number
+  sessions_remaining: number
+  price_paid: number
+  status: 'pending' | 'active' | 'expired' | 'cancelled'
+  purchased_at: string | null
+  expires_at: string | null
+  payment: Payment | null
+  created_at: string
 }
 
 export interface PaginatedResponse<T> {
@@ -126,6 +141,7 @@ export interface CreateAppointmentData {
   service_id: string
   starts_at: string // ISO datetime: "YYYY-MM-DDTHH:MM:00"
   notes?: string
+  package_purchase_id?: string
 }
 
 export interface TeamMember {

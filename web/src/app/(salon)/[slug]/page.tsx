@@ -1,9 +1,11 @@
 import { notFound } from 'next/navigation'
 import { AtSign, Clock, MapPin, Phone } from 'lucide-react'
+import { PackagesSection } from '@/components/shared/PackagesSection'
 import { Badge } from '@/components/ui/badge'
+import { packagesService } from '@/services/packages'
 import { servicesService } from '@/services/services'
 import { tenantsService } from '@/services/tenants'
-import type { Service, Tenant } from '@/types/index'
+import type { Service, ServicePackage, Tenant } from '@/types/index'
 import { formatDuration, formatPrice } from '@/lib/format'
 
 interface SalonHomeProps {
@@ -15,14 +17,17 @@ export default async function SalonHomePage({ params }: SalonHomeProps) {
 
   let tenant: Tenant
   let services: Service[] = []
+  let packages: ServicePackage[] = []
 
   try {
-    const [tenantRes, servicesRes] = await Promise.all([
+    const [tenantRes, servicesRes, packagesRes] = await Promise.all([
       tenantsService.show(slug),
       servicesService.list(slug),
+      packagesService.list(slug),
     ])
     tenant = tenantRes.data.data
     services = servicesRes.data.data
+    packages = packagesRes.data.data
   } catch {
     notFound()
   }
@@ -125,6 +130,8 @@ export default async function SalonHomePage({ params }: SalonHomeProps) {
           </div>
         )}
       </section>
+
+      <PackagesSection slug={slug} packages={packages} />
     </div>
   )
 }
