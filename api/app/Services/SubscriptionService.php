@@ -2,11 +2,15 @@
 
 namespace App\Services;
 
+use App\Models\Appointment;
+use App\Models\Professional;
 use App\Models\Subscription;
 use App\Models\Tenant;
 use App\Models\User;
 use App\Notifications\SubscriptionActivated;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Notification;
+use Illuminate\Validation\ValidationException;
 use MercadoPago\Client\Payment\PaymentClient;
 use MercadoPago\Client\Preference\PreferenceClient;
 use MercadoPago\MercadoPagoConfig;
@@ -55,6 +59,46 @@ class SubscriptionService
     public static function maxAppointmentsPerMonth(string $plan): ?int
     {
         return (self::PLANS[$plan] ?? self::PLANS['starter'])['max_appointments_per_month'];
+    }
+
+    public static function assertCanAddProfessional(Tenant $tenant): void
+    {
+        $limit = self::maxProfessionals($tenant->plan);
+
+        if ($limit === null) {
+            return;
+        }
+
+        if (Professional::count() >= $limit) {
+            $plural = $limit === 1 ? 'profissional' : 'profissionais';
+
+            throw ValidationException::withMessages([
+                'name' => ["Seu plano permite no máximo {$limit} {$plural}. Faça upgrade para adicionar mais."],
+            ]);
+        }
+    }
+
+    public static function assertCanCreateAppointment(Tenant $tenant, Carbon $startsAt): void
+    {
+        $limit = self::maxAppointmentsPerMonth($tenant->plan);
+
+        if ($limit === null) {
+            return;
+        }
+
+        $count = Appointment::query()
+            ->whereNotIn('status', ['cancelled'])
+            ->whereBetween('starts_at', [
+                $startsAt->copy()->startOfMonth(),
+                $startsAt->copy()->endOfMonth(),
+            ])
+            ->count();
+
+        if ($count >= $limit) {
+            throw ValidationException::withMessages([
+                'starts_at' => ["O salão atingiu o limite de {$limit} agendamentos neste mês. Fale com o salão para mais informações."],
+            ]);
+        }
     }
 
     public function __construct()

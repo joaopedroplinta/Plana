@@ -13,7 +13,6 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Facades\Gate;
-use Illuminate\Validation\ValidationException;
 
 class ProfessionalController extends Controller
 {
@@ -34,7 +33,10 @@ class ProfessionalController extends Controller
     {
         Gate::authorize('create', Professional::class);
 
-        $this->assertPlanAllowsNewProfessional();
+        /** @var Tenant $tenant */
+        $tenant = app('currentTenant');
+
+        SubscriptionService::assertCanAddProfessional($tenant);
 
         $professional = Professional::create($request->validated());
 
@@ -66,24 +68,5 @@ class ProfessionalController extends Controller
         $professional->delete();
 
         return response()->json(null, 204);
-    }
-
-    private function assertPlanAllowsNewProfessional(): void
-    {
-        /** @var Tenant $tenant */
-        $tenant = app('currentTenant');
-        $limit = SubscriptionService::maxProfessionals($tenant->plan);
-
-        if ($limit === null) {
-            return;
-        }
-
-        if (Professional::count() >= $limit) {
-            $plural = $limit === 1 ? 'profissional' : 'profissionais';
-
-            throw ValidationException::withMessages([
-                'name' => ["Seu plano permite no máximo {$limit} {$plural}. Faça upgrade para adicionar mais."],
-            ]);
-        }
     }
 }
