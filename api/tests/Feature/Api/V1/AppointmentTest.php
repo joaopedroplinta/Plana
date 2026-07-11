@@ -415,6 +415,107 @@ it('slot ocupado por agendamento existente nao aparece na disponibilidade', func
     $response->assertJsonFragment(['starts_at' => '11:00', 'ends_at' => '12:00']);
 });
 
+it('ignore_appointment_id faz o proprio slot do agendamento aparecer disponivel na disponibilidade', function () {
+    $tenant = Tenant::factory()->create();
+    $professional = Professional::factory()->create(['tenant_id' => $tenant->id]);
+    $service = Service::factory()->create(['tenant_id' => $tenant->id, 'duration_minutes' => 60]);
+
+    $date = now()->next('Thursday');
+
+    Schedule::factory()->create([
+        'tenant_id' => $tenant->id,
+        'professional_id' => $professional->id,
+        'day_of_week' => $date->dayOfWeek,
+        'start_time' => '09:00:00',
+        'end_time' => '12:00:00',
+    ]);
+
+    $appointment = Appointment::factory()->create([
+        'tenant_id' => $tenant->id,
+        'professional_id' => $professional->id,
+        'service_id' => $service->id,
+        'starts_at' => $date->copy()->setHour(9)->setMinute(0)->setSecond(0),
+        'ends_at' => $date->copy()->setHour(10)->setMinute(0)->setSecond(0),
+        'status' => 'confirmed',
+        'price' => 5000,
+    ]);
+
+    // Sem ignore_appointment_id, o próprio slot aparece ocupado.
+    $withoutIgnore = $this->getJson("/api/v1/salao/{$tenant->slug}/availability?professional_id={$professional->id}&service_id={$service->id}&date={$date->format('Y-m-d')}");
+    $withoutIgnore->assertOk()->assertJsonCount(2, 'data');
+    $withoutIgnore->assertJsonMissing(['starts_at' => '09:00', 'ends_at' => '10:00']);
+
+    // Com ignore_appointment_id apontando para o próprio agendamento, o slot volta a aparecer livre.
+    $withIgnore = $this->getJson("/api/v1/salao/{$tenant->slug}/availability?professional_id={$professional->id}&service_id={$service->id}&date={$date->format('Y-m-d')}&ignore_appointment_id={$appointment->id}");
+    $withIgnore->assertOk()->assertJsonCount(3, 'data');
+    $withIgnore->assertJsonFragment(['starts_at' => '09:00', 'ends_at' => '10:00']);
+});
+
+it('nao lista slots para profissional inativo', function () {
+    $tenant = Tenant::factory()->create();
+    $professional = Professional::factory()->inactive()->create(['tenant_id' => $tenant->id]);
+    $service = Service::factory()->create(['tenant_id' => $tenant->id, 'duration_minutes' => 60]);
+
+    $date = now()->next('Monday');
+
+    Schedule::factory()->create([
+        'tenant_id' => $tenant->id,
+        'professional_id' => $professional->id,
+        'day_of_week' => $date->dayOfWeek,
+        'start_time' => '09:00:00',
+        'end_time' => '12:00:00',
+    ]);
+
+    $response = $this->getJson("/api/v1/salao/{$tenant->slug}/availability?professional_id={$professional->id}&service_id={$service->id}&date={$date->format('Y-m-d')}");
+
+    $response->assertOk()->assertJsonCount(0, 'data');
+});
+
+it('nao lista slots para servico inativo', function () {
+    $tenant = Tenant::factory()->create();
+    $professional = Professional::factory()->create(['tenant_id' => $tenant->id]);
+    $service = Service::factory()->inactive()->create(['tenant_id' => $tenant->id, 'duration_minutes' => 60]);
+
+    $date = now()->next('Monday');
+
+    Schedule::factory()->create([
+        'tenant_id' => $tenant->id,
+        'professional_id' => $professional->id,
+        'day_of_week' => $date->dayOfWeek,
+        'start_time' => '09:00:00',
+        'end_time' => '12:00:00',
+    ]);
+
+    $response = $this->getJson("/api/v1/salao/{$tenant->slug}/availability?professional_id={$professional->id}&service_id={$service->id}&date={$date->format('Y-m-d')}");
+
+    $response->assertOk()->assertJsonCount(0, 'data');
+});
+
+it('nao lista slots que ja passaram no dia de hoje', function () {
+    // Fixa o "agora" às 10:00 para evitar flakiness perto da virada do dia.
+    $now = now()->startOfDay()->addHours(10);
+    $this->travelTo($now);
+
+    $tenant = Tenant::factory()->create();
+    $professional = Professional::factory()->create(['tenant_id' => $tenant->id]);
+    $service = Service::factory()->create(['tenant_id' => $tenant->id, 'duration_minutes' => 60]);
+
+    Schedule::factory()->create([
+        'tenant_id' => $tenant->id,
+        'professional_id' => $professional->id,
+        'day_of_week' => $now->dayOfWeek,
+        'start_time' => '08:00:00',
+        'end_time' => '12:00:00',
+    ]);
+
+    $response = $this->getJson("/api/v1/salao/{$tenant->slug}/availability?professional_id={$professional->id}&service_id={$service->id}&date={$now->format('Y-m-d')}");
+
+    $response->assertOk()->assertJsonCount(1, 'data');
+    $response->assertJsonFragment(['starts_at' => '11:00', 'ends_at' => '12:00']);
+
+    $this->travelBack();
+});
+
 // --- Regras de negócio: horário de atendimento ---
 
 it('rejeita agendamento fora do expediente do profissional com 422', function () {
@@ -475,6 +576,107 @@ it('rejeita agendamento em data bloqueada com 422', function () {
         'service_id' => $service->id,
         'starts_at' => $date->copy()->setTime(10, 0)->toIso8601String(),
     ]);
+
+    $response->assertUnprocessable()->assertJsonValidationErrors(['starts_at']);
+});
+
+// --- Regras de negócio: grade de horários e disponibilidade do profissional/serviço ---
+
+it('rejeita agendamento com profissional inativo com 422', function () {
+    $tenant = Tenant::factory()->create();
+    $client = apptClient($tenant);
+    $professional = Professional::factory()->inactive()->create(['tenant_id' => $tenant->id]);
+    $service = Service::factory()->create(['tenant_id' => $tenant->id, 'duration_minutes' => 60, 'price' => 5000]);
+    apptFullWeekSchedule($tenant, $professional);
+
+    $response = $this->actingAs($client)->postJson("/api/v1/salao/{$tenant->slug}/appointments", [
+        'professional_id' => $professional->id,
+        'service_id' => $service->id,
+        'starts_at' => now()->addDay()->setTime(10, 0)->toIso8601String(),
+    ]);
+
+    $response->assertUnprocessable()->assertJsonValidationErrors(['starts_at']);
+});
+
+it('rejeita agendamento com servico inativo com 422', function () {
+    $tenant = Tenant::factory()->create();
+    $client = apptClient($tenant);
+    $professional = Professional::factory()->create(['tenant_id' => $tenant->id]);
+    $service = Service::factory()->inactive()->create(['tenant_id' => $tenant->id, 'duration_minutes' => 60, 'price' => 5000]);
+    apptFullWeekSchedule($tenant, $professional);
+
+    $response = $this->actingAs($client)->postJson("/api/v1/salao/{$tenant->slug}/appointments", [
+        'professional_id' => $professional->id,
+        'service_id' => $service->id,
+        'starts_at' => now()->addDay()->setTime(10, 0)->toIso8601String(),
+    ]);
+
+    $response->assertUnprocessable()->assertJsonValidationErrors(['starts_at']);
+});
+
+it('rejeita reagendamento quando profissional fica inativo com 422', function () {
+    $tenant = Tenant::factory()->create();
+    $client = apptClient($tenant);
+    $professional = Professional::factory()->create(['tenant_id' => $tenant->id]);
+    $service = Service::factory()->create(['tenant_id' => $tenant->id, 'duration_minutes' => 60, 'price' => 5000]);
+    apptFullWeekSchedule($tenant, $professional);
+
+    $appointment = Appointment::factory()->pending()->create([
+        'tenant_id' => $tenant->id,
+        'client_id' => $client->id,
+        'professional_id' => $professional->id,
+        'service_id' => $service->id,
+        'starts_at' => now()->addDay()->setTime(10, 0),
+        'ends_at' => now()->addDay()->setTime(11, 0),
+    ]);
+
+    $professional->update(['active' => false]);
+
+    $response = $this->actingAs($client)
+        ->patchJson("/api/v1/salao/{$tenant->slug}/appointments/{$appointment->id}/reschedule", [
+            'starts_at' => now()->addDays(2)->setTime(10, 0)->toIso8601String(),
+        ]);
+
+    $response->assertUnprocessable()->assertJsonValidationErrors(['starts_at']);
+});
+
+it('rejeita agendamento em horario fora da grade de slots com 422', function () {
+    $tenant = Tenant::factory()->create();
+    $client = apptClient($tenant);
+    $professional = Professional::factory()->create(['tenant_id' => $tenant->id]);
+    $service = Service::factory()->create(['tenant_id' => $tenant->id, 'duration_minutes' => 60, 'price' => 5000]);
+    apptFullWeekSchedule($tenant, $professional);
+
+    // Expediente 08:00-20:00, grade de 60min: 08:00, 09:00, 10:00... 10:07 não é um horário válido.
+    $response = $this->actingAs($client)->postJson("/api/v1/salao/{$tenant->slug}/appointments", [
+        'professional_id' => $professional->id,
+        'service_id' => $service->id,
+        'starts_at' => now()->addDay()->setTime(10, 7)->toIso8601String(),
+    ]);
+
+    $response->assertUnprocessable()->assertJsonValidationErrors(['starts_at']);
+});
+
+it('rejeita reagendamento em horario fora da grade de slots com 422', function () {
+    $tenant = Tenant::factory()->create();
+    $client = apptClient($tenant);
+    $professional = Professional::factory()->create(['tenant_id' => $tenant->id]);
+    $service = Service::factory()->create(['tenant_id' => $tenant->id, 'duration_minutes' => 60, 'price' => 5000]);
+    apptFullWeekSchedule($tenant, $professional);
+
+    $appointment = Appointment::factory()->pending()->create([
+        'tenant_id' => $tenant->id,
+        'client_id' => $client->id,
+        'professional_id' => $professional->id,
+        'service_id' => $service->id,
+        'starts_at' => now()->addDay()->setTime(10, 0),
+        'ends_at' => now()->addDay()->setTime(11, 0),
+    ]);
+
+    $response = $this->actingAs($client)
+        ->patchJson("/api/v1/salao/{$tenant->slug}/appointments/{$appointment->id}/reschedule", [
+            'starts_at' => now()->addDays(2)->setTime(14, 15)->toIso8601String(),
+        ]);
 
     $response->assertUnprocessable()->assertJsonValidationErrors(['starts_at']);
 });

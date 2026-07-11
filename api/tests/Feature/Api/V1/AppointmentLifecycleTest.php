@@ -146,13 +146,14 @@ it('owner remarca mantendo o status confirmado', function () {
         ->assertJsonPath('data.status', 'confirmed');
 });
 
-it('remarcar para horario sobreposto ao proprio slot nao conflita consigo mesmo', function () {
+it('remarcar para o proprio horario atual nao conflita consigo mesmo', function () {
     [$tenant, , $client, $appointment] = lcSetup();
 
-    // Desloca 30min dentro do próprio horário atual (10:00 → 10:30)
+    // Mantém o mesmo horário (10:00) — sem ignoreAppointmentId isso
+    // conflitaria com o próprio registro no banco.
     $this->actingAs($client)
         ->patchJson("/api/v1/salao/{$tenant->slug}/appointments/{$appointment->id}/reschedule", [
-            'starts_at' => $appointment->starts_at->copy()->addMinutes(30)->toIso8601String(),
+            'starts_at' => $appointment->starts_at->copy()->toIso8601String(),
         ])
         ->assertOk();
 });
