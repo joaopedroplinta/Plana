@@ -7,6 +7,7 @@ use App\Http\Requests\RescheduleAppointmentRequest;
 use App\Http\Requests\StoreAppointmentRequest;
 use App\Http\Resources\AppointmentResource;
 use App\Models\Appointment;
+use App\Models\Professional;
 use App\Models\Service;
 use App\Models\Tenant;
 use App\Models\User;
@@ -55,14 +56,15 @@ class AppointmentController extends Controller
         /** @var Tenant $tenant */
         $tenant = app('currentTenant');
 
+        $professional = Professional::findOrFail($request->professional_id);
         $service = Service::findOrFail($request->service_id);
         $startsAt = Carbon::parse($request->starts_at);
         $endsAt = $startsAt->copy()->addMinutes($service->duration_minutes);
 
         $this->assertPlanAllowsNewAppointment($tenant, $startsAt);
 
-        $appointment = DB::transaction(function () use ($request, $service, $startsAt, $endsAt) {
-            $this->schedulingService->assertSlotAvailable($request->professional_id, $startsAt, $endsAt);
+        $appointment = DB::transaction(function () use ($request, $professional, $service, $startsAt, $endsAt) {
+            $this->schedulingService->assertSlotAvailable($professional, $service, $startsAt);
 
             return Appointment::create([
                 'client_id' => $request->user()->id,
@@ -149,9 +151,9 @@ class AppointmentController extends Controller
 
         DB::transaction(function () use ($appointment, $startsAt, $endsAt, $isStaff) {
             $this->schedulingService->assertSlotAvailable(
-                $appointment->professional_id,
+                $appointment->professional,
+                $appointment->service,
                 $startsAt,
-                $endsAt,
                 $appointment->id,
             );
 

@@ -190,7 +190,9 @@ it('salon_owner from another tenant cannot subscribe for a different tenant', fu
 
 it('owner of one tenant who is staff at another cannot change that tenant subscription', function () {
     $tenantA = Tenant::factory()->create();
-    $tenantB = Tenant::factory()->create();
+    // Plano fixo (não 'pro'): TenantFactory sorteia o plano aleatoriamente,
+    // e a asserção abaixo verifica que a mudança para 'pro' foi bloqueada.
+    $tenantB = Tenant::factory()->create(['plan' => 'starter']);
 
     $user = subOwner($tenantA);
     $tenantB->users()->attach($user->id, ['role' => 'staff']);
