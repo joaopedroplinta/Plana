@@ -71,7 +71,7 @@ class SubscriptionService
             return;
         }
 
-        if (Professional::count() >= $limit) {
+        if (Professional::where('active', true)->count() >= $limit) {
             $plural = $limit === 1 ? 'profissional' : 'profissionais';
 
             throw ValidationException::withMessages([
