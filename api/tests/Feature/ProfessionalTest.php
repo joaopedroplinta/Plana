@@ -339,6 +339,16 @@ it('plano starter bloqueia segundo profissional com 422', function () {
     $response->assertUnprocessable()->assertJsonValidationErrors(['name']);
 });
 
+it('profissional inativo nao conta para o limite do plano', function () {
+    $tenant = Tenant::factory()->create(['plan' => 'starter']);
+    $owner = profOwner($tenant);
+    Professional::factory()->inactive()->create(['tenant_id' => $tenant->id]);
+
+    $this->actingAs($owner)->postJson("/api/v1/salao/{$tenant->slug}/professionals", [
+        'name' => 'Novo Profissional',
+    ])->assertCreated();
+});
+
 it('plano pro permite ate cinco profissionais', function () {
     $tenant = Tenant::factory()->create(['plan' => 'pro']);
     $owner = profOwner($tenant);
