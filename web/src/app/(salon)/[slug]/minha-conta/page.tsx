@@ -34,11 +34,11 @@ import type { ApiError, Appointment, TimeSlot } from '@/types/index'
 import { formatDate, formatPrice, formatTime } from '@/lib/format'
 
 const STATUS_BADGE: Record<string, { label: string; className: string }> = {
-  pending: { label: 'Aguardando confirmação', className: 'bg-amber-100 text-amber-800' },
-  confirmed: { label: 'Confirmado', className: 'bg-blue-100 text-blue-800' },
-  completed: { label: 'Concluído', className: 'bg-green-100 text-green-800' },
-  cancelled: { label: 'Cancelado', className: 'bg-gray-100 text-gray-500' },
-  no_show: { label: 'Não compareceu', className: 'bg-red-100 text-red-700' },
+  pending: { label: 'Aguardando confirmação', className: 'bg-amber-100 dark:bg-amber-500/15 text-amber-800 dark:text-amber-300' },
+  confirmed: { label: 'Confirmado', className: 'bg-blue-100 dark:bg-blue-500/15 text-blue-800 dark:text-blue-300' },
+  completed: { label: 'Concluído', className: 'bg-green-100 dark:bg-green-500/15 text-green-800 dark:text-green-300' },
+  cancelled: { label: 'Cancelado', className: 'bg-muted text-muted-foreground' },
+  no_show: { label: 'Não compareceu', className: 'bg-red-100 dark:bg-red-500/15 text-red-700 dark:text-red-400' },
 }
 
 export default function MinhaContaPage() {
@@ -152,7 +152,7 @@ export default function MinhaContaPage() {
   if (authLoading || (!isAuthenticated && !error)) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center">
-        <p className="text-sm text-gray-400 animate-pulse">Carregando...</p>
+        <p className="text-sm text-muted-foreground animate-pulse">Carregando...</p>
       </div>
     )
   }
@@ -162,24 +162,24 @@ export default function MinhaContaPage() {
       <MinhaContaTabs slug={slug} />
 
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Meus agendamentos</h1>
-        <p className="mt-1 text-sm text-gray-500">
+        <h1 className="text-2xl font-bold text-foreground">Meus agendamentos</h1>
+        <p className="mt-1 text-sm text-muted-foreground">
           Acompanhe seus horários e histórico neste salão
         </p>
       </div>
 
       {error && (
-        <div className="mb-4 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-600">{error}</div>
+        <div className="mb-4 rounded-lg bg-red-50 dark:bg-red-950/40 px-4 py-3 text-sm text-red-600 dark:text-red-400">{error}</div>
       )}
 
       {isLoading ? (
-        <p className="py-16 text-center text-sm text-gray-400 animate-pulse">
+        <p className="py-16 text-center text-sm text-muted-foreground animate-pulse">
           Carregando agendamentos...
         </p>
       ) : appointments.length === 0 ? (
-        <div className="flex flex-col items-center rounded-xl border bg-white py-16 text-center">
-          <CalendarX className="h-10 w-10 text-gray-300" />
-          <p className="mt-4 text-sm text-gray-500">Você ainda não tem agendamentos.</p>
+        <div className="flex flex-col items-center rounded-xl border bg-card py-16 text-center">
+          <CalendarX className="h-10 w-10 text-muted-foreground" />
+          <p className="mt-4 text-sm text-muted-foreground">Você ainda não tem agendamentos.</p>
           <Button className="mt-4" onClick={() => router.push(`/${slug}/booking`)}>
             Agendar agora
           </Button>
@@ -189,19 +189,19 @@ export default function MinhaContaPage() {
           {appointments.map((appt) => {
             const badge = STATUS_BADGE[appt.status] ?? {
               label: appt.status,
-              className: 'bg-gray-100 text-gray-600',
+              className: 'bg-muted text-muted-foreground',
             }
             const canCancel = appt.status === 'pending' || appt.status === 'confirmed'
             return (
               <Card key={appt.id} data-testid="appointment-card" className="p-4">
                 <div className="flex items-start justify-between gap-4">
                   <div className="min-w-0">
-                    <p className="font-semibold text-gray-900">{appt.service.name}</p>
-                    <p className="mt-0.5 text-sm text-gray-500">
+                    <p className="font-semibold text-foreground">{appt.service.name}</p>
+                    <p className="mt-0.5 text-sm text-muted-foreground">
                       com {appt.professional.name}
                     </p>
-                    <p className="mt-1.5 flex items-center gap-1.5 text-sm text-gray-600">
-                      <Clock className="h-3.5 w-3.5 text-gray-400" />
+                    <p className="mt-1.5 flex items-center gap-1.5 text-sm text-muted-foreground">
+                      <Clock className="h-3.5 w-3.5 text-muted-foreground" />
                       {formatDate(appt.starts_at)} · {formatTime(appt.starts_at)} –{' '}
                       {formatTime(appt.ends_at)}
                     </p>
@@ -218,7 +218,7 @@ export default function MinhaContaPage() {
                         <Button
                           size="sm"
                           variant="ghost"
-                          className="text-indigo-600 hover:bg-indigo-50 hover:text-indigo-700"
+                          className="text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-500/15 hover:text-indigo-700"
                           onClick={() => openReschedule(appt)}
                         >
                           Remarcar
@@ -226,7 +226,7 @@ export default function MinhaContaPage() {
                         <Button
                           size="sm"
                           variant="ghost"
-                          className="text-red-600 hover:bg-red-50 hover:text-red-700"
+                          className="text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 hover:text-red-700 dark:hover:text-red-400"
                           disabled={cancellingId === appt.id}
                           onClick={() => setAppointmentToCancel(appt)}
                         >
@@ -277,7 +277,7 @@ export default function MinhaContaPage() {
 
             {slotsLoaded &&
               (slots.length === 0 ? (
-                <p className="rounded-lg bg-gray-50 py-6 text-center text-sm text-gray-500">
+                <p className="rounded-lg bg-muted py-6 text-center text-sm text-muted-foreground">
                   Nenhum horário disponível nesta data.
                 </p>
               ) : (
@@ -287,7 +287,7 @@ export default function MinhaContaPage() {
                       key={`${slot.starts_at}-${slot.ends_at}`}
                       onClick={() => handleReschedule(slot)}
                       disabled={dialogLoading}
-                      className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-700 transition-all hover:border-indigo-400 hover:bg-indigo-50 disabled:opacity-50"
+                      className="rounded-lg border border-border bg-card px-3 py-2 text-sm font-medium text-foreground transition-all hover:border-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-500/15 disabled:opacity-50"
                     >
                       {slot.starts_at}
                     </button>
@@ -295,7 +295,7 @@ export default function MinhaContaPage() {
                 </div>
               ))}
 
-            <p className="text-xs text-gray-400">
+            <p className="text-xs text-muted-foreground">
               Ao remarcar, o salão precisa confirmar o novo horário.
             </p>
           </div>

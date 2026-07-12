@@ -92,15 +92,15 @@ export default function SalonSettingsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Meu salão</h1>
-        <p className="mt-1 text-sm text-gray-500">
+        <h1 className="text-2xl font-bold text-foreground">Meu salão</h1>
+        <p className="mt-1 text-sm text-muted-foreground">
           Essas informações aparecem na página pública do seu salão
         </p>
       </div>
 
       {isLoading ? (
-        <div className="flex items-center justify-center rounded-xl border bg-white py-24">
-          <p className="text-sm text-gray-400 animate-pulse">Carregando...</p>
+        <div className="flex items-center justify-center rounded-xl border bg-card py-24">
+          <p className="text-sm text-muted-foreground animate-pulse">Carregando...</p>
         </div>
       ) : (
         <Card className="max-w-2xl p-6">
@@ -174,10 +174,10 @@ export default function SalonSettingsPage() {
             </div>
 
             {error && (
-              <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{error}</p>
+              <p className="rounded-lg bg-red-50 dark:bg-red-950/40 px-3 py-2 text-sm text-red-600 dark:text-red-400">{error}</p>
             )}
             {success && (
-              <p className="rounded-lg bg-green-50 px-3 py-2 text-sm text-green-700">
+              <p className="rounded-lg bg-green-50 dark:bg-green-950/40 px-3 py-2 text-sm text-green-700 dark:text-green-400">
                 {success}
               </p>
             )}

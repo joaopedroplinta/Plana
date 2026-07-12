@@ -5,6 +5,8 @@ import { useRouter, usePathname } from 'next/navigation'
 import Link from 'next/link'
 import { useAuth } from '@/hooks/useAuth'
 import { Button } from '@/components/ui/button'
+import { ThemeToggle } from '@/components/theme-toggle'
+import { Footer } from '@/components/shared/Footer'
 import { LayoutDashboard, Building2, LogOut, Menu, X } from 'lucide-react'
 
 interface NavItem {
@@ -41,8 +43,8 @@ export default function SuperAdminLayout({ children }: { children: React.ReactNo
 
   if (isLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-50">
-        <p className="text-sm text-gray-500">Carregando...</p>
+      <div className="flex min-h-screen items-center justify-center bg-muted">
+        <p className="text-sm text-muted-foreground">Carregando...</p>
       </div>
     )
   }
@@ -57,7 +59,7 @@ export default function SuperAdminLayout({ children }: { children: React.ReactNo
   }
 
   return (
-    <div className="flex min-h-screen bg-gray-50">
+    <div className="flex min-h-screen bg-muted">
       {sidebarOpen && (
         <div
           className="fixed inset-0 z-20 bg-black/40 lg:hidden"
@@ -129,22 +131,28 @@ export default function SuperAdminLayout({ children }: { children: React.ReactNo
 
       {/* Main */}
       <div className="flex flex-1 flex-col min-w-0">
-        <header className="flex h-16 items-center gap-4 border-b bg-white px-6">
+        <header className="flex h-16 items-center gap-4 border-b border-border bg-card px-6">
           <button
-            className="rounded p-1.5 text-gray-400 hover:text-gray-600 lg:hidden"
+            className="rounded p-1.5 text-muted-foreground hover:text-foreground lg:hidden"
             onClick={() => setSidebarOpen(true)}
           >
             <Menu className="h-5 w-5" />
           </button>
           <div className="flex flex-1 items-center justify-between">
-            <span className="text-sm text-gray-500">
-              Bem-vindo, <span className="font-medium text-gray-900">{user?.name}</span>
+            <span className="text-sm text-muted-foreground">
+              Bem-vindo, <span className="font-medium text-foreground">{user?.name}</span>
             </span>
-            <span className="hidden text-xs text-gray-400 sm:block">Plataforma Agendei</span>
+            <div className="flex items-center gap-3">
+              <span className="hidden text-xs text-muted-foreground sm:block">
+                Plataforma Agendei
+              </span>
+              <ThemeToggle />
+            </div>
           </div>
         </header>
 
         <main className="flex-1 overflow-auto p-6">{children}</main>
+        <Footer variant="admin" />
       </div>
     </div>
   )

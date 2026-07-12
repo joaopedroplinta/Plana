@@ -194,8 +194,8 @@ export default function PackagesPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Pacotes</h1>
-          <p className="mt-1 text-sm text-gray-500">
+          <h1 className="text-2xl font-bold text-foreground">Pacotes</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
             Gerencie os pacotes de serviços do seu salão
           </p>
         </div>
@@ -206,19 +206,19 @@ export default function PackagesPage() {
       </div>
 
       {/* List */}
-      <div className="rounded-xl border bg-white">
+      <div className="rounded-xl border bg-card">
         {isLoadingList ? (
           <div className="flex items-center justify-center py-16">
-            <p className="text-sm text-gray-400">Carregando pacotes...</p>
+            <p className="text-sm text-muted-foreground">Carregando pacotes...</p>
           </div>
         ) : listError ? (
           <div className="flex items-center justify-center py-16">
-            <p className="text-sm text-red-500">{listError}</p>
+            <p className="text-sm text-red-500 dark:text-red-400">{listError}</p>
           </div>
         ) : packages.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 text-center">
-            <p className="text-sm font-medium text-gray-500">Nenhum pacote cadastrado</p>
-            <p className="mt-1 text-xs text-gray-400">
+            <p className="text-sm font-medium text-muted-foreground">Nenhum pacote cadastrado</p>
+            <p className="mt-1 text-xs text-muted-foreground">
               Clique em &quot;Novo pacote&quot; para começar.
             </p>
           </div>
@@ -238,9 +238,9 @@ export default function PackagesPage() {
                 <TableRow key={pkg.id}>
                   <TableCell>
                     <div>
-                      <p className="font-medium text-gray-900">{pkg.name}</p>
+                      <p className="font-medium text-foreground">{pkg.name}</p>
                       {pkg.description && (
-                        <p className="mt-0.5 text-xs text-gray-400 line-clamp-1">
+                        <p className="mt-0.5 text-xs text-muted-foreground line-clamp-1">
                           {pkg.description}
                         </p>
                       )}
@@ -263,7 +263,7 @@ export default function PackagesPage() {
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="h-8 w-8 p-0 text-red-500 hover:text-red-600 hover:bg-red-50"
+                        className="h-8 w-8 p-0 text-red-500 dark:text-red-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40"
                         onClick={() => setDeleteTarget(pkg)}
                       >
                         <Trash2 className="h-4 w-4" />
@@ -354,7 +354,7 @@ export default function PackagesPage() {
               </div>
             </div>
             {formError && (
-              <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">
+              <p className="rounded-lg bg-red-50 dark:bg-red-950/40 px-3 py-2 text-sm text-red-600 dark:text-red-400">
                 {formError}
               </p>
             )}

@@ -44,7 +44,7 @@ function StepProgress({ current }: { current: number }) {
                 {idx > 0 && (
                   <div
                     className={`h-0.5 flex-1 ${
-                      isCompleted ? 'bg-indigo-600' : 'bg-gray-200'
+                      isCompleted ? 'bg-indigo-600' : 'bg-muted'
                     }`}
                   />
                 )}
@@ -53,8 +53,8 @@ function StepProgress({ current }: { current: number }) {
                     isCompleted
                       ? 'bg-indigo-600 text-white'
                       : isActive
-                        ? 'border-2 border-indigo-600 bg-white text-indigo-600'
-                        : 'border-2 border-gray-200 bg-white text-gray-400'
+                        ? 'border-2 border-indigo-600 bg-card text-indigo-600'
+                        : 'border-2 border-border bg-card text-muted-foreground'
                   }`}
                 >
                   {isCompleted ? <CheckCircle className="h-4 w-4" /> : stepNum}
@@ -62,14 +62,14 @@ function StepProgress({ current }: { current: number }) {
                 {idx < TOTAL_STEPS - 1 && (
                   <div
                     className={`h-0.5 flex-1 ${
-                      isCompleted ? 'bg-indigo-600' : 'bg-gray-200'
+                      isCompleted ? 'bg-indigo-600' : 'bg-muted'
                     }`}
                   />
                 )}
               </div>
               <span
                 className={`mt-1.5 text-xs font-medium ${
-                  isActive ? 'text-indigo-600' : isCompleted ? 'text-gray-700' : 'text-gray-400'
+                  isActive ? 'text-indigo-600' : isCompleted ? 'text-foreground' : 'text-muted-foreground'
                 }`}
               >
                 {label}
@@ -290,7 +290,7 @@ export default function BookingPage() {
   if (initialLoading) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center">
-        <p className="text-sm text-gray-400">Carregando...</p>
+        <p className="text-sm text-muted-foreground">Carregando...</p>
       </div>
     )
   }
@@ -298,28 +298,28 @@ export default function BookingPage() {
   if (success) {
     return (
       <div className="flex min-h-[60vh] flex-col items-center justify-center px-4 text-center">
-        <div className="rounded-full bg-green-100 p-4 text-green-600">
+        <div className="rounded-full bg-green-100 dark:bg-green-500/15 p-4 text-green-600 dark:text-green-400">
           <CheckCircle className="h-10 w-10" />
         </div>
-        <h2 className="mt-4 text-2xl font-bold text-gray-900">Agendamento realizado!</h2>
-        <p className="mt-2 text-sm text-gray-500">
+        <h2 className="mt-4 text-2xl font-bold text-foreground">Agendamento realizado!</h2>
+        <p className="mt-2 text-sm text-muted-foreground">
           Seu horário foi reservado com sucesso. Aguarde a confirmação do salão.
         </p>
-        <div className="mt-6 space-y-2 rounded-xl border bg-gray-50 px-6 py-4 text-left text-sm">
+        <div className="mt-6 space-y-2 rounded-xl border bg-muted px-6 py-4 text-left text-sm">
           <p>
-            <span className="font-medium text-gray-700">Serviço:</span>{' '}
+            <span className="font-medium text-foreground">Serviço:</span>{' '}
             {selectedService?.name}
           </p>
           <p>
-            <span className="font-medium text-gray-700">Profissional:</span>{' '}
+            <span className="font-medium text-foreground">Profissional:</span>{' '}
             {selectedProfessional?.name}
           </p>
           <p>
-            <span className="font-medium text-gray-700">Data:</span>{' '}
+            <span className="font-medium text-foreground">Data:</span>{' '}
             {selectedDate ? formatDate(selectedDate) : '—'}
           </p>
           <p>
-            <span className="font-medium text-gray-700">Horário:</span>{' '}
+            <span className="font-medium text-foreground">Horário:</span>{' '}
             {selectedSlot
               ? `${selectedSlot.starts_at} – ${selectedSlot.ends_at}`
               : '—'}
@@ -346,7 +346,7 @@ export default function BookingPage() {
         {step > 1 && step <= 5 && (
           <button
             onClick={goBack}
-            className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-800 transition-colors"
+            className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
           >
             <ArrowLeft className="h-4 w-4" />
             Voltar
@@ -355,7 +355,7 @@ export default function BookingPage() {
         {step <= 5 && (
           <button
             onClick={() => router.push(`/${slug}`)}
-            className="ml-auto text-sm text-gray-400 hover:text-gray-600 transition-colors"
+            className="ml-auto text-sm text-muted-foreground hover:text-muted-foreground transition-colors"
           >
             Cancelar
           </button>
@@ -363,7 +363,7 @@ export default function BookingPage() {
       </div>
 
       {error && (
-        <div className="mb-4 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-600">
+        <div className="mb-4 rounded-lg bg-red-50 dark:bg-red-950/40 px-4 py-3 text-sm text-red-600 dark:text-red-400">
           {error}
         </div>
       )}
@@ -372,13 +372,13 @@ export default function BookingPage() {
       {step === 1 && (
         <div className="space-y-4">
           <div>
-            <h2 className="text-xl font-bold text-gray-900">Escolha um serviço</h2>
-            <p className="mt-1 text-sm text-gray-500">
+            <h2 className="text-xl font-bold text-foreground">Escolha um serviço</h2>
+            <p className="mt-1 text-sm text-muted-foreground">
               Selecione o serviço que deseja agendar
             </p>
           </div>
           {services.length === 0 ? (
-            <p className="py-8 text-center text-sm text-gray-400">
+            <p className="py-8 text-center text-sm text-muted-foreground">
               Nenhum serviço disponível no momento.
             </p>
           ) : (
@@ -402,9 +402,9 @@ export default function BookingPage() {
                   >
                     <div className="flex items-start justify-between gap-4">
                       <div className="flex-1">
-                        <p className="font-semibold text-gray-900">{service.name}</p>
+                        <p className="font-semibold text-foreground">{service.name}</p>
                         {service.description && (
-                          <p className="mt-0.5 text-sm text-gray-500 line-clamp-2">
+                          <p className="mt-0.5 text-sm text-muted-foreground line-clamp-2">
                             {service.description}
                           </p>
                         )}
@@ -429,13 +429,13 @@ export default function BookingPage() {
       {step === 2 && (
         <div className="space-y-4">
           <div>
-            <h2 className="text-xl font-bold text-gray-900">Escolha um profissional</h2>
-            <p className="mt-1 text-sm text-gray-500">
+            <h2 className="text-xl font-bold text-foreground">Escolha um profissional</h2>
+            <p className="mt-1 text-sm text-muted-foreground">
               Selecione com quem deseja ser atendido
             </p>
           </div>
           {professionals.length === 0 ? (
-            <p className="py-8 text-center text-sm text-gray-400">
+            <p className="py-8 text-center text-sm text-muted-foreground">
               Nenhum profissional disponível no momento.
             </p>
           ) : (
@@ -457,13 +457,13 @@ export default function BookingPage() {
                     }}
                   >
                     <div className="flex items-center gap-3">
-                      <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-indigo-100 text-sm font-bold text-indigo-600">
+                      <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-indigo-100 dark:bg-indigo-500/15 text-sm font-bold text-indigo-600 dark:text-indigo-300">
                         {professional.name.charAt(0).toUpperCase()}
                       </div>
                       <div className="flex-1">
-                        <p className="font-semibold text-gray-900">{professional.name}</p>
+                        <p className="font-semibold text-foreground">{professional.name}</p>
                         {professional.bio && (
-                          <p className="mt-0.5 text-sm text-gray-500 line-clamp-2">
+                          <p className="mt-0.5 text-sm text-muted-foreground line-clamp-2">
                             {professional.bio}
                           </p>
                         )}
@@ -480,8 +480,8 @@ export default function BookingPage() {
       {step === 3 && (
         <div className="space-y-6">
           <div>
-            <h2 className="text-xl font-bold text-gray-900">Escolha uma data</h2>
-            <p className="mt-1 text-sm text-gray-500">
+            <h2 className="text-xl font-bold text-foreground">Escolha uma data</h2>
+            <p className="mt-1 text-sm text-muted-foreground">
               Selecione o dia em que deseja ser atendido
             </p>
           </div>
@@ -509,14 +509,14 @@ export default function BookingPage() {
       {step === 4 && (
         <div className="space-y-4">
           <div>
-            <h2 className="text-xl font-bold text-gray-900">Escolha um horário</h2>
-            <p className="mt-1 text-sm text-gray-500">
+            <h2 className="text-xl font-bold text-foreground">Escolha um horário</h2>
+            <p className="mt-1 text-sm text-muted-foreground">
               Horários disponíveis para {selectedDate ? formatDate(selectedDate) : ''}
             </p>
           </div>
           {slots.length === 0 ? (
-            <div className="rounded-xl border bg-gray-50 py-12 text-center">
-              <p className="text-sm text-gray-500">
+            <div className="rounded-xl border bg-muted py-12 text-center">
+              <p className="text-sm text-muted-foreground">
                 Nenhum horário disponível nesta data.
               </p>
               <button
@@ -543,7 +543,7 @@ export default function BookingPage() {
                     className={`rounded-lg border px-3 py-2.5 text-sm font-medium transition-all ${
                       isSelected
                         ? 'border-indigo-500 bg-indigo-600 text-white'
-                        : 'border-gray-200 bg-white text-gray-700 hover:border-indigo-400 hover:bg-indigo-50'
+                        : 'border-border bg-card text-foreground hover:border-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-500/15'
                     }`}
                   >
                     {slot.starts_at} – {slot.ends_at}
@@ -559,21 +559,21 @@ export default function BookingPage() {
       {step === 5 && (
         <div className="space-y-6">
           <div>
-            <h2 className="text-xl font-bold text-gray-900">Confirmar agendamento</h2>
-            <p className="mt-1 text-sm text-gray-500">
+            <h2 className="text-xl font-bold text-foreground">Confirmar agendamento</h2>
+            <p className="mt-1 text-sm text-muted-foreground">
               Revise os detalhes antes de confirmar
             </p>
           </div>
 
-          <div className="rounded-xl border bg-gray-50 p-5 space-y-3">
-            <div className="flex items-center justify-between border-b border-gray-200 pb-3">
+          <div className="rounded-xl border bg-muted p-5 space-y-3">
+            <div className="flex items-center justify-between border-b border-border pb-3">
               <div>
-                <p className="text-xs font-medium uppercase tracking-wide text-gray-400">
+                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                   Serviço
                 </p>
-                <p className="mt-0.5 font-semibold text-gray-900">{selectedService?.name}</p>
+                <p className="mt-0.5 font-semibold text-foreground">{selectedService?.name}</p>
                 {selectedService && (
-                  <p className="text-xs text-gray-500">
+                  <p className="text-xs text-muted-foreground">
                     {formatDuration(selectedService.duration_minutes)}
                   </p>
                 )}
@@ -589,24 +589,24 @@ export default function BookingPage() {
 
             <div className="grid grid-cols-2 gap-4 pt-1">
               <div>
-                <p className="text-xs font-medium uppercase tracking-wide text-gray-400">
+                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                   Profissional
                 </p>
-                <p className="mt-0.5 font-medium text-gray-900">{selectedProfessional?.name}</p>
+                <p className="mt-0.5 font-medium text-foreground">{selectedProfessional?.name}</p>
               </div>
               <div>
-                <p className="text-xs font-medium uppercase tracking-wide text-gray-400">
+                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                   Data
                 </p>
-                <p className="mt-0.5 font-medium text-gray-900">
+                <p className="mt-0.5 font-medium text-foreground">
                   {selectedDate ? formatDate(selectedDate) : '—'}
                 </p>
               </div>
               <div>
-                <p className="text-xs font-medium uppercase tracking-wide text-gray-400">
+                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                   Horário
                 </p>
-                <p className="mt-0.5 font-medium text-gray-900">
+                <p className="mt-0.5 font-medium text-foreground">
                   {selectedSlot
                     ? `${selectedSlot.starts_at} – ${selectedSlot.ends_at}`
                     : '—'}
@@ -624,12 +624,12 @@ export default function BookingPage() {
                   onClick={() => setSelectedPackagePurchaseId(null)}
                   className={`rounded-lg border px-4 py-3 text-left text-sm transition-all ${
                     selectedPackagePurchaseId === null
-                      ? 'border-indigo-500 bg-indigo-50'
-                      : 'border-gray-200 hover:border-indigo-300'
+                      ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-500/15'
+                      : 'border-border hover:border-indigo-300'
                   }`}
                 >
-                  <p className="font-medium text-gray-900">Pagar agora</p>
-                  <p className="text-xs text-gray-500">PIX, cartão ou no local</p>
+                  <p className="font-medium text-foreground">Pagar agora</p>
+                  <p className="text-xs text-muted-foreground">PIX, cartão ou no local</p>
                 </button>
                 {usablePackagePurchases.map((purchase) => (
                   <button
@@ -638,14 +638,14 @@ export default function BookingPage() {
                     onClick={() => setSelectedPackagePurchaseId(purchase.id)}
                     className={`rounded-lg border px-4 py-3 text-left text-sm transition-all ${
                       selectedPackagePurchaseId === purchase.id
-                        ? 'border-indigo-500 bg-indigo-50'
-                        : 'border-gray-200 hover:border-indigo-300'
+                        ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-500/15'
+                        : 'border-border hover:border-indigo-300'
                     }`}
                   >
-                    <p className="font-medium text-gray-900">
+                    <p className="font-medium text-foreground">
                       Usar pacote: {purchase.service_package.name}
                     </p>
-                    <p className="text-xs text-gray-500">
+                    <p className="text-xs text-muted-foreground">
                       {purchase.sessions_remaining} sessões restantes
                     </p>
                   </button>
@@ -680,48 +680,48 @@ export default function BookingPage() {
       {step === 6 && (
         <div className="space-y-6">
           <div>
-            <h2 className="text-xl font-bold text-gray-900">Pagamento</h2>
-            <p className="mt-1 text-sm text-gray-500">
+            <h2 className="text-xl font-bold text-foreground">Pagamento</h2>
+            <p className="mt-1 text-sm text-muted-foreground">
               Horário reservado! Escolha como deseja pagar.
             </p>
           </div>
-          <p className="text-gray-600">
+          <p className="text-muted-foreground">
             {selectedService?.name} —{' '}
             <span className="font-semibold text-indigo-600">
               {formatPrice(selectedService?.price ?? 0)}
             </span>
           </p>
           {paymentError && (
-            <p className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-600">{paymentError}</p>
+            <p className="rounded-lg bg-red-50 dark:bg-red-950/40 px-4 py-3 text-sm text-red-600 dark:text-red-400">{paymentError}</p>
           )}
           <div className="grid grid-cols-2 gap-4">
             <button
               onClick={handlePayPix}
               disabled={paymentLoading}
-              className="border-2 border-green-500 rounded-lg p-6 text-center hover:bg-green-50 transition-colors disabled:opacity-50"
+              className="border-2 border-green-500 rounded-lg p-6 text-center hover:bg-green-50 dark:hover:bg-green-950/40 transition-colors disabled:opacity-50"
             >
               <div className="text-3xl mb-2">PIX</div>
-              <div className="font-semibold text-green-700">PIX</div>
-              <div className="text-sm text-gray-500">Pagamento imediato</div>
+              <div className="font-semibold text-green-700 dark:text-green-400">PIX</div>
+              <div className="text-sm text-muted-foreground">Pagamento imediato</div>
             </button>
             <button
               onClick={handleShowCardForm}
               disabled={paymentLoading}
-              className="border-2 border-blue-500 rounded-lg p-6 text-center hover:bg-blue-50 transition-colors disabled:opacity-50"
+              className="border-2 border-blue-500 rounded-lg p-6 text-center hover:bg-blue-50 dark:hover:bg-blue-950/40 transition-colors disabled:opacity-50"
             >
               <div className="text-3xl mb-2">💳</div>
-              <div className="font-semibold text-blue-700">Cartão de crédito</div>
-              <div className="text-sm text-gray-500">Pague sem sair daqui</div>
+              <div className="font-semibold text-blue-700 dark:text-blue-400">Cartão de crédito</div>
+              <div className="text-sm text-muted-foreground">Pague sem sair daqui</div>
             </button>
           </div>
           <button
             onClick={() => setSuccess(true)}
             disabled={paymentLoading}
-            className="w-full rounded-lg border border-gray-200 px-4 py-3 text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors disabled:opacity-50"
+            className="w-full rounded-lg border border-border px-4 py-3 text-sm font-medium text-muted-foreground hover:bg-muted transition-colors disabled:opacity-50"
           >
             Pagar no local — finalizar sem pagamento online
           </button>
-          {paymentLoading && <p className="text-center text-gray-400 animate-pulse">Aguarde...</p>}
+          {paymentLoading && <p className="text-center text-muted-foreground animate-pulse">Aguarde...</p>}
         </div>
       )}
 
@@ -729,19 +729,19 @@ export default function BookingPage() {
       {step === 8 && (
         <div className="space-y-6">
           <div>
-            <h2 className="text-xl font-bold text-gray-900">Pagamento com cartão</h2>
-            <p className="mt-1 text-sm text-gray-500">
+            <h2 className="text-xl font-bold text-foreground">Pagamento com cartão</h2>
+            <p className="mt-1 text-sm text-muted-foreground">
               Seus dados são enviados com segurança diretamente ao MercadoPago.
             </p>
           </div>
-          <p className="text-gray-600">
+          <p className="text-muted-foreground">
             {selectedService?.name} —{' '}
             <span className="font-semibold text-indigo-600">
               {formatPrice(selectedService?.price ?? 0)}
             </span>
           </p>
           {paymentError && (
-            <p className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-600">{paymentError}</p>
+            <p className="rounded-lg bg-red-50 dark:bg-red-950/40 px-4 py-3 text-sm text-red-600 dark:text-red-400">{paymentError}</p>
           )}
           <CardPaymentBrick
             amount={(selectedService?.price ?? 0) / 100}
@@ -751,11 +751,11 @@ export default function BookingPage() {
           <button
             onClick={() => setStep(6)}
             disabled={paymentLoading}
-            className="w-full rounded-lg border border-gray-200 px-4 py-3 text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors disabled:opacity-50"
+            className="w-full rounded-lg border border-border px-4 py-3 text-sm font-medium text-muted-foreground hover:bg-muted transition-colors disabled:opacity-50"
           >
             Voltar
           </button>
-          {paymentLoading && <p className="text-center text-gray-400 animate-pulse">Processando pagamento...</p>}
+          {paymentLoading && <p className="text-center text-muted-foreground animate-pulse">Processando pagamento...</p>}
         </div>
       )}
 
@@ -767,8 +767,8 @@ export default function BookingPage() {
               <div className="text-6xl flex justify-center">
                 <CheckCircle className="h-16 w-16 text-green-500" />
               </div>
-              <h2 className="text-2xl font-bold text-green-600">Pagamento confirmado!</h2>
-              <p className="text-gray-500">Seu agendamento está garantido.</p>
+              <h2 className="text-2xl font-bold text-green-600 dark:text-green-400">Pagamento confirmado!</h2>
+              <p className="text-muted-foreground">Seu agendamento está garantido.</p>
               <div className="flex justify-center gap-3">
                 <a
                   href={`/${slug}/minha-conta`}
@@ -778,7 +778,7 @@ export default function BookingPage() {
                 </a>
                 <a
                   href={`/${slug}`}
-                  className="inline-block mt-4 px-6 py-2 border border-gray-200 text-gray-600 rounded-lg hover:bg-gray-50"
+                  className="inline-block mt-4 px-6 py-2 border border-border text-muted-foreground rounded-lg hover:bg-muted"
                 >
                   Voltar ao início
                 </a>
@@ -787,7 +787,7 @@ export default function BookingPage() {
           ) : (
             <div className="space-y-4">
               <h2 className="text-xl font-semibold">Pague via PIX</h2>
-              <p className="text-gray-500">Escaneie o QR code ou copie o código abaixo</p>
+              <p className="text-muted-foreground">Escaneie o QR code ou copie o código abaixo</p>
               {payment.pix_qr_code_base64 && (
                 <div className="flex justify-center">
                   <img
@@ -799,24 +799,24 @@ export default function BookingPage() {
               )}
               {payment.pix_qr_code && (
                 <div className="space-y-2">
-                  <p className="text-sm font-medium text-gray-600">Código PIX (copia e cola):</p>
+                  <p className="text-sm font-medium text-muted-foreground">Código PIX (copia e cola):</p>
                   <div className="flex items-center gap-2">
                     <input
                       readOnly
                       value={payment.pix_qr_code}
-                      className="flex-1 text-xs p-2 border rounded bg-gray-50 font-mono truncate"
+                      className="flex-1 text-xs p-2 border rounded bg-muted font-mono truncate"
                     />
                     <button
                       onClick={() => navigator.clipboard.writeText(payment.pix_qr_code ?? '')}
-                      className="px-3 py-2 bg-gray-100 border rounded hover:bg-gray-200 text-sm"
+                      className="px-3 py-2 bg-muted border rounded hover:bg-muted text-sm"
                     >
                       Copiar
                     </button>
                   </div>
                 </div>
               )}
-              <p className="text-sm text-gray-400 animate-pulse">Aguardando confirmação do pagamento...</p>
-              <p className="text-xs text-gray-300">Verificando a cada 5 segundos</p>
+              <p className="text-sm text-muted-foreground animate-pulse">Aguardando confirmação do pagamento...</p>
+              <p className="text-xs text-muted-foreground">Verificando a cada 5 segundos</p>
             </div>
           )}
         </div>

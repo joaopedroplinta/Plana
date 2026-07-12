@@ -162,8 +162,8 @@ export default function ProfessionalsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Profissionais</h1>
-          <p className="mt-1 text-sm text-gray-500">
+          <h1 className="text-2xl font-bold text-foreground">Profissionais</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
             Gerencie os profissionais do seu salão
           </p>
         </div>
@@ -174,21 +174,21 @@ export default function ProfessionalsPage() {
       </div>
 
       {/* List */}
-      <div className="rounded-xl border bg-white">
+      <div className="rounded-xl border bg-card">
         {isLoadingList ? (
           <div className="flex items-center justify-center py-16">
-            <p className="text-sm text-gray-400">Carregando profissionais...</p>
+            <p className="text-sm text-muted-foreground">Carregando profissionais...</p>
           </div>
         ) : listError ? (
           <div className="flex items-center justify-center py-16">
-            <p className="text-sm text-red-500">{listError}</p>
+            <p className="text-sm text-red-500 dark:text-red-400">{listError}</p>
           </div>
         ) : professionals.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 text-center">
-            <p className="text-sm font-medium text-gray-500">
+            <p className="text-sm font-medium text-muted-foreground">
               Nenhum profissional cadastrado
             </p>
-            <p className="mt-1 text-xs text-gray-400">
+            <p className="mt-1 text-xs text-muted-foreground">
               Clique em &quot;Novo profissional&quot; para começar.
             </p>
           </div>
@@ -206,10 +206,10 @@ export default function ProfessionalsPage() {
               {professionals.map((professional) => (
                 <TableRow key={professional.id}>
                   <TableCell>
-                    <p className="font-medium text-gray-900">{professional.name}</p>
+                    <p className="font-medium text-foreground">{professional.name}</p>
                   </TableCell>
                   <TableCell>
-                    <p className="max-w-xs text-sm text-gray-500 line-clamp-2">
+                    <p className="max-w-xs text-sm text-muted-foreground line-clamp-2">
                       {professional.bio ?? '—'}
                     </p>
                   </TableCell>
@@ -217,7 +217,7 @@ export default function ProfessionalsPage() {
                     {professional.active ? (
                       <Badge
                         variant="default"
-                        className="bg-green-100 text-green-700 hover:bg-green-100"
+                        className="bg-green-100 dark:bg-green-500/15 text-green-700 dark:text-green-400 hover:bg-green-100 dark:hover:bg-green-500/15"
                       >
                         Ativo
                       </Badge>
@@ -239,7 +239,7 @@ export default function ProfessionalsPage() {
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="h-8 w-8 p-0 text-red-500 hover:text-red-600 hover:bg-red-50"
+                        className="h-8 w-8 p-0 text-red-500 dark:text-red-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40"
                         onClick={() => setDeleteTarget(professional)}
                       >
                         <Trash2 className="h-4 w-4" />
@@ -299,7 +299,7 @@ export default function ProfessionalsPage() {
                 disabled={isSubmitting}
                 className={[
                   'relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 disabled:opacity-50',
-                  form.active ? 'bg-indigo-600' : 'bg-gray-200',
+                  form.active ? 'bg-indigo-600' : 'bg-muted',
                 ].join(' ')}
               >
                 <span
@@ -314,7 +314,7 @@ export default function ProfessionalsPage() {
               </Label>
             </div>
             {formError && (
-              <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">
+              <p className="rounded-lg bg-red-50 dark:bg-red-950/40 px-3 py-2 text-sm text-red-600 dark:text-red-400">
                 {formError}
               </p>
             )}

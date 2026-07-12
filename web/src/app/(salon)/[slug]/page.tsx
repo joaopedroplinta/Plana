@@ -37,11 +37,11 @@ export default async function SalonHomePage({ params }: SalonHomeProps) {
   return (
     <div className="flex-1">
       {/* Hero */}
-      <section className="border-b bg-gradient-to-b from-indigo-50 to-white px-6 py-16 text-center">
+      <section className="border-b bg-gradient-to-b from-indigo-50 to-background dark:from-indigo-500/10 px-6 py-16 text-center">
         <div className="mx-auto max-w-2xl">
-          <h1 className="text-4xl font-bold text-gray-900">{tenant.name}</h1>
+          <h1 className="text-4xl font-bold text-foreground">{tenant.name}</h1>
           {tenant.description && (
-            <p className="mt-4 text-base text-gray-600">{tenant.description}</p>
+            <p className="mt-4 text-base text-muted-foreground">{tenant.description}</p>
           )}
           <a
             href={`/${slug}/booking`}
@@ -51,7 +51,7 @@ export default async function SalonHomePage({ params }: SalonHomeProps) {
           </a>
 
           {(tenant.address || tenant.phone || whatsappDigits || tenant.instagram) && (
-            <div className="mt-8 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm text-gray-500">
+            <div className="mt-8 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm text-muted-foreground">
               {tenant.address && (
                 <span className="flex items-center gap-1.5">
                   <MapPin className="h-4 w-4 text-indigo-400" />
@@ -93,9 +93,9 @@ export default async function SalonHomePage({ params }: SalonHomeProps) {
 
       {/* Serviços */}
       <section className="mx-auto max-w-4xl px-6 py-12">
-        <h2 className="text-xl font-bold text-gray-900">Serviços</h2>
+        <h2 className="text-xl font-bold text-foreground">Serviços</h2>
         {services.length === 0 ? (
-          <p className="mt-6 rounded-xl border bg-gray-50 py-12 text-center text-sm text-gray-400">
+          <p className="mt-6 rounded-xl border bg-muted py-12 text-center text-sm text-muted-foreground">
             Nenhum serviço cadastrado ainda.
           </p>
         ) : (
@@ -104,15 +104,15 @@ export default async function SalonHomePage({ params }: SalonHomeProps) {
               <a
                 key={service.id}
                 href={`/${slug}/booking`}
-                className="group rounded-xl border bg-white p-5 transition-all hover:border-indigo-300 hover:shadow-sm"
+                className="group rounded-xl border bg-card p-5 transition-all hover:border-indigo-300 hover:shadow-sm"
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
-                    <p className="font-semibold text-gray-900 group-hover:text-indigo-600 transition-colors">
+                    <p className="font-semibold text-foreground group-hover:text-indigo-600 transition-colors">
                       {service.name}
                     </p>
                     {service.description && (
-                      <p className="mt-1 text-sm text-gray-500 line-clamp-2">
+                      <p className="mt-1 text-sm text-muted-foreground line-clamp-2">
                         {service.description}
                       </p>
                     )}

@@ -39,7 +39,7 @@ export function CardPaymentBrick({ amount, payerEmail, onApprove }: CardPaymentB
 
   if (!publicKey) {
     return (
-      <p className="rounded-lg bg-amber-50 px-4 py-3 text-sm text-amber-700">
+      <p className="rounded-lg bg-amber-50 dark:bg-amber-950/40 px-4 py-3 text-sm text-amber-700 dark:text-amber-400">
         Pagamento com cartão indisponível no momento (chave pública do MercadoPago não
         configurada).
       </p>
@@ -47,7 +47,7 @@ export function CardPaymentBrick({ amount, payerEmail, onApprove }: CardPaymentB
   }
 
   if (!ready) {
-    return <p className="text-center text-sm text-gray-400 animate-pulse">Carregando formulário de cartão...</p>
+    return <p className="text-center text-sm text-muted-foreground animate-pulse">Carregando formulário de cartão...</p>
   }
 
   return (

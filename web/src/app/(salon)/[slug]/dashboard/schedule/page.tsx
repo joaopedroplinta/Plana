@@ -24,15 +24,15 @@ const STATUS_FILTERS: Array<{ value: StatusFilter; label: string }> = [
 ]
 
 const STATUS_BADGE: Record<string, { label: string; className: string }> = {
-  pending: { label: 'Pendente', className: 'bg-amber-100 text-amber-800' },
-  confirmed: { label: 'Confirmado', className: 'bg-blue-100 text-blue-800' },
-  completed: { label: 'Concluído', className: 'bg-green-100 text-green-800' },
-  cancelled: { label: 'Cancelado', className: 'bg-gray-100 text-gray-500' },
-  no_show: { label: 'Não compareceu', className: 'bg-red-100 text-red-700' },
+  pending: { label: 'Pendente', className: 'bg-amber-100 dark:bg-amber-500/15 text-amber-800 dark:text-amber-300' },
+  confirmed: { label: 'Confirmado', className: 'bg-blue-100 dark:bg-blue-500/15 text-blue-800 dark:text-blue-300' },
+  completed: { label: 'Concluído', className: 'bg-green-100 dark:bg-green-500/15 text-green-800 dark:text-green-300' },
+  cancelled: { label: 'Cancelado', className: 'bg-muted text-muted-foreground' },
+  no_show: { label: 'Não compareceu', className: 'bg-red-100 dark:bg-red-500/15 text-red-700 dark:text-red-400' },
 }
 
 function StatusBadge({ status }: { status: string }) {
-  const badge = STATUS_BADGE[status] ?? { label: status, className: 'bg-gray-100 text-gray-600' }
+  const badge = STATUS_BADGE[status] ?? { label: status, className: 'bg-muted text-muted-foreground' }
   return (
     <Badge variant="secondary" className={`text-xs font-medium ${badge.className}`}>
       {badge.label}
@@ -126,8 +126,8 @@ export default function SchedulePage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Agenda</h1>
-        <p className="mt-1 text-sm text-gray-500">
+        <h1 className="text-2xl font-bold text-foreground">Agenda</h1>
+        <p className="mt-1 text-sm text-muted-foreground">
           Visualize e gerencie os agendamentos do seu salão
         </p>
       </div>
@@ -169,7 +169,7 @@ export default function SchedulePage() {
               className={`rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
                 status === f.value
                   ? 'bg-indigo-600 text-white'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  : 'bg-muted text-muted-foreground hover:bg-muted'
               }`}
             >
               {f.label}
@@ -179,22 +179,22 @@ export default function SchedulePage() {
       </div>
 
       {error && (
-        <div className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-600">{error}</div>
+        <div className="rounded-lg bg-red-50 dark:bg-red-950/40 px-4 py-3 text-sm text-red-600 dark:text-red-400">{error}</div>
       )}
 
       {isLoading ? (
-        <div className="flex items-center justify-center rounded-xl border bg-white py-24">
-          <p className="text-sm text-gray-400 animate-pulse">Carregando agendamentos...</p>
+        <div className="flex items-center justify-center rounded-xl border bg-card py-24">
+          <p className="text-sm text-muted-foreground animate-pulse">Carregando agendamentos...</p>
         </div>
       ) : appointments.length === 0 ? (
-        <div className="flex flex-col items-center justify-center rounded-xl border bg-white py-24 text-center">
-          <div className="rounded-full bg-indigo-50 p-4">
+        <div className="flex flex-col items-center justify-center rounded-xl border bg-card py-24 text-center">
+          <div className="rounded-full bg-indigo-50 dark:bg-indigo-500/15 p-4">
             <Calendar className="h-10 w-10 text-indigo-400" />
           </div>
-          <h2 className="mt-4 text-lg font-semibold text-gray-700">
+          <h2 className="mt-4 text-lg font-semibold text-foreground">
             Nenhum agendamento encontrado
           </h2>
-          <p className="mt-2 max-w-sm text-sm text-gray-400">
+          <p className="mt-2 max-w-sm text-sm text-muted-foreground">
             Quando seus clientes agendarem, os horários aparecerão aqui.
           </p>
         </div>
@@ -202,8 +202,8 @@ export default function SchedulePage() {
         <div className="space-y-6">
           {Object.entries(groupedByDay).map(([day, dayAppointments]) => (
             <div key={day}>
-              <h2 className="mb-2 text-sm font-semibold capitalize text-gray-500">{day}</h2>
-              <div className="overflow-hidden rounded-xl border bg-white">
+              <h2 className="mb-2 text-sm font-semibold capitalize text-muted-foreground">{day}</h2>
+              <div className="overflow-hidden rounded-xl border bg-card">
                 <ul className="divide-y">
                   {dayAppointments.map((appt) => {
                     const isActing = actingId === appt.id
@@ -212,20 +212,20 @@ export default function SchedulePage() {
                         key={appt.id}
                         className="flex flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center"
                       >
-                        <div className="w-28 shrink-0 text-sm font-semibold text-gray-900">
+                        <div className="w-28 shrink-0 text-sm font-semibold text-foreground">
                           {formatTime(appt.starts_at)} – {formatTime(appt.ends_at)}
                         </div>
                         <div className="min-w-0 flex-1">
-                          <p className="truncate font-medium text-gray-900">
+                          <p className="truncate font-medium text-foreground">
                             {appt.service.name}
-                            <span className="ml-2 text-sm font-normal text-gray-500">
+                            <span className="ml-2 text-sm font-normal text-muted-foreground">
                               com {appt.professional.name}
                             </span>
                           </p>
-                          <p className="truncate text-sm text-gray-500">
+                          <p className="truncate text-sm text-muted-foreground">
                             Cliente: {appt.client?.name ?? '—'}
                             {appt.notes && (
-                              <span className="ml-2 text-gray-400">· {appt.notes}</span>
+                              <span className="ml-2 text-muted-foreground">· {appt.notes}</span>
                             )}
                           </p>
                         </div>
@@ -265,7 +265,7 @@ export default function SchedulePage() {
                                     variant="outline"
                                     disabled={isActing}
                                     onClick={() => handleAction(appt, 'noShow')}
-                                    className="text-red-600 hover:bg-red-50"
+                                    className="text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40"
                                     title="Cliente não compareceu"
                                   >
                                     <UserX className="h-4 w-4" />
@@ -277,7 +277,7 @@ export default function SchedulePage() {
                                   variant="ghost"
                                   disabled={isActing}
                                   onClick={() => handleAction(appt, 'cancel')}
-                                  className="text-red-600 hover:bg-red-50 hover:text-red-700"
+                                  className="text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 hover:text-red-700 dark:hover:text-red-400"
                                   title="Cancelar"
                                 >
                                   <X className="h-4 w-4" />
@@ -296,7 +296,7 @@ export default function SchedulePage() {
 
           {lastPage > 1 && (
             <div className="flex items-center justify-between">
-              <p className="text-sm text-gray-500">
+              <p className="text-sm text-muted-foreground">
                 {total} agendamento{total === 1 ? '' : 's'}
               </p>
               <div className="flex gap-2">
@@ -308,7 +308,7 @@ export default function SchedulePage() {
                 >
                   Anterior
                 </Button>
-                <span className="flex items-center px-2 text-sm text-gray-500">
+                <span className="flex items-center px-2 text-sm text-muted-foreground">
                   {page} / {lastPage}
                 </span>
                 <Button

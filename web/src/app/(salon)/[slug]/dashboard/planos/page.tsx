@@ -155,15 +155,15 @@ export default function PlanosPage() {
   }
 
   const planBadgeColors: Record<string, string> = {
-    starter: 'bg-gray-100 text-gray-700',
-    pro: 'bg-indigo-100 text-indigo-700',
-    enterprise: 'bg-purple-100 text-purple-700',
+    starter: 'bg-muted text-foreground',
+    pro: 'bg-indigo-100 dark:bg-indigo-500/15 text-indigo-700 dark:text-indigo-300',
+    enterprise: 'bg-purple-100 dark:bg-purple-500/15 text-purple-700 dark:text-purple-300',
   }
 
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <p className="text-sm text-gray-500">Carregando planos...</p>
+        <p className="text-sm text-muted-foreground">Carregando planos...</p>
       </div>
     )
   }
@@ -171,7 +171,7 @@ export default function PlanosPage() {
   if (error) {
     return (
       <div className="flex items-center justify-center py-20">
-        <p className="text-sm text-red-500">{error}</p>
+        <p className="text-sm text-red-500 dark:text-red-400">{error}</p>
       </div>
     )
   }
@@ -182,8 +182,8 @@ export default function PlanosPage() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Planos e assinatura</h1>
-        <p className="mt-1 text-sm text-gray-500">
+        <h1 className="text-2xl font-bold text-foreground">Planos e assinatura</h1>
+        <p className="mt-1 text-sm text-muted-foreground">
           Escolha o plano ideal para o seu salao.
         </p>
       </div>
@@ -215,11 +215,11 @@ export default function PlanosPage() {
                 </CardTitle>
                 <div className="mt-2">
                   {plan.price === 0 ? (
-                    <span className="text-3xl font-bold text-gray-900">Gratis</span>
+                    <span className="text-3xl font-bold text-foreground">Gratis</span>
                   ) : (
-                    <span className="text-3xl font-bold text-gray-900">
+                    <span className="text-3xl font-bold text-foreground">
                       {formatPrice(plan.price)}
-                      <span className="text-sm font-normal text-gray-500">/mes</span>
+                      <span className="text-sm font-normal text-muted-foreground">/mes</span>
                     </span>
                   )}
                 </div>
@@ -227,7 +227,7 @@ export default function PlanosPage() {
               <CardContent className="flex-1 space-y-2">
                 <ul className="space-y-1.5">
                   {plan.features.map((feature) => (
-                    <li key={feature} className="flex items-center gap-2 text-sm text-gray-700">
+                    <li key={feature} className="flex items-center gap-2 text-sm text-foreground">
                       <svg
                         className="h-4 w-4 shrink-0 text-green-500"
                         fill="none"
@@ -260,19 +260,19 @@ export default function PlanosPage() {
       {/* Recent subscriptions */}
       {(data?.subscriptions ?? []).length > 0 && (
         <div className="space-y-3">
-          <h2 className="text-base font-semibold text-gray-900">Historico de assinaturas</h2>
-          <div className="overflow-hidden rounded-lg border bg-white">
-            <table className="min-w-full divide-y divide-gray-200 text-sm">
-              <thead className="bg-gray-50">
+          <h2 className="text-base font-semibold text-foreground">Historico de assinaturas</h2>
+          <div className="overflow-hidden rounded-lg border bg-card">
+            <table className="min-w-full divide-y divide-border text-sm">
+              <thead className="bg-muted">
                 <tr>
-                  <th className="px-4 py-3 text-left font-medium text-gray-500">Plano</th>
-                  <th className="px-4 py-3 text-left font-medium text-gray-500">Metodo</th>
-                  <th className="px-4 py-3 text-left font-medium text-gray-500">Valor</th>
-                  <th className="px-4 py-3 text-left font-medium text-gray-500">Status</th>
-                  <th className="px-4 py-3 text-left font-medium text-gray-500">Data</th>
+                  <th className="px-4 py-3 text-left font-medium text-muted-foreground">Plano</th>
+                  <th className="px-4 py-3 text-left font-medium text-muted-foreground">Metodo</th>
+                  <th className="px-4 py-3 text-left font-medium text-muted-foreground">Valor</th>
+                  <th className="px-4 py-3 text-left font-medium text-muted-foreground">Status</th>
+                  <th className="px-4 py-3 text-left font-medium text-muted-foreground">Data</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100">
+              <tbody className="divide-y divide-border">
                 {data?.subscriptions.map((sub) => (
                   <tr key={sub.id}>
                     <td className="px-4 py-3 font-medium capitalize">{sub.plan}</td>
@@ -281,7 +281,7 @@ export default function PlanosPage() {
                     <td className="px-4 py-3">
                       <StatusBadge status={sub.status} />
                     </td>
-                    <td className="px-4 py-3 text-gray-500">
+                    <td className="px-4 py-3 text-muted-foreground">
                       {new Date(sub.created_at).toLocaleDateString('pt-BR')}
                     </td>
                   </tr>
@@ -371,17 +371,17 @@ export default function PlanosPage() {
               )}
               {modal.subscription.pix_qr_code && (
                 <div className="space-y-2">
-                  <p className="text-xs font-medium text-gray-600">Codigo copia e cola</p>
+                  <p className="text-xs font-medium text-muted-foreground">Codigo copia e cola</p>
                   <div
-                    className="cursor-pointer rounded-md bg-gray-50 p-3 text-xs break-all font-mono text-gray-700 border hover:bg-gray-100 transition-colors"
+                    className="cursor-pointer rounded-md bg-muted p-3 text-xs break-all font-mono text-foreground border hover:bg-muted transition-colors"
                     onClick={() => navigator.clipboard.writeText(modal.subscription.pix_qr_code!)}
                   >
                     {modal.subscription.pix_qr_code}
                   </div>
-                  <p className="text-xs text-gray-400">Clique para copiar</p>
+                  <p className="text-xs text-muted-foreground">Clique para copiar</p>
                 </div>
               )}
-              <p className="text-center text-sm text-gray-500">
+              <p className="text-center text-sm text-muted-foreground">
                 Aguardando confirmacao do pagamento...
               </p>
             </div>
@@ -403,7 +403,7 @@ export default function PlanosPage() {
               <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
             <div>
-              <DialogTitle className="text-lg font-bold text-green-600">
+              <DialogTitle className="text-lg font-bold text-green-600 dark:text-green-400">
                 Plano ativado!
               </DialogTitle>
               <DialogDescription className="mt-1">
@@ -422,10 +422,10 @@ export default function PlanosPage() {
 
 function StatusBadge({ status }: { status: Subscription['status'] }) {
   const styles: Record<Subscription['status'], string> = {
-    pending: 'bg-yellow-100 text-yellow-700',
-    approved: 'bg-green-100 text-green-700',
-    rejected: 'bg-red-100 text-red-700',
-    cancelled: 'bg-gray-100 text-gray-500',
+    pending: 'bg-yellow-100 dark:bg-yellow-500/15 text-yellow-700 dark:text-yellow-400',
+    approved: 'bg-green-100 dark:bg-green-500/15 text-green-700 dark:text-green-400',
+    rejected: 'bg-red-100 dark:bg-red-500/15 text-red-700 dark:text-red-400',
+    cancelled: 'bg-muted text-muted-foreground',
   }
   const labels: Record<Subscription['status'], string> = {
     pending: 'Pendente',

@@ -39,8 +39,8 @@ export default function ForgotPasswordPage() {
     <div className="flex flex-1 items-center justify-center px-6 py-16">
       <div className="w-full max-w-sm">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900">Recuperar senha</h1>
-          <p className="mt-2 text-sm text-gray-600">
+          <h1 className="text-2xl font-bold text-foreground">Recuperar senha</h1>
+          <p className="mt-2 text-sm text-muted-foreground">
             Lembrou a senha?{' '}
             <Link
               href="/login"
@@ -51,11 +51,11 @@ export default function ForgotPasswordPage() {
           </p>
         </div>
 
-        <div className="mt-8 rounded-2xl border border-gray-100 bg-white p-8 shadow-sm">
+        <div className="mt-8 rounded-2xl border border-border bg-card p-8 shadow-sm">
           {sent ? (
             <div className="space-y-4 text-center">
-              <div className="rounded-lg bg-green-50 px-4 py-4">
-                <p className="text-sm font-medium text-green-800">
+              <div className="rounded-lg bg-green-50 dark:bg-green-950/40 px-4 py-4">
+                <p className="text-sm font-medium text-green-800 dark:text-green-300">
                   Verifique seu email — enviamos um link de redefinicao de senha.
                 </p>
               </div>
@@ -83,7 +83,7 @@ export default function ForgotPasswordPage() {
               </div>
 
               {error && (
-                <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">
+                <p className="rounded-lg bg-red-50 dark:bg-red-950/40 px-3 py-2 text-sm text-red-600 dark:text-red-400">
                   {error}
                 </p>
               )}
@@ -96,7 +96,7 @@ export default function ForgotPasswordPage() {
                 {isLoading ? 'Enviando...' : 'Enviar link de recuperacao'}
               </Button>
 
-              <p className="text-center text-sm text-gray-500">
+              <p className="text-center text-sm text-muted-foreground">
                 <Link
                   href="/login"
                   className="font-medium text-indigo-600 hover:text-indigo-500"

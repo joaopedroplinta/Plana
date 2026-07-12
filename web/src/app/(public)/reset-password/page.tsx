@@ -54,8 +54,8 @@ function ResetPasswordForm() {
 
   if (!token || !email) {
     return (
-      <div className="rounded-lg bg-red-50 px-4 py-4 text-center">
-        <p className="text-sm text-red-700">
+      <div className="rounded-lg bg-red-50 dark:bg-red-950/40 px-4 py-4 text-center">
+        <p className="text-sm text-red-700 dark:text-red-400">
           Link invalido ou expirado. Solicite um novo link de recuperacao.
         </p>
         <Link
@@ -99,7 +99,7 @@ function ResetPasswordForm() {
       </div>
 
       {error && (
-        <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">
+        <p className="rounded-lg bg-red-50 dark:bg-red-950/40 px-3 py-2 text-sm text-red-600 dark:text-red-400">
           {error}
         </p>
       )}
@@ -120,8 +120,8 @@ export default function ResetPasswordPage() {
     <div className="flex flex-1 items-center justify-center px-6 py-16">
       <div className="w-full max-w-sm">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900">Redefinir senha</h1>
-          <p className="mt-2 text-sm text-gray-600">
+          <h1 className="text-2xl font-bold text-foreground">Redefinir senha</h1>
+          <p className="mt-2 text-sm text-muted-foreground">
             Lembrou a senha?{' '}
             <Link
               href="/login"
@@ -132,10 +132,10 @@ export default function ResetPasswordPage() {
           </p>
         </div>
 
-        <div className="mt-8 rounded-2xl border border-gray-100 bg-white p-8 shadow-sm">
+        <div className="mt-8 rounded-2xl border border-border bg-card p-8 shadow-sm">
           <Suspense
             fallback={
-              <p className="text-center text-sm text-gray-500">Carregando...</p>
+              <p className="text-center text-sm text-muted-foreground">Carregando...</p>
             }
           >
             <ResetPasswordForm />

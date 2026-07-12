@@ -12,25 +12,25 @@ const PLAN_LABELS: Record<string, string> = {
 }
 
 const PLAN_COLORS: Record<string, string> = {
-  starter: 'bg-gray-100 text-gray-700',
-  pro: 'bg-indigo-100 text-indigo-700',
-  enterprise: 'bg-amber-100 text-amber-700',
+  starter: 'bg-muted text-foreground',
+  pro: 'bg-indigo-100 dark:bg-indigo-500/15 text-indigo-700 dark:text-indigo-300',
+  enterprise: 'bg-amber-100 dark:bg-amber-500/15 text-amber-700 dark:text-amber-400',
 }
 
 function SummaryCard({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-lg border bg-white p-5">
-      <p className="text-xs font-medium uppercase tracking-wide text-gray-500">{label}</p>
-      <p className="mt-2 text-2xl font-bold text-gray-900">{value}</p>
+    <div className="rounded-lg border bg-card p-5">
+      <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{label}</p>
+      <p className="mt-2 text-2xl font-bold text-foreground">{value}</p>
     </div>
   )
 }
 
 function SummaryCardSkeleton() {
   return (
-    <div className="rounded-lg border bg-white p-5 animate-pulse">
-      <div className="h-3 w-24 rounded bg-gray-200" />
-      <div className="mt-3 h-7 w-16 rounded bg-gray-200" />
+    <div className="rounded-lg border bg-card p-5 animate-pulse">
+      <div className="h-3 w-24 rounded bg-muted" />
+      <div className="mt-3 h-7 w-16 rounded bg-muted" />
     </div>
   )
 }
@@ -51,14 +51,14 @@ export default function SuperAdminDashboard() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Dashboard da Plataforma</h1>
-        <p className="mt-1 text-sm text-gray-500">
+        <h1 className="text-2xl font-bold text-foreground">Dashboard da Plataforma</h1>
+        <p className="mt-1 text-sm text-muted-foreground">
           Visão consolidada de todos os salões e atividade da plataforma.
         </p>
       </div>
 
       {error && (
-        <div className="rounded-md bg-red-50 p-4 text-sm text-red-700">{error}</div>
+        <div className="rounded-md bg-red-50 dark:bg-red-950/40 p-4 text-sm text-red-700 dark:text-red-400">{error}</div>
       )}
 
       {/* Summary cards */}
@@ -80,28 +80,28 @@ export default function SuperAdminDashboard() {
 
       {/* Tenants by plan */}
       {!isLoading && metrics && metrics.tenants_by_plan.length > 0 && (
-        <div className="rounded-lg border bg-white">
+        <div className="rounded-lg border bg-card">
           <div className="border-b p-5">
-            <h2 className="text-sm font-semibold text-gray-700">Distribuição por Plano</h2>
+            <h2 className="text-sm font-semibold text-foreground">Distribuição por Plano</h2>
           </div>
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b bg-gray-50">
-                <th className="px-5 py-3 text-left font-medium text-gray-600">Plano</th>
-                <th className="px-5 py-3 text-right font-medium text-gray-600">Salões</th>
+              <tr className="border-b bg-muted">
+                <th className="px-5 py-3 text-left font-medium text-muted-foreground">Plano</th>
+                <th className="px-5 py-3 text-right font-medium text-muted-foreground">Salões</th>
               </tr>
             </thead>
             <tbody>
               {metrics.tenants_by_plan.map((row) => (
-                <tr key={row.plan} className="border-b last:border-0 hover:bg-gray-50">
+                <tr key={row.plan} className="border-b last:border-0 hover:bg-muted">
                   <td className="px-5 py-3">
                     <span
-                      className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-semibold ${PLAN_COLORS[row.plan] ?? 'bg-gray-100 text-gray-700'}`}
+                      className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-semibold ${PLAN_COLORS[row.plan] ?? 'bg-muted text-foreground'}`}
                     >
                       {PLAN_LABELS[row.plan] ?? row.plan}
                     </span>
                   </td>
-                  <td className="px-5 py-3 text-right font-semibold text-gray-900">
+                  <td className="px-5 py-3 text-right font-semibold text-foreground">
                     {row.count}
                   </td>
                 </tr>

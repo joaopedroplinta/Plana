@@ -40,18 +40,18 @@ function formatShortDate(dateStr: string): string {
 
 function SummaryCard({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-lg border bg-white p-5">
-      <p className="text-xs font-medium uppercase tracking-wide text-gray-500">{label}</p>
-      <p className="mt-2 text-2xl font-bold text-gray-900">{value}</p>
+    <div className="rounded-lg border bg-card p-5">
+      <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{label}</p>
+      <p className="mt-2 text-2xl font-bold text-foreground">{value}</p>
     </div>
   )
 }
 
 function SummaryCardSkeleton() {
   return (
-    <div className="rounded-lg border bg-white p-5 animate-pulse">
-      <div className="h-3 w-24 rounded bg-gray-200" />
-      <div className="mt-3 h-7 w-16 rounded bg-gray-200" />
+    <div className="rounded-lg border bg-card p-5 animate-pulse">
+      <div className="h-3 w-24 rounded bg-muted" />
+      <div className="mt-3 h-7 w-16 rounded bg-muted" />
     </div>
   )
 }
@@ -77,7 +77,7 @@ export default function DashboardPage() {
   return (
     <div className="space-y-6 p-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">Visão Geral</h1>
+        <h1 className="text-2xl font-bold text-foreground">Visão Geral</h1>
         <select
           value={period}
           onChange={(e) => {
@@ -86,7 +86,7 @@ export default function DashboardPage() {
             setMetrics(null)
             setPeriod(Number(e.target.value))
           }}
-          className="rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          className="rounded-md border border-border bg-card px-3 py-1.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-indigo-500"
         >
           <option value={7}>Últimos 7 dias</option>
           <option value={30}>Últimos 30 dias</option>
@@ -95,7 +95,7 @@ export default function DashboardPage() {
       </div>
 
       {error && (
-        <div className="rounded-md bg-red-50 p-4 text-sm text-red-700">{error}</div>
+        <div className="rounded-md bg-red-50 dark:bg-red-950/40 p-4 text-sm text-red-700 dark:text-red-400">{error}</div>
       )}
 
       {/* Summary cards */}
@@ -128,10 +128,10 @@ export default function DashboardPage() {
       {!isLoading && metrics && (
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
           {/* Revenue line chart */}
-          <div className="rounded-lg border bg-white p-5">
-            <h2 className="mb-4 text-sm font-semibold text-gray-700">Receita Diária</h2>
+          <div className="rounded-lg border bg-card p-5">
+            <h2 className="mb-4 text-sm font-semibold text-foreground">Receita Diária</h2>
             {metrics.revenue_by_day.length === 0 ? (
-              <p className="py-12 text-center text-sm text-gray-400">Sem dados no período</p>
+              <p className="py-12 text-center text-sm text-muted-foreground">Sem dados no período</p>
             ) : (
               <ResponsiveContainer width="100%" height={200}>
                 <LineChart data={metrics.revenue_by_day}>
@@ -164,12 +164,12 @@ export default function DashboardPage() {
           </div>
 
           {/* Status pie chart */}
-          <div className="rounded-lg border bg-white p-5">
-            <h2 className="mb-4 text-sm font-semibold text-gray-700">
+          <div className="rounded-lg border bg-card p-5">
+            <h2 className="mb-4 text-sm font-semibold text-foreground">
               Agendamentos por Status
             </h2>
             {metrics.appointments_by_status.length === 0 ? (
-              <p className="py-12 text-center text-sm text-gray-400">Sem agendamentos</p>
+              <p className="py-12 text-center text-sm text-muted-foreground">Sem agendamentos</p>
             ) : (
               <ResponsiveContainer width="100%" height={200}>
                 <PieChart>
@@ -203,8 +203,8 @@ export default function DashboardPage() {
 
       {/* Top services bar chart */}
       {!isLoading && metrics && metrics.top_services.length > 0 && (
-        <div className="rounded-lg border bg-white p-5">
-          <h2 className="mb-4 text-sm font-semibold text-gray-700">Top Serviços</h2>
+        <div className="rounded-lg border bg-card p-5">
+          <h2 className="mb-4 text-sm font-semibold text-foreground">Top Serviços</h2>
           <ResponsiveContainer width="100%" height={200}>
             <BarChart data={metrics.top_services} layout="vertical">
               <XAxis type="number" tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
@@ -225,28 +225,28 @@ export default function DashboardPage() {
 
       {/* Professionals table */}
       {!isLoading && metrics && metrics.appointments_by_professional.length > 0 && (
-        <div className="rounded-lg border bg-white">
+        <div className="rounded-lg border bg-card">
           <div className="border-b p-5">
-            <h2 className="text-sm font-semibold text-gray-700">Profissionais</h2>
+            <h2 className="text-sm font-semibold text-foreground">Profissionais</h2>
           </div>
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b bg-gray-50">
-                <th className="px-5 py-3 text-left font-medium text-gray-600">
+              <tr className="border-b bg-muted">
+                <th className="px-5 py-3 text-left font-medium text-muted-foreground">
                   Profissional
                 </th>
-                <th className="px-5 py-3 text-right font-medium text-gray-600">
+                <th className="px-5 py-3 text-right font-medium text-muted-foreground">
                   Agendamentos
                 </th>
-                <th className="px-5 py-3 text-right font-medium text-gray-600">Receita</th>
+                <th className="px-5 py-3 text-right font-medium text-muted-foreground">Receita</th>
               </tr>
             </thead>
             <tbody>
               {metrics.appointments_by_professional.map((p) => (
-                <tr key={p.name} className="border-b last:border-0 hover:bg-gray-50">
-                  <td className="px-5 py-3 text-gray-900">{p.name}</td>
-                  <td className="px-5 py-3 text-right text-gray-700">{p.count}</td>
-                  <td className="px-5 py-3 text-right text-gray-700">
+                <tr key={p.name} className="border-b last:border-0 hover:bg-muted">
+                  <td className="px-5 py-3 text-foreground">{p.name}</td>
+                  <td className="px-5 py-3 text-right text-foreground">{p.count}</td>
+                  <td className="px-5 py-3 text-right text-foreground">
                     {formatPrice(p.revenue)}
                   </td>
                 </tr>

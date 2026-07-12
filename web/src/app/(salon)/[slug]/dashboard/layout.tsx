@@ -6,6 +6,8 @@ import Link from 'next/link'
 import { useAuth } from '@/hooks/useAuth'
 import { useTenant } from '@/hooks/useTenant'
 import { Button } from '@/components/ui/button'
+import { ThemeToggle } from '@/components/theme-toggle'
+import { Footer } from '@/components/shared/Footer'
 import {
   LayoutDashboard,
   Scissors,
@@ -98,8 +100,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   if (isLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-50">
-        <p className="text-sm text-gray-500">Carregando...</p>
+      <div className="flex min-h-screen items-center justify-center bg-muted">
+        <p className="text-sm text-muted-foreground">Carregando...</p>
       </div>
     )
   }
@@ -116,7 +118,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const salonName = user?.tenant?.name ?? slug
 
   return (
-    <div className="flex min-h-screen bg-gray-50">
+    <div className="flex min-h-screen bg-muted">
       {/* Mobile overlay */}
       {sidebarOpen && (
         <div
@@ -128,18 +130,18 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       {/* Sidebar */}
       <aside
         className={[
-          'fixed inset-y-0 left-0 z-30 flex w-64 flex-col border-r bg-white transition-transform duration-200 lg:static lg:translate-x-0',
+          'fixed inset-y-0 left-0 z-30 flex w-64 flex-col border-r border-border bg-card transition-transform duration-200 lg:static lg:translate-x-0',
           sidebarOpen ? 'translate-x-0' : '-translate-x-full',
         ].join(' ')}
       >
         {/* Sidebar header */}
-        <div className="flex h-16 items-center justify-between border-b px-5">
+        <div className="flex h-16 items-center justify-between border-b border-border px-5">
           <div className="flex items-center gap-2 min-w-0">
-            <span className="text-base font-bold text-gray-900 truncate">{salonName}</span>
+            <span className="text-base font-bold text-foreground truncate">{salonName}</span>
             {user?.tenant?.plan && <PlanBadge plan={user.tenant.plan} />}
           </div>
           <button
-            className="rounded p-1 text-gray-400 hover:text-gray-600 lg:hidden"
+            className="rounded p-1 text-muted-foreground hover:text-foreground lg:hidden"
             onClick={() => setSidebarOpen(false)}
           >
             <X className="h-5 w-5" />
@@ -161,8 +163,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 className={[
                   'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
                   isActive
-                    ? 'bg-indigo-50 text-indigo-700'
-                    : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900',
+                    ? 'bg-indigo-50 text-indigo-700 dark:bg-indigo-500/15 dark:text-indigo-300'
+                    : 'text-muted-foreground hover:bg-muted hover:text-foreground',
                 ].join(' ')}
               >
                 {item.icon}
@@ -173,10 +175,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </nav>
 
         {/* Logout */}
-        <div className="border-t p-4">
+        <div className="border-t border-border p-4">
           <Button
             variant="ghost"
-            className="w-full justify-start gap-3 text-sm text-gray-600 hover:text-red-600"
+            className="w-full justify-start gap-3 text-sm text-muted-foreground hover:text-red-600 dark:hover:text-red-400"
             onClick={handleLogout}
           >
             <LogOut className="h-4 w-4" />
@@ -188,23 +190,27 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       {/* Main area */}
       <div className="flex flex-1 flex-col min-w-0">
         {/* Top header */}
-        <header className="flex h-16 items-center gap-4 border-b bg-white px-6">
+        <header className="flex h-16 items-center gap-4 border-b border-border bg-card px-6">
           <button
-            className="rounded p-1.5 text-gray-400 hover:text-gray-600 lg:hidden"
+            className="rounded p-1.5 text-muted-foreground hover:text-foreground lg:hidden"
             onClick={() => setSidebarOpen(true)}
           >
             <Menu className="h-5 w-5" />
           </button>
           <div className="flex flex-1 items-center justify-between">
-            <span className="text-sm text-gray-500">
-              Bem-vindo, <span className="font-medium text-gray-900">{user?.name}</span>
+            <span className="text-sm text-muted-foreground">
+              Bem-vindo, <span className="font-medium text-foreground">{user?.name}</span>
             </span>
-            <span className="hidden text-xs text-gray-400 sm:block">{salonName}</span>
+            <div className="flex items-center gap-3">
+              <span className="hidden text-xs text-muted-foreground sm:block">{salonName}</span>
+              <ThemeToggle />
+            </div>
           </div>
         </header>
 
         {/* Page content */}
         <main className="flex-1 overflow-auto p-6">{children}</main>
+        <Footer variant="admin" />
       </div>
     </div>
   )
@@ -212,9 +218,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
 function PlanBadge({ plan }: { plan: 'starter' | 'pro' | 'enterprise' }) {
   const styles: Record<string, string> = {
-    starter: 'bg-gray-100 text-gray-600',
-    pro: 'bg-indigo-100 text-indigo-700',
-    enterprise: 'bg-purple-100 text-purple-700',
+    starter: 'bg-muted text-muted-foreground',
+    pro: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-500/15 dark:text-indigo-300',
+    enterprise: 'bg-purple-100 text-purple-700 dark:bg-purple-500/15 dark:text-purple-300',
   }
   return (
     <span

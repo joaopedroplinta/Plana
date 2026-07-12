@@ -8,7 +8,7 @@ export default function SubscriptionSuccessPage() {
   const slug = typeof params.slug === 'string' ? params.slug : ''
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+    <div className="min-h-screen flex items-center justify-center bg-muted">
       <div className="max-w-md w-full text-center space-y-6 p-8">
         <div className="flex justify-center">
           <svg
@@ -28,7 +28,7 @@ export default function SubscriptionSuccessPage() {
         </div>
         <div>
           <h1 className="text-2xl font-bold text-green-600">Assinatura confirmada!</h1>
-          <p className="mt-2 text-gray-500">
+          <p className="mt-2 text-muted-foreground">
             Seu plano foi ativado com sucesso. Agora voce tem acesso a todos os recursos do plano escolhido.
           </p>
         </div>
@@ -41,7 +41,7 @@ export default function SubscriptionSuccessPage() {
           </Link>
           <Link
             href={`/${slug}/dashboard`}
-            className="px-6 py-3 border border-indigo-600 text-indigo-600 rounded-lg hover:bg-indigo-50 transition-colors"
+            className="px-6 py-3 border border-indigo-600 text-indigo-600 rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-500/15 transition-colors"
           >
             Ir para o dashboard
           </Link>
