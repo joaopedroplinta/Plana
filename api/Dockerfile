@@ -25,7 +25,8 @@ RUN apk add --no-cache \
         icu-dev \
         oniguruma-dev \
     && docker-php-ext-configure pgsql \
-    && docker-php-ext-install pdo pdo_pgsql pgsql intl opcache
+    && docker-php-ext-install pdo pdo_pgsql pgsql intl
+    # opcache já vem compilado nativamente na imagem base — só falta configurá-lo (abaixo)
 
 RUN { \
         echo 'opcache.enable=1'; \
