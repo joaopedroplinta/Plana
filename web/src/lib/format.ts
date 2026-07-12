@@ -22,10 +22,19 @@ function toLocalDate(date: string | Date): Date {
 }
 
 export function formatDate(date: string | Date): string {
+  const isPureDate = typeof date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(date)
+
   return new Intl.DateTimeFormat('pt-BR', {
     day: '2-digit',
     month: 'short',
     year: 'numeric',
+    // Timestamps completos (starts_at, expires_at, created_at) são sempre
+    // formatados em UTC, consistente com formatTime()/formatDateTime() — o
+    // sistema não tem noção real de fuso do salão, tudo é UTC "puro" de
+    // ponta a ponta. Strings "só data" (sem componente de hora) já foram
+    // convertidas para meia-noite local por toLocalDate() e não precisam
+    // dessa opção (não têm ambiguidade de fuso).
+    ...(isPureDate ? {} : { timeZone: 'UTC' }),
   }).format(toLocalDate(date))
 }
 
@@ -36,6 +45,7 @@ export function formatDateTime(date: string | Date): string {
     year: 'numeric',
     hour: '2-digit',
     minute: '2-digit',
+    timeZone: 'UTC',
   }).format(new Date(date))
 }
 
@@ -51,5 +61,6 @@ export function formatTime(date: string | Date): string {
   return new Intl.DateTimeFormat('pt-BR', {
     hour: '2-digit',
     minute: '2-digit',
+    timeZone: 'UTC',
   }).format(new Date(date))
 }

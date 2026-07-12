@@ -118,6 +118,7 @@ export default function SchedulePage() {
       weekday: 'long',
       day: '2-digit',
       month: 'long',
+      timeZone: 'UTC',
     }).format(new Date(appt.starts_at))
     acc[day] = acc[day] ? [...acc[day], appt] : [appt]
     return acc
