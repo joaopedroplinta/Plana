@@ -12,10 +12,10 @@ import type { PackagePurchase } from '@/types/index'
 import { formatDate, formatPrice } from '@/lib/format'
 
 const STATUS_BADGE: Record<PackagePurchase['status'], { label: string; className: string }> = {
-  pending: { label: 'Aguardando pagamento', className: 'bg-amber-100 text-amber-800' },
-  active: { label: 'Ativo', className: 'bg-green-100 text-green-800' },
-  expired: { label: 'Expirado', className: 'bg-gray-100 text-gray-500' },
-  cancelled: { label: 'Cancelado', className: 'bg-red-100 text-red-700' },
+  pending: { label: 'Aguardando pagamento', className: 'bg-amber-100 dark:bg-amber-500/15 text-amber-800 dark:text-amber-300' },
+  active: { label: 'Ativo', className: 'bg-green-100 dark:bg-green-500/15 text-green-800 dark:text-green-300' },
+  expired: { label: 'Expirado', className: 'bg-muted text-muted-foreground' },
+  cancelled: { label: 'Cancelado', className: 'bg-red-100 dark:bg-red-500/15 text-red-700 dark:text-red-400' },
 }
 
 export default function MeusPacotesPage() {
@@ -50,7 +50,7 @@ export default function MeusPacotesPage() {
   if (authLoading || (!isAuthenticated && !error)) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center">
-        <p className="text-sm text-gray-400 animate-pulse">Carregando...</p>
+        <p className="text-sm text-muted-foreground animate-pulse">Carregando...</p>
       </div>
     )
   }
@@ -60,22 +60,22 @@ export default function MeusPacotesPage() {
       <MinhaContaTabs slug={slug} />
 
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Meus pacotes</h1>
-        <p className="mt-1 text-sm text-gray-500">Pacotes de sessões comprados neste salão</p>
+        <h1 className="text-2xl font-bold text-foreground">Meus pacotes</h1>
+        <p className="mt-1 text-sm text-muted-foreground">Pacotes de sessões comprados neste salão</p>
       </div>
 
       {error && (
-        <div className="mb-4 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-600">{error}</div>
+        <div className="mb-4 rounded-lg bg-red-50 dark:bg-red-950/40 px-4 py-3 text-sm text-red-600 dark:text-red-400">{error}</div>
       )}
 
       {isLoading ? (
-        <p className="py-16 text-center text-sm text-gray-400 animate-pulse">
+        <p className="py-16 text-center text-sm text-muted-foreground animate-pulse">
           Carregando pacotes...
         </p>
       ) : purchases.length === 0 ? (
-        <div className="flex flex-col items-center rounded-xl border bg-white py-16 text-center">
-          <PackageX className="h-10 w-10 text-gray-300" />
-          <p className="mt-4 text-sm text-gray-500">Você ainda não comprou nenhum pacote.</p>
+        <div className="flex flex-col items-center rounded-xl border bg-card py-16 text-center">
+          <PackageX className="h-10 w-10 text-muted-foreground" />
+          <p className="mt-4 text-sm text-muted-foreground">Você ainda não comprou nenhum pacote.</p>
           <a
             href={`/${slug}`}
             className="mt-4 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-500 transition-colors"
@@ -91,12 +91,12 @@ export default function MeusPacotesPage() {
               <Card key={purchase.id} className="p-4">
                 <div className="flex items-start justify-between gap-4">
                   <div className="min-w-0">
-                    <p className="font-semibold text-gray-900">{purchase.service_package.name}</p>
-                    <p className="mt-0.5 text-sm text-gray-500">
+                    <p className="font-semibold text-foreground">{purchase.service_package.name}</p>
+                    <p className="mt-0.5 text-sm text-muted-foreground">
                       {purchase.sessions_remaining} de {purchase.sessions_total} sessões restantes
                     </p>
                     {purchase.expires_at && (
-                      <p className="mt-1 text-xs text-gray-400">
+                      <p className="mt-1 text-xs text-muted-foreground">
                         Válido até {formatDate(purchase.expires_at)}
                       </p>
                     )}

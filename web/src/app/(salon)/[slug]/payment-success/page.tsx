@@ -11,7 +11,7 @@ function PaymentSuccessContent() {
   const externalRef = searchParams.get('external_reference')
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+    <div className="min-h-screen flex items-center justify-center bg-muted">
       <div className="max-w-md w-full text-center space-y-6 p-8">
         <div className="text-6xl flex justify-center">
           <svg
@@ -26,11 +26,11 @@ function PaymentSuccessContent() {
           </svg>
         </div>
         <h1 className="text-2xl font-bold text-green-600">Pagamento confirmado!</h1>
-        <p className="text-gray-500">
+        <p className="text-muted-foreground">
           Seu agendamento está garantido. Em breve você receberá uma confirmação.
         </p>
         {(paymentId || externalRef) && (
-          <p className="text-xs text-gray-400">
+          <p className="text-xs text-muted-foreground">
             Referência: {externalRef ?? paymentId}
           </p>
         )}
@@ -43,7 +43,7 @@ function PaymentSuccessContent() {
           </a>
           <a
             href={`/${slug}/booking`}
-            className="px-6 py-3 border border-indigo-600 text-indigo-600 rounded-lg hover:bg-indigo-50 transition-colors"
+            className="px-6 py-3 border border-indigo-600 text-indigo-600 rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-500/15 transition-colors"
           >
             Fazer outro agendamento
           </a>

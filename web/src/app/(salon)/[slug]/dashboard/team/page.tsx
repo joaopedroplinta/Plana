@@ -96,15 +96,15 @@ export default function TeamPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Equipe</h1>
-        <p className="mt-1 text-sm text-gray-500">
+        <h1 className="text-2xl font-bold text-foreground">Equipe</h1>
+        <p className="mt-1 text-sm text-muted-foreground">
           Convide funcionários para acessar a agenda do salão
         </p>
       </div>
 
       {isOwner && (
         <Card className="p-5">
-          <h2 className="mb-4 flex items-center gap-2 text-sm font-semibold text-gray-700">
+          <h2 className="mb-4 flex items-center gap-2 text-sm font-semibold text-foreground">
             <UserPlus className="h-4 w-4 text-indigo-500" />
             Convidar funcionário
           </h2>
@@ -140,38 +140,38 @@ export default function TeamPage() {
       )}
 
       {error && (
-        <div className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-600">{error}</div>
+        <div className="rounded-lg bg-red-50 dark:bg-red-950/40 px-4 py-3 text-sm text-red-600 dark:text-red-400">{error}</div>
       )}
 
       {isLoading ? (
-        <div className="flex items-center justify-center rounded-xl border bg-white py-24">
-          <p className="text-sm text-gray-400 animate-pulse">Carregando equipe...</p>
+        <div className="flex items-center justify-center rounded-xl border bg-card py-24">
+          <p className="text-sm text-muted-foreground animate-pulse">Carregando equipe...</p>
         </div>
       ) : members.length === 0 ? (
-        <div className="flex flex-col items-center justify-center rounded-xl border bg-white py-24 text-center">
-          <div className="rounded-full bg-indigo-50 p-4">
+        <div className="flex flex-col items-center justify-center rounded-xl border bg-card py-24 text-center">
+          <div className="rounded-full bg-indigo-50 dark:bg-indigo-500/15 p-4">
             <Users className="h-10 w-10 text-indigo-400" />
           </div>
-          <p className="mt-4 text-sm text-gray-500">Nenhum membro na equipe ainda.</p>
+          <p className="mt-4 text-sm text-muted-foreground">Nenhum membro na equipe ainda.</p>
         </div>
       ) : (
-        <div className="overflow-hidden rounded-xl border bg-white">
+        <div className="overflow-hidden rounded-xl border bg-card">
           <ul className="divide-y">
             {members.map((member) => (
               <li key={member.id} className="flex items-center gap-4 px-4 py-3">
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-indigo-100 text-sm font-bold text-indigo-600">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-indigo-100 dark:bg-indigo-500/15 text-sm font-bold text-indigo-600 dark:text-indigo-300">
                   {member.name.charAt(0).toUpperCase()}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="truncate font-medium text-gray-900">{member.name}</p>
-                  <p className="truncate text-sm text-gray-500">{member.email}</p>
+                  <p className="truncate font-medium text-foreground">{member.name}</p>
+                  <p className="truncate text-sm text-muted-foreground">{member.email}</p>
                 </div>
                 <Badge
                   variant="secondary"
                   className={
                     member.role === 'owner'
-                      ? 'bg-indigo-100 text-indigo-700'
-                      : 'bg-gray-100 text-gray-600'
+                      ? 'bg-indigo-100 dark:bg-indigo-500/15 text-indigo-700 dark:text-indigo-300'
+                      : 'bg-muted text-muted-foreground'
                   }
                 >
                   {member.role === 'owner' ? 'Dono' : 'Funcionário'}
@@ -180,7 +180,7 @@ export default function TeamPage() {
                   <Button
                     size="sm"
                     variant="ghost"
-                    className="text-red-600 hover:bg-red-50 hover:text-red-700"
+                    className="text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 hover:text-red-700 dark:hover:text-red-400"
                     disabled={removingId === member.id}
                     onClick={() => setMemberToRemove(member)}
                     title="Remover da equipe"

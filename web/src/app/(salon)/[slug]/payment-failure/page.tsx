@@ -12,18 +12,18 @@ function PaymentFailureContent() {
   const externalRef = searchParams.get('external_reference')
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+    <div className="min-h-screen flex items-center justify-center bg-muted">
       <div className="max-w-md w-full text-center space-y-6 p-8">
         <div className="flex justify-center">
           <XCircle className="h-16 w-16 text-red-500" />
         </div>
         <h1 className="text-2xl font-bold text-red-600">Pagamento não aprovado</h1>
-        <p className="text-gray-500">
+        <p className="text-muted-foreground">
           Não foi possível concluir o pagamento. Seu horário continua reservado como
           pendente — você pode tentar pagar novamente ou pagar no local.
         </p>
         {(paymentId || externalRef) && (
-          <p className="text-xs text-gray-400">Referência: {externalRef ?? paymentId}</p>
+          <p className="text-xs text-muted-foreground">Referência: {externalRef ?? paymentId}</p>
         )}
         <div className="flex flex-col gap-3">
           <a
@@ -34,7 +34,7 @@ function PaymentFailureContent() {
           </a>
           <a
             href={`/${slug}`}
-            className="px-6 py-3 border border-gray-200 text-gray-600 rounded-lg hover:bg-gray-50 transition-colors"
+            className="px-6 py-3 border border-border text-muted-foreground rounded-lg hover:bg-muted transition-colors"
           >
             Voltar ao salão
           </a>

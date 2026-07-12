@@ -4,6 +4,8 @@ import { use } from 'react'
 import { usePathname } from 'next/navigation'
 import { useAuth } from '@/hooks/useAuth'
 import { useTenant } from '@/hooks/useTenant'
+import { ThemeToggle } from '@/components/theme-toggle'
+import { Footer } from '@/components/shared/Footer'
 
 interface SalonLayoutProps {
   children: React.ReactNode
@@ -28,23 +30,23 @@ export default function SalonLayout({ children, params }: SalonLayoutProps) {
 
   return (
     <div className="flex min-h-screen flex-col">
-      <header className="border-b bg-white px-6 py-4">
+      <header className="border-b border-border bg-background px-6 py-4">
         <div className="mx-auto flex max-w-7xl items-center justify-between">
-          <a href={`/${slug}`} className="text-lg font-bold text-gray-900">
+          <a href={`/${slug}`} className="text-lg font-bold text-foreground">
             {displayName}
           </a>
           <nav className="flex items-center gap-4">
             {isAuthenticated ? (
               <a
                 href={`/${slug}/minha-conta`}
-                className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors"
+                className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
               >
                 Meus agendamentos
               </a>
             ) : (
               <a
                 href={`/login?redirect=${encodeURIComponent(`/${slug}`)}`}
-                className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors"
+                className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
               >
                 Entrar
               </a>
@@ -52,7 +54,7 @@ export default function SalonLayout({ children, params }: SalonLayoutProps) {
             {isStaff && (
               <a
                 href={`/${slug}/dashboard`}
-                className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors"
+                className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
               >
                 Dashboard
               </a>
@@ -63,10 +65,12 @@ export default function SalonLayout({ children, params }: SalonLayoutProps) {
             >
               Agendar
             </a>
+            <ThemeToggle />
           </nav>
         </div>
       </header>
       <main className="flex flex-1 flex-col">{children}</main>
+      <Footer variant="public" />
     </div>
   )
 }

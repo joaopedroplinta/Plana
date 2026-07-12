@@ -184,8 +184,8 @@ export default function ServicesPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Serviços</h1>
-          <p className="mt-1 text-sm text-gray-500">
+          <h1 className="text-2xl font-bold text-foreground">Serviços</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
             Gerencie os serviços oferecidos pelo seu salão
           </p>
         </div>
@@ -196,19 +196,19 @@ export default function ServicesPage() {
       </div>
 
       {/* List */}
-      <div className="rounded-xl border bg-white">
+      <div className="rounded-xl border bg-card">
         {isLoadingList ? (
           <div className="flex items-center justify-center py-16">
-            <p className="text-sm text-gray-400">Carregando serviços...</p>
+            <p className="text-sm text-muted-foreground">Carregando serviços...</p>
           </div>
         ) : listError ? (
           <div className="flex items-center justify-center py-16">
-            <p className="text-sm text-red-500">{listError}</p>
+            <p className="text-sm text-red-500 dark:text-red-400">{listError}</p>
           </div>
         ) : services.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 text-center">
-            <p className="text-sm font-medium text-gray-500">Nenhum serviço cadastrado</p>
-            <p className="mt-1 text-xs text-gray-400">
+            <p className="text-sm font-medium text-muted-foreground">Nenhum serviço cadastrado</p>
+            <p className="mt-1 text-xs text-muted-foreground">
               Clique em &quot;Novo serviço&quot; para começar.
             </p>
           </div>
@@ -228,9 +228,9 @@ export default function ServicesPage() {
                 <TableRow key={service.id}>
                   <TableCell>
                     <div>
-                      <p className="font-medium text-gray-900">{service.name}</p>
+                      <p className="font-medium text-foreground">{service.name}</p>
                       {service.description && (
-                        <p className="mt-0.5 text-xs text-gray-400 line-clamp-1">
+                        <p className="mt-0.5 text-xs text-muted-foreground line-clamp-1">
                           {service.description}
                         </p>
                       )}
@@ -242,7 +242,7 @@ export default function ServicesPage() {
                   <TableCell>{formatDuration(service.duration_minutes)}</TableCell>
                   <TableCell>
                     {service.active ? (
-                      <Badge variant="default" className="bg-green-100 text-green-700 hover:bg-green-100">
+                      <Badge variant="default" className="bg-green-100 dark:bg-green-500/15 text-green-700 dark:text-green-400 hover:bg-green-100 dark:hover:bg-green-500/15">
                         Ativo
                       </Badge>
                     ) : (
@@ -263,7 +263,7 @@ export default function ServicesPage() {
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="h-8 w-8 p-0 text-red-500 hover:text-red-600 hover:bg-red-50"
+                        className="h-8 w-8 p-0 text-red-500 dark:text-red-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40"
                         onClick={() => setDeleteTarget(service)}
                       >
                         <Trash2 className="h-4 w-4" />
@@ -343,7 +343,7 @@ export default function ServicesPage() {
               </div>
             </div>
             {formError && (
-              <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">
+              <p className="rounded-lg bg-red-50 dark:bg-red-950/40 px-3 py-2 text-sm text-red-600 dark:text-red-400">
                 {formError}
               </p>
             )}

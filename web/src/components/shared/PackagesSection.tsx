@@ -134,15 +134,15 @@ export function PackagesSection({ slug, packages }: PackagesSectionProps) {
 
   return (
     <section className="mx-auto max-w-4xl px-6 py-12">
-      <h2 className="text-xl font-bold text-gray-900">Pacotes de sessões</h2>
+      <h2 className="text-xl font-bold text-foreground">Pacotes de sessões</h2>
       <div className="mt-6 grid gap-4 sm:grid-cols-2">
         {packages.map((pkg) => (
           <Card key={pkg.id} className="flex flex-col p-5">
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
-                <p className="font-semibold text-gray-900">{pkg.name}</p>
+                <p className="font-semibold text-foreground">{pkg.name}</p>
                 {pkg.description && (
-                  <p className="mt-1 text-sm text-gray-500 line-clamp-2">{pkg.description}</p>
+                  <p className="mt-1 text-sm text-muted-foreground line-clamp-2">{pkg.description}</p>
                 )}
               </div>
               <p className="whitespace-nowrap text-lg font-bold text-indigo-600">
@@ -159,7 +159,7 @@ export function PackagesSection({ slug, packages }: PackagesSectionProps) {
               </Badge>
             </div>
             {pkg.services.length > 0 && (
-              <p className="mt-3 text-xs text-gray-400">
+              <p className="mt-3 text-xs text-muted-foreground">
                 Inclui: {pkg.services.map((s) => s.name).join(', ')}
               </p>
             )}
@@ -247,19 +247,19 @@ export function PackagesSection({ slug, packages }: PackagesSectionProps) {
               )}
               {modal.purchase.payment?.pix_qr_code && (
                 <div className="space-y-2">
-                  <p className="text-xs font-medium text-gray-600">Código copia e cola</p>
+                  <p className="text-xs font-medium text-muted-foreground">Código copia e cola</p>
                   <div
-                    className="cursor-pointer rounded-md bg-gray-50 p-3 text-xs break-all font-mono text-gray-700 border hover:bg-gray-100 transition-colors"
+                    className="cursor-pointer rounded-md bg-muted p-3 text-xs break-all font-mono text-foreground border hover:bg-muted transition-colors"
                     onClick={() =>
                       navigator.clipboard.writeText(modal.purchase.payment?.pix_qr_code ?? '')
                     }
                   >
                     {modal.purchase.payment.pix_qr_code}
                   </div>
-                  <p className="text-xs text-gray-400">Clique para copiar</p>
+                  <p className="text-xs text-muted-foreground">Clique para copiar</p>
                 </div>
               )}
-              <p className="text-center text-sm text-gray-500">
+              <p className="text-center text-sm text-muted-foreground">
                 Aguardando confirmação do pagamento...
               </p>
             </div>

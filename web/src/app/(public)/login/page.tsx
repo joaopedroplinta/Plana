@@ -63,8 +63,8 @@ function LoginForm() {
     <div className="flex flex-1 items-center justify-center px-6 py-16">
       <div className="w-full max-w-sm">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900">Entrar na sua conta</h1>
-          <p className="mt-2 text-sm text-gray-600">
+          <h1 className="text-2xl font-bold text-foreground">Entrar na sua conta</h1>
+          <p className="mt-2 text-sm text-muted-foreground">
             Ainda não tem conta?{' '}
             <Link
               href={redirect ? `/register?redirect=${encodeURIComponent(redirect)}` : '/register'}
@@ -75,7 +75,7 @@ function LoginForm() {
           </p>
         </div>
 
-        <div className="mt-8 rounded-2xl border border-gray-100 bg-white p-8 shadow-sm">
+        <div className="mt-8 rounded-2xl border border-border bg-card p-8 shadow-sm">
           <form onSubmit={handleSubmit} className="space-y-5">
             <div className="space-y-1.5">
               <Label htmlFor="email">E-mail</Label>
@@ -114,7 +114,7 @@ function LoginForm() {
             </div>
 
             {error && (
-              <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">
+              <p className="rounded-lg bg-red-50 dark:bg-red-950/40 px-3 py-2 text-sm text-red-600 dark:text-red-400">
                 {error}
               </p>
             )}

@@ -84,8 +84,8 @@ function RegisterForm() {
     <div className="flex flex-1 items-center justify-center px-6 py-16">
       <div className="w-full max-w-sm">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900">Criar conta grátis</h1>
-          <p className="mt-2 text-sm text-gray-600">
+          <h1 className="text-2xl font-bold text-foreground">Criar conta grátis</h1>
+          <p className="mt-2 text-sm text-muted-foreground">
             Já tem uma conta?{' '}
             <Link
               href={redirect ? `/login?redirect=${encodeURIComponent(redirect)}` : '/login'}
@@ -96,15 +96,15 @@ function RegisterForm() {
           </p>
         </div>
 
-        <div className="mt-8 rounded-2xl border border-gray-100 bg-white p-8 shadow-sm">
-          <div className="mb-6 grid grid-cols-2 gap-1 rounded-full bg-gray-100 p-1">
+        <div className="mt-8 rounded-2xl border border-border bg-card p-8 shadow-sm">
+          <div className="mb-6 grid grid-cols-2 gap-1 rounded-full bg-muted p-1">
             <button
               type="button"
               onClick={() => setAccountType('client')}
               className={`rounded-full px-3 py-1.5 text-sm font-medium transition-colors ${
                 accountType === 'client'
-                  ? 'bg-white text-indigo-600 shadow-sm'
-                  : 'text-gray-500 hover:text-gray-700'
+                  ? 'bg-card text-indigo-600 shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground'
               }`}
             >
               Sou cliente
@@ -114,8 +114,8 @@ function RegisterForm() {
               onClick={() => setAccountType('owner')}
               className={`rounded-full px-3 py-1.5 text-sm font-medium transition-colors ${
                 accountType === 'owner'
-                  ? 'bg-white text-indigo-600 shadow-sm'
-                  : 'text-gray-500 hover:text-gray-700'
+                  ? 'bg-card text-indigo-600 shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground'
               }`}
             >
               Tenho um salão
@@ -136,7 +136,7 @@ function RegisterForm() {
                 disabled={isLoading}
               />
               {fieldErrors.name && (
-                <p className="text-xs text-red-600">{fieldErrors.name[0]}</p>
+                <p className="text-xs text-red-600 dark:text-red-400">{fieldErrors.name[0]}</p>
               )}
             </div>
 
@@ -154,7 +154,7 @@ function RegisterForm() {
                   disabled={isLoading}
                 />
                 {fieldErrors.salon_name && (
-                  <p className="text-xs text-red-600">{fieldErrors.salon_name[0]}</p>
+                  <p className="text-xs text-red-600 dark:text-red-400">{fieldErrors.salon_name[0]}</p>
                 )}
               </div>
             )}
@@ -172,7 +172,7 @@ function RegisterForm() {
                 disabled={isLoading}
               />
               {fieldErrors.email && (
-                <p className="text-xs text-red-600">{fieldErrors.email[0]}</p>
+                <p className="text-xs text-red-600 dark:text-red-400">{fieldErrors.email[0]}</p>
               )}
             </div>
 
@@ -189,7 +189,7 @@ function RegisterForm() {
                 disabled={isLoading}
               />
               {fieldErrors.password && (
-                <p className="text-xs text-red-600">{fieldErrors.password[0]}</p>
+                <p className="text-xs text-red-600 dark:text-red-400">{fieldErrors.password[0]}</p>
               )}
             </div>
 
@@ -206,14 +206,14 @@ function RegisterForm() {
                 disabled={isLoading}
               />
               {fieldErrors.password_confirmation && (
-                <p className="text-xs text-red-600">
+                <p className="text-xs text-red-600 dark:text-red-400">
                   {fieldErrors.password_confirmation[0]}
                 </p>
               )}
             </div>
 
             {error && (
-              <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">
+              <p className="rounded-lg bg-red-50 dark:bg-red-950/40 px-3 py-2 text-sm text-red-600 dark:text-red-400">
                 {error}
               </p>
             )}
