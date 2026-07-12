@@ -16,16 +16,18 @@ export function proxy(request: NextRequest) {
     return NextResponse.next()
   }
 
-  // Rotas públicas — sempre liberadas
+  // Rotas públicas — sempre liberadas. Não redirecionamos aqui mesmo se
+  // houver cookie `token`: o proxy roda no edge e não tem como validar se
+  // o token ainda é válido (só checar a presença dele já causou um bug real
+  // — um cookie órfão/inválido travava o acesso a /login para sempre, sem
+  // forma de deslogar pela UI). Quem decide "já autenticado, redirecionar
+  // para longe do login" é o próprio client-side (useAuth, que valida via
+  // /auth/me antes de considerar o usuário autenticado).
   const isPublic = PUBLIC_PATHS.some(
     (p) => pathname === p || pathname.startsWith(p + '?'),
   )
 
   if (isPublic) {
-    // Se já autenticado e tentando acessar login/register → redirecionar para /
-    if (token && (pathname === '/login' || pathname === '/register')) {
-      return NextResponse.redirect(new URL('/', request.url))
-    }
     return NextResponse.next()
   }
 

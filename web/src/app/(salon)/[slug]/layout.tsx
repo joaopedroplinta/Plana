@@ -1,7 +1,7 @@
 'use client'
 
 import { use } from 'react'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { useAuth } from '@/hooks/useAuth'
 import { useTenant } from '@/hooks/useTenant'
 import { ThemeToggle } from '@/components/theme-toggle'
@@ -15,8 +15,14 @@ interface SalonLayoutProps {
 export default function SalonLayout({ children, params }: SalonLayoutProps) {
   const { slug } = use(params)
   const pathname = usePathname()
+  const router = useRouter()
   const { tenant, isLoading } = useTenant(slug)
-  const { isAuthenticated } = useAuth()
+  const { isAuthenticated, logout } = useAuth()
+
+  async function handleLogout() {
+    await logout()
+    router.push(`/${slug}`)
+  }
 
   const displayName = isLoading ? '...' : (tenant?.name ?? slug)
   const isStaff =
@@ -37,12 +43,21 @@ export default function SalonLayout({ children, params }: SalonLayoutProps) {
           </a>
           <nav className="flex items-center gap-4">
             {isAuthenticated ? (
-              <a
-                href={`/${slug}/minha-conta`}
-                className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
-              >
-                Meus agendamentos
-              </a>
+              <>
+                <a
+                  href={`/${slug}/minha-conta`}
+                  className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  Meus agendamentos
+                </a>
+                <button
+                  type="button"
+                  onClick={handleLogout}
+                  className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  Sair
+                </button>
+              </>
             ) : (
               <a
                 href={`/login?redirect=${encodeURIComponent(`/${slug}`)}`}
