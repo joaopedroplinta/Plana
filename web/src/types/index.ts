@@ -84,11 +84,29 @@ export interface Payment {
   appointment_id: string | null
   amount: number
   method: 'pix' | 'credit_card'
-  status: 'pending' | 'approved' | 'rejected' | 'refunded'
+  status: 'pending' | 'approved' | 'rejected' | 'refunded' | 'cancelled'
   pix_qr_code: string | null
   pix_qr_code_base64: string | null
   preference_url: string | null
   paid_at: string | null
+}
+
+/**
+ * Dados do cartão tokenizado pelo Card Payment Brick (MercadoPago.js) no
+ * frontend — nunca enviamos o número do cartão em si, só o token.
+ */
+export interface CardPaymentData {
+  token: string
+  payment_method_id: string
+  installments: number
+  issuer_id?: string
+  payer?: {
+    email?: string
+    identification?: {
+      type: string
+      number: string
+    }
+  }
 }
 
 export interface PackagePurchase {

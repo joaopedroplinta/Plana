@@ -6,11 +6,12 @@ import { Package } from 'lucide-react'
 import { toast } from 'sonner'
 import { useAuth } from '@/hooks/useAuth'
 import { packagePurchasesService } from '@/services/packagePurchases'
-import type { PackagePurchase, ServicePackage } from '@/types/index'
+import type { CardPaymentData, PackagePurchase, ServicePackage } from '@/types/index'
 import { formatPrice } from '@/lib/format'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
+import { CardPaymentBrick } from '@/components/shared/CardPaymentBrick'
 import {
   Dialog,
   DialogContent,
@@ -23,6 +24,7 @@ type PaymentMethod = 'pix' | 'credit_card'
 
 type ModalState =
   | { step: 'choose_method'; pkg: ServicePackage }
+  | { step: 'card_form'; pkg: ServicePackage }
   | { step: 'pix_waiting'; pkg: ServicePackage; purchase: PackagePurchase }
   | { step: 'approved'; pkg: ServicePackage }
   | null
@@ -34,7 +36,7 @@ interface PackagesSectionProps {
 
 export function PackagesSection({ slug, packages }: PackagesSectionProps) {
   const router = useRouter()
-  const { isAuthenticated } = useAuth()
+  const { isAuthenticated, user } = useAuth()
 
   const [modal, setModal] = useState<ModalState>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -78,21 +80,42 @@ export function PackagesSection({ slug, packages }: PackagesSectionProps) {
   }
 
   async function handleSelectMethod(pkg: ServicePackage, method: PaymentMethod) {
+    if (method === 'credit_card') {
+      setModal({ step: 'card_form', pkg })
+      return
+    }
+
     setIsSubmitting(true)
     try {
       const res = await packagePurchasesService.purchase(slug, pkg.id, method)
       const purchase = res.data.data
 
-      if (method === 'credit_card') {
-        const url = purchase.payment?.preference_url
-        if (url) {
-          window.location.href = url
-          return
-        }
-        toast.error('Erro ao iniciar pagamento. Tente novamente.')
+      setModal({ step: 'pix_waiting', pkg, purchase })
+      startPolling(pkg, purchase.id)
+    } catch {
+      toast.error('Erro ao processar pagamento. Tente novamente.')
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  async function handleCardSubmit(pkg: ServicePackage, cardData: CardPaymentData) {
+    setIsSubmitting(true)
+    try {
+      const res = await packagePurchasesService.purchase(slug, pkg.id, 'credit_card', cardData)
+      const purchase = res.data.data
+
+      if (purchase.status === 'active') {
+        setModal({ step: 'approved', pkg })
         return
       }
 
+      if (purchase.payment?.status === 'rejected' || purchase.payment?.status === 'cancelled') {
+        toast.error('Pagamento recusado pela operadora do cartão. Verifique os dados e tente novamente.')
+        return
+      }
+
+      // Ainda pendente (incomum para cartão) — aguarda confirmação como no PIX.
       setModal({ step: 'pix_waiting', pkg, purchase })
       startPolling(pkg, purchase.id)
     } catch {
@@ -180,6 +203,26 @@ export function PackagesSection({ slug, packages }: PackagesSectionProps) {
               <span className="text-sm">Cartão de crédito via MercadoPago</span>
             </Button>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Card form modal — Checkout Transparente via Card Payment Brick */}
+      <Dialog open={modal?.step === 'card_form'} onOpenChange={(open) => !open && closeModal()}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Pagamento com cartão</DialogTitle>
+            <DialogDescription>
+              {modal?.step === 'card_form' ? modal.pkg.name : ''} — {' '}
+              {modal?.step === 'card_form' ? formatPrice(modal.pkg.price) : ''}
+            </DialogDescription>
+          </DialogHeader>
+          {modal?.step === 'card_form' && (
+            <CardPaymentBrick
+              amount={modal.pkg.price / 100}
+              payerEmail={user?.email}
+              onApprove={(cardData) => handleCardSubmit(modal.pkg, cardData)}
+            />
+          )}
         </DialogContent>
       </Dialog>
 

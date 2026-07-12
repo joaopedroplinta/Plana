@@ -3,11 +3,11 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Enums\PackagePurchaseStatus;
+use App\Http\Controllers\Api\V1\Concerns\HandlesCardPaymentData;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\PackagePurchaseResource;
 use App\Models\PackagePurchase;
 use App\Models\ServicePackage;
-use App\Models\Tenant;
 use App\Services\PaymentService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -16,6 +16,8 @@ use Illuminate\Support\Facades\Gate;
 
 class PackagePurchaseController extends Controller
 {
+    use HandlesCardPaymentData;
+
     public function __construct(private readonly PaymentService $paymentService) {}
 
     public function index(Request $request): AnonymousResourceCollection
@@ -36,12 +38,7 @@ class PackagePurchaseController extends Controller
     {
         Gate::authorize('create', PackagePurchase::class);
 
-        /** @var Tenant $currentTenant */
-        $currentTenant = app('currentTenant');
-
-        $data = $request->validate([
-            'method' => ['required', 'in:pix,credit_card'],
-        ]);
+        $data = $request->validate($this->paymentValidationRules());
 
         $purchase = PackagePurchase::create([
             'client_id' => $request->user()->id,
@@ -55,7 +52,7 @@ class PackagePurchaseController extends Controller
         try {
             $data['method'] === 'pix'
                 ? $this->paymentService->createPixForPackagePurchase($purchase, $request->user())
-                : $this->paymentService->createCheckoutProForPackagePurchase($purchase, $request->user(), $currentTenant->slug);
+                : $this->paymentService->createCheckoutProForPackagePurchase($purchase, $request->user(), $this->cardData($data));
         } catch (\Throwable $e) {
             $purchase->delete();
 

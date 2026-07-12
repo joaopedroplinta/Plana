@@ -1,15 +1,17 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { useParams, useRouter } from 'next/navigation'
+import { useParams } from 'next/navigation'
 import { toast } from 'sonner'
+import { useAuth } from '@/hooks/useAuth'
 import { useTenant } from '@/hooks/useTenant'
 import { subscriptionService } from '@/services/subscription'
-import type { Subscription, SubscriptionPlan, SubscriptionResponse } from '@/types'
+import type { CardPaymentData, Subscription, SubscriptionPlan, SubscriptionResponse } from '@/types'
 import { formatPrice } from '@/lib/format'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
+import { CardPaymentBrick } from '@/components/shared/CardPaymentBrick'
 import {
   Dialog,
   DialogContent,
@@ -18,10 +20,9 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 
-type PaymentMethod = 'pix' | 'credit_card'
-
 type ModalState =
   | { step: 'choose_method'; plan: SubscriptionPlan }
+  | { step: 'card_form'; plan: SubscriptionPlan }
   | { step: 'pix_waiting'; plan: SubscriptionPlan; subscription: Subscription }
   | { step: 'approved'; plan: SubscriptionPlan }
   | null
@@ -29,7 +30,7 @@ type ModalState =
 export default function PlanosPage() {
   const params = useParams()
   const slug = typeof params.slug === 'string' ? params.slug : ''
-  const router = useRouter()
+  const { user } = useAuth()
   const { tenant } = useTenant(slug)
 
   const [data, setData] = useState<SubscriptionResponse | null>(null)
@@ -79,14 +80,14 @@ export default function PlanosPage() {
     }, 5000)
   }
 
-  async function handleSelectPlan(plan: SubscriptionPlan, method: PaymentMethod) {
+  async function handleSelectPlan(plan: SubscriptionPlan) {
     if (!isOwner) return
     setIsSubmitting(true)
 
     try {
       const res = await subscriptionService.create(slug, {
         plan: plan.key,
-        method,
+        method: 'pix',
       })
       const subscription = res.data.data
 
@@ -97,15 +98,38 @@ export default function PlanosPage() {
         return
       }
 
-      if (method === 'credit_card' && subscription.mp_preference_id) {
-        router.push(subscription.mp_preference_id)
+      setModal({ step: 'pix_waiting', plan, subscription })
+      startPolling(plan)
+    } catch {
+      toast.error('Erro ao processar pagamento. Tente novamente.')
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  async function handleCardSubmit(plan: SubscriptionPlan, cardData: CardPaymentData) {
+    if (!isOwner) return
+    setIsSubmitting(true)
+
+    try {
+      const res = await subscriptionService.create(slug, { plan: plan.key, method: 'credit_card' }, cardData)
+      const subscription = res.data.data
+
+      if (subscription.status === 'approved') {
+        const refreshed = await subscriptionService.get(slug)
+        setData(refreshed.data.data)
+        setModal({ step: 'approved', plan })
         return
       }
 
-      if (method === 'pix') {
-        setModal({ step: 'pix_waiting', plan, subscription })
-        startPolling(plan)
+      if (subscription.status === 'rejected' || subscription.status === 'cancelled') {
+        toast.error('Pagamento recusado pela operadora do cartão. Verifique os dados e tente novamente.')
+        return
       }
+
+      // pending/in_process — incomum para cartão (normalmente síncrono).
+      setModal({ step: 'pix_waiting', plan, subscription })
+      startPolling(plan)
     } catch {
       toast.error('Erro ao processar pagamento. Tente novamente.')
     } finally {
@@ -116,7 +140,7 @@ export default function PlanosPage() {
   function handlePlanClick(plan: SubscriptionPlan) {
     if (!isOwner) return
     if (plan.price === 0) {
-      handleSelectPlan(plan, 'pix')
+      handleSelectPlan(plan)
       return
     }
     setModal({ step: 'choose_method', plan })
@@ -283,7 +307,7 @@ export default function PlanosPage() {
               className="h-14 justify-start gap-3"
               disabled={isSubmitting}
               onClick={() =>
-                modal?.step === 'choose_method' && handleSelectPlan(modal.plan, 'pix')
+                modal?.step === 'choose_method' && handleSelectPlan(modal.plan)
               }
             >
               <span className="text-2xl">PIX</span>
@@ -294,14 +318,33 @@ export default function PlanosPage() {
               className="h-14 justify-start gap-3"
               disabled={isSubmitting}
               onClick={() =>
-                modal?.step === 'choose_method' &&
-                handleSelectPlan(modal.plan, 'credit_card')
+                modal?.step === 'choose_method' && setModal({ step: 'card_form', plan: modal.plan })
               }
             >
               <span className="text-2xl">Cartao</span>
-              <span className="text-sm">Cartao de credito via MercadoPago</span>
+              <span className="text-sm">Cartao de credito, sem sair daqui</span>
             </Button>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Card form modal — Checkout Transparente via Card Payment Brick */}
+      <Dialog open={modal?.step === 'card_form'} onOpenChange={(open) => !open && closeModal()}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Pagamento com cartão</DialogTitle>
+            <DialogDescription>
+              {modal?.step === 'card_form' ? modal.plan.name : ''} — {' '}
+              {modal?.step === 'card_form' ? formatPrice(modal.plan.price) : ''}/mes
+            </DialogDescription>
+          </DialogHeader>
+          {modal?.step === 'card_form' && (
+            <CardPaymentBrick
+              amount={modal.plan.price / 100}
+              payerEmail={user?.email}
+              onApprove={(cardData) => handleCardSubmit(modal.plan, cardData)}
+            />
+          )}
         </DialogContent>
       </Dialog>
 

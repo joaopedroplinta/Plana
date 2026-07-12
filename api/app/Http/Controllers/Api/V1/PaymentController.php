@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Enums\AppointmentStatus;
+use App\Http\Controllers\Api\V1\Concerns\HandlesCardPaymentData;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\PaymentResource;
 use App\Jobs\ProcessPaymentWebhook;
@@ -18,6 +19,8 @@ use Illuminate\Validation\ValidationException;
 
 class PaymentController extends Controller
 {
+    use HandlesCardPaymentData;
+
     public function __construct(private PaymentService $paymentService) {}
 
     public function index(Request $request, string $tenant, Appointment $appointment): AnonymousResourceCollection
@@ -31,9 +34,7 @@ class PaymentController extends Controller
     {
         Gate::authorize('create', [Payment::class, $appointment]);
 
-        $data = $request->validate([
-            'method' => ['required', 'in:pix,credit_card'],
-        ]);
+        $data = $request->validate($this->paymentValidationRules());
 
         if ($appointment->status === AppointmentStatus::Cancelled) {
             throw ValidationException::withMessages([
@@ -47,10 +48,9 @@ class PaymentController extends Controller
             ]);
         }
 
-        $currentTenant = app('currentTenant');
         $payment = $data['method'] === 'pix'
             ? $this->paymentService->createPix($appointment, $request->user())
-            : $this->paymentService->createCheckoutPro($appointment, $request->user(), $currentTenant->slug);
+            : $this->paymentService->createCheckoutPro($appointment, $request->user(), $this->cardData($data));
 
         return (new PaymentResource($payment))
             ->response()
