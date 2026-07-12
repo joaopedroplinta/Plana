@@ -7,7 +7,7 @@ import { useAuth } from '@/hooks/useAuth'
 import { useTenant } from '@/hooks/useTenant'
 import { subscriptionService } from '@/services/subscription'
 import type { CardPaymentData, Subscription, SubscriptionPlan, SubscriptionResponse } from '@/types'
-import { formatPrice } from '@/lib/format'
+import { formatDate, formatPrice } from '@/lib/format'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
@@ -282,7 +282,7 @@ export default function PlanosPage() {
                       <StatusBadge status={sub.status} />
                     </td>
                     <td className="px-4 py-3 text-muted-foreground">
-                      {new Date(sub.created_at).toLocaleDateString('pt-BR')}
+                      {formatDate(sub.created_at)}
                     </td>
                   </tr>
                 ))}
