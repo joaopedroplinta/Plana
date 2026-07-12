@@ -4,6 +4,53 @@ Todas as mudanças relevantes deste projeto são documentadas aqui.
 
 ---
 
+## [v1.0.0] — Lançamento (2026-07-12)
+
+Fechamento da auditoria de hardening pré-lançamento (#40–#61): correções de
+segurança, produto novo (equipe, pacotes de sessões, reagendamento), testes
+E2E e empacotamento Docker para deploy.
+
+### Segurança
+- Fix de vazamento cross-tenant: `SubscriptionController` e gate do dashboard
+  usavam role Spatie global em vez do papel por tenant (`ownsTenant()`) (#47, #50)
+- `Professional.user_id` passou a ser validado escopado ao tenant atual (#55)
+- Rate limiting (5/min auth, 60/min API), expiração de token Sanctum (7 dias),
+  `MERCADOPAGO_WEBHOOK_SECRET` obrigatório em produção, CORS restrito (#41)
+
+### Produto
+- Gestão de equipe: convite e remoção de staff, promoção client → staff (#42)
+- Perfil público do salão com serviços e contatos (#43)
+- Lembrete de agendamento por e-mail ~24h antes, idempotente (#44)
+- Reagendamento (mantém status pro staff, volta a `pending` pro cliente) e
+  registro de falta (`no_show`, só staff, só após o horário) (#45)
+- Traduções pt_BR do framework — e-mails, reset de senha, validação (#46)
+- Toasts (sonner) e `AlertDialog` para confirmações destrutivas no frontend (#49)
+- Máquina de estados centralizada para status de `Appointment` (enum nativo +
+  CHECK constraint) (#48)
+- Regras de slot unificadas entre disponibilidade e agendamento — corrige bug
+  de reagendamento não ignorar o próprio slot no conflito (#51)
+- Limites de plano centralizados em `SubscriptionService` (#52)
+- **Compra de pacotes de sessões**: schema novo, consumo de sessão no
+  agendamento com lock (sem condição de corrida), devolução no cancelamento,
+  pagamento via PIX/cartão reaproveitando o `PaymentService` (#53, #56)
+- Dark mode funcional e footer em todos os layouts (#58)
+- Fix de horário de agendamento inconsistente entre telas (timezone) (#60)
+- Fix de bloqueio de `/login` por cookie órfão + logout no cliente (#59)
+- Limite de profissionais do plano conta apenas ativos (#61)
+- Migração da integração MercadoPago de `/v1/payments` para a API Orders (#57)
+
+### Testes e infra
+- Suite E2E com Playwright (registro/login, booking + cancelamento, staff
+  confirma, reagendamento) e job `e2e` no CI — encontrou e corrigiu 2 bugs
+  reais de frontend (redirect de login quebrado, gate de `/super-admin`
+  travado) (#54)
+- Suite final: 227 testes Pest + 4 specs E2E, todos passando
+- Empacotamento Docker (`api/Dockerfile`, `web/Dockerfile`,
+  `docker-compose.prod.yml` + Caddy com HTTPS automático) e workflow de
+  release publicando imagens no GHCR
+
+---
+
 ## [v0.7.0] — Sprint 8: Super Admin (2026-05-30)
 
 ### API
