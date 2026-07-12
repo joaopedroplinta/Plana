@@ -5,12 +5,28 @@ export function formatPrice(valueInCents: number): string {
   }).format(valueInCents / 100)
 }
 
+/**
+ * Strings "só data" (YYYY-MM-DD, ex: valor de <input type="date">) não têm
+ * horário — `new Date("2026-07-15")` interpreta isso como meia-noite UTC, e
+ * formatar no fuso local de quem está atrás de UTC (ex: Brasil) exibe o dia
+ * anterior. Parseamos manualmente como data local para evitar esse
+ * off-by-one; datas com horário (timestamps ISO completos) seguem o
+ * comportamento normal do Date.
+ */
+function toLocalDate(date: string | Date): Date {
+  if (typeof date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(date)) {
+    const [year, month, day] = date.split('-').map(Number)
+    return new Date(year, month - 1, day)
+  }
+  return new Date(date)
+}
+
 export function formatDate(date: string | Date): string {
   return new Intl.DateTimeFormat('pt-BR', {
     day: '2-digit',
     month: 'short',
     year: 'numeric',
-  }).format(new Date(date))
+  }).format(toLocalDate(date))
 }
 
 export function formatDateTime(date: string | Date): string {
