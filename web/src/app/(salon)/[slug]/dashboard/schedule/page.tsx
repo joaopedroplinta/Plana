@@ -24,9 +24,9 @@ const STATUS_FILTERS: Array<{ value: StatusFilter; label: string }> = [
 ]
 
 const STATUS_BADGE: Record<string, { label: string; className: string }> = {
-  pending: { label: 'Pendente', className: 'bg-amber-100 dark:bg-amber-500/15 text-amber-800 dark:text-amber-300' },
-  confirmed: { label: 'Confirmado', className: 'bg-blue-100 dark:bg-blue-500/15 text-blue-800 dark:text-blue-300' },
-  completed: { label: 'Concluído', className: 'bg-green-100 dark:bg-green-500/15 text-green-800 dark:text-green-300' },
+  pending: { label: 'Pendente', className: 'bg-secondary text-secondary-foreground dark:bg-primary/15 dark:text-primary' },
+  confirmed: { label: 'Confirmado', className: 'bg-accent text-accent-foreground' },
+  completed: { label: 'Concluído', className: 'bg-primary text-primary-foreground' },
   cancelled: { label: 'Cancelado', className: 'bg-muted text-muted-foreground' },
   no_show: { label: 'Não compareceu', className: 'bg-red-100 dark:bg-red-500/15 text-red-700 dark:text-red-400' },
 }
@@ -169,7 +169,7 @@ export default function SchedulePage() {
               }}
               className={`rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
                 status === f.value
-                  ? 'bg-indigo-600 text-white'
+                  ? 'bg-primary text-white'
                   : 'bg-muted text-muted-foreground hover:bg-muted'
               }`}
             >
@@ -189,8 +189,8 @@ export default function SchedulePage() {
         </div>
       ) : appointments.length === 0 ? (
         <div className="flex flex-col items-center justify-center rounded-xl border bg-card py-24 text-center">
-          <div className="rounded-full bg-indigo-50 dark:bg-indigo-500/15 p-4">
-            <Calendar className="h-10 w-10 text-indigo-400" />
+          <div className="rounded-full bg-secondary dark:bg-primary/15 p-4">
+            <Calendar className="h-10 w-10 text-primary/70" />
           </div>
           <h2 className="mt-4 text-lg font-semibold text-foreground">
             Nenhum agendamento encontrado
@@ -213,7 +213,7 @@ export default function SchedulePage() {
                         key={appt.id}
                         className="flex flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center"
                       >
-                        <div className="w-28 shrink-0 text-sm font-semibold text-foreground">
+                        <div className="w-28 shrink-0 text-sm font-semibold tabular-nums text-foreground">
                           {formatTime(appt.starts_at)} – {formatTime(appt.ends_at)}
                         </div>
                         <div className="min-w-0 flex-1">
@@ -231,7 +231,7 @@ export default function SchedulePage() {
                           </p>
                         </div>
                         <div className="flex shrink-0 items-center gap-3">
-                          <span className="text-sm font-semibold text-indigo-600">
+                          <span className="text-sm font-semibold tabular-nums text-primary">
                             {formatPrice(appt.price)}
                           </span>
                           <StatusBadge status={appt.status} />

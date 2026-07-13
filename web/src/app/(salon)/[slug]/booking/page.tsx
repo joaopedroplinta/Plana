@@ -44,16 +44,16 @@ function StepProgress({ current }: { current: number }) {
                 {idx > 0 && (
                   <div
                     className={`h-0.5 flex-1 ${
-                      isCompleted ? 'bg-indigo-600' : 'bg-muted'
+                      isCompleted ? 'bg-primary' : 'bg-muted'
                     }`}
                   />
                 )}
                 <div
                   className={`flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full text-xs font-semibold ${
                     isCompleted
-                      ? 'bg-indigo-600 text-white'
+                      ? 'bg-primary text-white'
                       : isActive
-                        ? 'border-2 border-indigo-600 bg-card text-indigo-600'
+                        ? 'border-2 border-primary bg-card text-primary'
                         : 'border-2 border-border bg-card text-muted-foreground'
                   }`}
                 >
@@ -62,14 +62,14 @@ function StepProgress({ current }: { current: number }) {
                 {idx < TOTAL_STEPS - 1 && (
                   <div
                     className={`h-0.5 flex-1 ${
-                      isCompleted ? 'bg-indigo-600' : 'bg-muted'
+                      isCompleted ? 'bg-primary' : 'bg-muted'
                     }`}
                   />
                 )}
               </div>
               <span
                 className={`mt-1.5 text-xs font-medium ${
-                  isActive ? 'text-indigo-600' : isCompleted ? 'text-foreground' : 'text-muted-foreground'
+                  isActive ? 'text-primary' : isCompleted ? 'text-foreground' : 'text-muted-foreground'
                 }`}
               >
                 {label}
@@ -389,9 +389,9 @@ export default function BookingPage() {
                   <Card
                     key={service.id}
                     data-testid="service-option"
-                    className={`cursor-pointer p-4 transition-all hover:border-indigo-400 hover:shadow-sm ${
+                    className={`cursor-pointer p-4 transition-all hover:border-primary/60 hover:shadow-sm ${
                       selectedService?.id === service.id
-                        ? 'border-indigo-500 ring-2 ring-indigo-200'
+                        ? 'border-primary ring-2 ring-secondary'
                         : ''
                     }`}
                     onClick={() => {
@@ -414,7 +414,7 @@ export default function BookingPage() {
                           </Badge>
                         </div>
                       </div>
-                      <p className="whitespace-nowrap text-lg font-bold text-indigo-600">
+                      <p className="whitespace-nowrap text-lg font-bold text-primary">
                         {formatPrice(service.price)}
                       </p>
                     </div>
@@ -446,9 +446,9 @@ export default function BookingPage() {
                   <Card
                     key={professional.id}
                     data-testid="professional-option"
-                    className={`cursor-pointer p-4 transition-all hover:border-indigo-400 hover:shadow-sm ${
+                    className={`cursor-pointer p-4 transition-all hover:border-primary/60 hover:shadow-sm ${
                       selectedProfessional?.id === professional.id
-                        ? 'border-indigo-500 ring-2 ring-indigo-200'
+                        ? 'border-primary ring-2 ring-secondary'
                         : ''
                     }`}
                     onClick={() => {
@@ -457,7 +457,7 @@ export default function BookingPage() {
                     }}
                   >
                     <div className="flex items-center gap-3">
-                      <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-indigo-100 dark:bg-indigo-500/15 text-sm font-bold text-indigo-600 dark:text-indigo-300">
+                      <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-secondary dark:bg-primary/15 text-sm font-bold text-secondary-foreground dark:text-primary">
                         {professional.name.charAt(0).toUpperCase()}
                       </div>
                       <div className="flex-1">
@@ -521,7 +521,7 @@ export default function BookingPage() {
               </p>
               <button
                 onClick={() => setStep(3)}
-                className="mt-2 text-sm text-indigo-600 hover:underline"
+                className="mt-2 text-sm text-primary hover:underline"
               >
                 Escolher outra data
               </button>
@@ -540,10 +540,10 @@ export default function BookingPage() {
                       setSelectedSlot(slot)
                       setStep(5)
                     }}
-                    className={`rounded-lg border px-3 py-2.5 text-sm font-medium transition-all ${
+                    className={`rounded-lg border px-3 py-2.5 text-sm font-medium tabular-nums transition-all ${
                       isSelected
-                        ? 'border-indigo-500 bg-indigo-600 text-white'
-                        : 'border-border bg-card text-foreground hover:border-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-500/15'
+                        ? 'border-primary bg-primary text-white'
+                        : 'border-[var(--lima-500)]/40 bg-[var(--lima-100)] text-[var(--teal-900)] hover:border-[var(--lima-500)]/70 dark:bg-[var(--lima-500)]/15 dark:text-[var(--lima-500)]'
                     }`}
                   >
                     {slot.starts_at} – {slot.ends_at}
@@ -578,7 +578,7 @@ export default function BookingPage() {
                   </p>
                 )}
               </div>
-              <p className="text-lg font-bold text-indigo-600">
+              <p className="text-lg font-bold text-primary">
                 {selectedPackagePurchaseId
                   ? 'Incluso no pacote'
                   : selectedService
@@ -624,8 +624,8 @@ export default function BookingPage() {
                   onClick={() => setSelectedPackagePurchaseId(null)}
                   className={`rounded-lg border px-4 py-3 text-left text-sm transition-all ${
                     selectedPackagePurchaseId === null
-                      ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-500/15'
-                      : 'border-border hover:border-indigo-300'
+                      ? 'border-primary bg-secondary dark:bg-primary/15'
+                      : 'border-border hover:border-primary/60'
                   }`}
                 >
                   <p className="font-medium text-foreground">Pagar agora</p>
@@ -638,8 +638,8 @@ export default function BookingPage() {
                     onClick={() => setSelectedPackagePurchaseId(purchase.id)}
                     className={`rounded-lg border px-4 py-3 text-left text-sm transition-all ${
                       selectedPackagePurchaseId === purchase.id
-                        ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-500/15'
-                        : 'border-border hover:border-indigo-300'
+                        ? 'border-primary bg-secondary dark:bg-primary/15'
+                        : 'border-border hover:border-primary/60'
                     }`}
                   >
                     <p className="font-medium text-foreground">
@@ -687,7 +687,7 @@ export default function BookingPage() {
           </div>
           <p className="text-muted-foreground">
             {selectedService?.name} —{' '}
-            <span className="font-semibold text-indigo-600">
+            <span className="font-semibold text-primary">
               {formatPrice(selectedService?.price ?? 0)}
             </span>
           </p>
@@ -736,7 +736,7 @@ export default function BookingPage() {
           </div>
           <p className="text-muted-foreground">
             {selectedService?.name} —{' '}
-            <span className="font-semibold text-indigo-600">
+            <span className="font-semibold text-primary">
               {formatPrice(selectedService?.price ?? 0)}
             </span>
           </p>
@@ -772,7 +772,7 @@ export default function BookingPage() {
               <div className="flex justify-center gap-3">
                 <a
                   href={`/${slug}/minha-conta`}
-                  className="inline-block mt-4 px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
+                  className="inline-block mt-4 px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary/90"
                 >
                   Ver meus agendamentos
                 </a>

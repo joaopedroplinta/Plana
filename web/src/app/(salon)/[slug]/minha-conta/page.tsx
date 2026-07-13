@@ -210,7 +210,7 @@ export default function MinhaContaPage() {
                     <Badge variant="secondary" className={`text-xs ${badge.className}`}>
                       {badge.label}
                     </Badge>
-                    <p className="text-sm font-bold text-indigo-600">
+                    <p className="text-sm font-bold text-primary">
                       {formatPrice(appt.price)}
                     </p>
                     {canCancel && (
@@ -218,7 +218,7 @@ export default function MinhaContaPage() {
                         <Button
                           size="sm"
                           variant="ghost"
-                          className="text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-500/15 hover:text-indigo-700"
+                          className="text-primary hover:bg-secondary dark:hover:bg-primary/15 hover:text-primary"
                           onClick={() => openReschedule(appt)}
                         >
                           Remarcar
@@ -287,7 +287,7 @@ export default function MinhaContaPage() {
                       key={`${slot.starts_at}-${slot.ends_at}`}
                       onClick={() => handleReschedule(slot)}
                       disabled={dialogLoading}
-                      className="rounded-lg border border-border bg-card px-3 py-2 text-sm font-medium text-foreground transition-all hover:border-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-500/15 disabled:opacity-50"
+                      className="rounded-lg border border-border bg-card px-3 py-2 text-sm font-medium text-foreground transition-all hover:border-primary/60 hover:bg-secondary dark:hover:bg-primary/15 disabled:opacity-50"
                     >
                       {slot.starts_at}
                     </button>

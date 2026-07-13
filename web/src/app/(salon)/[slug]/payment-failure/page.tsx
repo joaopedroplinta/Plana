@@ -28,7 +28,7 @@ function PaymentFailureContent() {
         <div className="flex flex-col gap-3">
           <a
             href={`/${slug}/minha-conta`}
-            className="px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+            className="px-6 py-3 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
           >
             Ver meus agendamentos
           </a>

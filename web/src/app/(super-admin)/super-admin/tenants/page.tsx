@@ -15,7 +15,7 @@ const PLAN_LABELS: Record<string, string> = {
 
 const PLAN_COLORS: Record<string, string> = {
   starter: 'bg-muted text-foreground',
-  pro: 'bg-indigo-100 dark:bg-indigo-500/15 text-indigo-700 dark:text-indigo-300',
+  pro: 'bg-secondary dark:bg-primary/15 text-secondary-foreground dark:text-primary',
   enterprise: 'bg-amber-100 dark:bg-amber-500/15 text-amber-700 dark:text-amber-400',
 }
 
@@ -133,7 +133,7 @@ export default function TenantsPage() {
                         value={tenant.plan}
                         disabled={updating === tenant.id}
                         onChange={(e) => handlePlanChange(tenant, e.target.value)}
-                        className={`rounded-full px-2.5 py-0.5 text-xs font-semibold border-0 cursor-pointer focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50 ${PLAN_COLORS[tenant.plan] ?? 'bg-muted text-foreground'}`}
+                        className={`rounded-full px-2.5 py-0.5 text-xs font-semibold border-0 cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50 ${PLAN_COLORS[tenant.plan] ?? 'bg-muted text-foreground'}`}
                       >
                         {PLAN_OPTIONS.map((p) => (
                           <option key={p} value={p}>
@@ -146,7 +146,7 @@ export default function TenantsPage() {
                       <button
                         onClick={() => handleToggleActive(tenant)}
                         disabled={updating === tenant.id}
-                        className={`inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50 ${tenant.active ? 'bg-green-500' : 'bg-muted'}`}
+                        className={`inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50 ${tenant.active ? 'bg-green-500' : 'bg-muted'}`}
                         title={tenant.active ? 'Desativar' : 'Ativar'}
                       >
                         <span

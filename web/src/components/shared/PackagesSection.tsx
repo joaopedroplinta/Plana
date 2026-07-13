@@ -145,7 +145,7 @@ export function PackagesSection({ slug, packages }: PackagesSectionProps) {
                   <p className="mt-1 text-sm text-muted-foreground line-clamp-2">{pkg.description}</p>
                 )}
               </div>
-              <p className="whitespace-nowrap text-lg font-bold text-indigo-600">
+              <p className="whitespace-nowrap text-lg font-bold text-primary">
                 {formatPrice(pkg.price)}
               </p>
             </div>

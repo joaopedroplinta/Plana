@@ -89,7 +89,7 @@ function RegisterForm() {
             Já tem uma conta?{' '}
             <Link
               href={redirect ? `/login?redirect=${encodeURIComponent(redirect)}` : '/login'}
-              className="font-medium text-indigo-600 hover:text-indigo-500"
+              className="font-medium text-primary hover:text-primary"
             >
               Entrar
             </Link>
@@ -103,7 +103,7 @@ function RegisterForm() {
               onClick={() => setAccountType('client')}
               className={`rounded-full px-3 py-1.5 text-sm font-medium transition-colors ${
                 accountType === 'client'
-                  ? 'bg-card text-indigo-600 shadow-sm'
+                  ? 'bg-card text-primary shadow-sm'
                   : 'text-muted-foreground hover:text-foreground'
               }`}
             >
@@ -114,7 +114,7 @@ function RegisterForm() {
               onClick={() => setAccountType('owner')}
               className={`rounded-full px-3 py-1.5 text-sm font-medium transition-colors ${
                 accountType === 'owner'
-                  ? 'bg-card text-indigo-600 shadow-sm'
+                  ? 'bg-card text-primary shadow-sm'
                   : 'text-muted-foreground hover:text-foreground'
               }`}
             >

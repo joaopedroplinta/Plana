@@ -20,10 +20,10 @@ import { formatPrice } from '@/lib/format'
 import type { DashboardMetrics } from '@/types'
 
 const STATUS_COLORS: Record<string, string> = {
-  completed: '#10b981',
-  confirmed: '#3b82f6',
-  pending: '#f59e0b',
-  cancelled: '#ef4444',
+  completed: 'var(--primary)',
+  confirmed: 'var(--lima-500)',
+  pending: 'var(--chart-3)',
+  cancelled: 'var(--chart-4)',
 }
 
 const STATUS_LABELS: Record<string, string> = {
@@ -42,7 +42,7 @@ function SummaryCard({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-lg border bg-card p-5">
       <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{label}</p>
-      <p className="mt-2 text-2xl font-bold text-foreground">{value}</p>
+      <p className="mt-2 text-2xl font-bold tabular-nums text-foreground">{value}</p>
     </div>
   )
 }
@@ -86,7 +86,7 @@ export default function DashboardPage() {
             setMetrics(null)
             setPeriod(Number(e.target.value))
           }}
-          className="rounded-md border border-border bg-card px-3 py-1.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          className="rounded-md border border-border bg-card px-3 py-1.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
         >
           <option value={7}>Últimos 7 dias</option>
           <option value={30}>Últimos 30 dias</option>
@@ -154,7 +154,7 @@ export default function DashboardPage() {
                   <Line
                     type="monotone"
                     dataKey="revenue"
-                    stroke="#6366f1"
+                    stroke="var(--primary)"
                     strokeWidth={2}
                     dot={false}
                   />
@@ -171,15 +171,15 @@ export default function DashboardPage() {
             {metrics.appointments_by_status.length === 0 ? (
               <p className="py-12 text-center text-sm text-muted-foreground">Sem agendamentos</p>
             ) : (
-              <ResponsiveContainer width="100%" height={200}>
-                <PieChart>
+              <ResponsiveContainer width="100%" height={240}>
+                <PieChart margin={{ top: 20, right: 20, bottom: 4, left: 20 }}>
                   <Pie
                     data={metrics.appointments_by_status}
                     dataKey="count"
                     nameKey="status"
                     cx="50%"
                     cy="50%"
-                    outerRadius={75}
+                    outerRadius={65}
                     label={(props) => {
                       const status = (props as { status?: string }).status ?? ''
                       const percent = (props as { percent?: number }).percent ?? 0
@@ -189,7 +189,7 @@ export default function DashboardPage() {
                     {metrics.appointments_by_status.map((entry) => (
                       <Cell
                         key={entry.status}
-                        fill={STATUS_COLORS[entry.status] ?? '#94a3b8'}
+                        fill={STATUS_COLORS[entry.status] ?? 'var(--muted-foreground)'}
                       />
                     ))}
                   </Pie>
@@ -205,19 +205,18 @@ export default function DashboardPage() {
       {!isLoading && metrics && metrics.top_services.length > 0 && (
         <div className="rounded-lg border bg-card p-5">
           <h2 className="mb-4 text-sm font-semibold text-foreground">Top Serviços</h2>
-          <ResponsiveContainer width="100%" height={200}>
-            <BarChart data={metrics.top_services} layout="vertical">
-              <XAxis type="number" tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
-              <YAxis
+          <ResponsiveContainer width="100%" height={220}>
+            <BarChart data={metrics.top_services}>
+              <XAxis
                 type="category"
                 dataKey="name"
-                width={140}
                 tick={{ fontSize: 11 }}
                 tickLine={false}
                 axisLine={false}
               />
+              <YAxis type="number" allowDecimals={false} tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
               <Tooltip formatter={(v) => [`${Number(v)} agendamentos`, '']} />
-              <Bar dataKey="count" fill="#6366f1" radius={[0, 4, 4, 0]} />
+              <Bar dataKey="count" fill="var(--primary)" radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>
@@ -245,8 +244,8 @@ export default function DashboardPage() {
               {metrics.appointments_by_professional.map((p) => (
                 <tr key={p.name} className="border-b last:border-0 hover:bg-muted">
                   <td className="px-5 py-3 text-foreground">{p.name}</td>
-                  <td className="px-5 py-3 text-right text-foreground">{p.count}</td>
-                  <td className="px-5 py-3 text-right text-foreground">
+                  <td className="px-5 py-3 text-right tabular-nums text-foreground">{p.count}</td>
+                  <td className="px-5 py-3 text-right tabular-nums text-foreground">
                     {formatPrice(p.revenue)}
                   </td>
                 </tr>

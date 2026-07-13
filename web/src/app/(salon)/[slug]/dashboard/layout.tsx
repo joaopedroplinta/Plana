@@ -163,7 +163,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 className={[
                   'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
                   isActive
-                    ? 'bg-indigo-50 text-indigo-700 dark:bg-indigo-500/15 dark:text-indigo-300'
+                    ? 'bg-secondary text-secondary-foreground dark:bg-primary/15 dark:text-primary'
                     : 'text-muted-foreground hover:bg-muted hover:text-foreground',
                 ].join(' ')}
               >
@@ -219,7 +219,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 function PlanBadge({ plan }: { plan: 'starter' | 'pro' | 'enterprise' }) {
   const styles: Record<string, string> = {
     starter: 'bg-muted text-muted-foreground',
-    pro: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-500/15 dark:text-indigo-300',
+    pro: 'bg-secondary text-secondary-foreground dark:bg-primary/15 dark:text-primary',
     enterprise: 'bg-purple-100 text-purple-700 dark:bg-purple-500/15 dark:text-purple-300',
   }
   return (

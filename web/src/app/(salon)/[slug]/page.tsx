@@ -37,7 +37,7 @@ export default async function SalonHomePage({ params }: SalonHomeProps) {
   return (
     <div className="flex-1">
       {/* Hero */}
-      <section className="border-b bg-gradient-to-b from-indigo-50 to-background dark:from-indigo-500/10 px-6 py-16 text-center">
+      <section className="border-b bg-gradient-to-b from-secondary to-background dark:from-primary/10 px-6 py-16 text-center">
         <div className="mx-auto max-w-2xl">
           <h1 className="text-4xl font-bold text-foreground">{tenant.name}</h1>
           {tenant.description && (
@@ -45,7 +45,7 @@ export default async function SalonHomePage({ params }: SalonHomeProps) {
           )}
           <a
             href={`/${slug}/booking`}
-            className="mt-8 inline-block rounded-full bg-indigo-600 px-8 py-3 text-sm font-semibold text-white shadow hover:bg-indigo-500 transition-colors"
+            className="mt-8 inline-block rounded-full bg-primary px-8 py-3 text-sm font-semibold text-white shadow hover:bg-primary/90 transition-colors"
           >
             Agendar horário
           </a>
@@ -54,13 +54,13 @@ export default async function SalonHomePage({ params }: SalonHomeProps) {
             <div className="mt-8 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm text-muted-foreground">
               {tenant.address && (
                 <span className="flex items-center gap-1.5">
-                  <MapPin className="h-4 w-4 text-indigo-400" />
+                  <MapPin className="h-4 w-4 text-primary/70" />
                   {tenant.address}
                 </span>
               )}
               {tenant.phone && (
                 <span className="flex items-center gap-1.5">
-                  <Phone className="h-4 w-4 text-indigo-400" />
+                  <Phone className="h-4 w-4 text-primary/70" />
                   {tenant.phone}
                 </span>
               )}
@@ -104,11 +104,11 @@ export default async function SalonHomePage({ params }: SalonHomeProps) {
               <a
                 key={service.id}
                 href={`/${slug}/booking`}
-                className="group rounded-xl border bg-card p-5 transition-all hover:border-indigo-300 hover:shadow-sm"
+                className="group rounded-xl border bg-card p-5 transition-all hover:border-primary/60 hover:shadow-sm"
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
-                    <p className="font-semibold text-foreground group-hover:text-indigo-600 transition-colors">
+                    <p className="font-semibold text-foreground group-hover:text-primary transition-colors">
                       {service.name}
                     </p>
                     {service.description && (
@@ -117,7 +117,7 @@ export default async function SalonHomePage({ params }: SalonHomeProps) {
                       </p>
                     )}
                   </div>
-                  <p className="whitespace-nowrap text-lg font-bold text-indigo-600">
+                  <p className="whitespace-nowrap text-lg font-bold text-primary">
                     {formatPrice(service.price)}
                   </p>
                 </div>

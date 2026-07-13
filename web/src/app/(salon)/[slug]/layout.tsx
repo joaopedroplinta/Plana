@@ -76,7 +76,7 @@ export default function SalonLayout({ children, params }: SalonLayoutProps) {
             )}
             <a
               href={`/${slug}/booking`}
-              className="rounded-full bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-500 transition-colors"
+              className="rounded-full bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary/90 transition-colors"
             >
               Agendar
             </a>
