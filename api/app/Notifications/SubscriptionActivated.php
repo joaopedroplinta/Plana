@@ -29,7 +29,7 @@ class SubscriptionActivated extends Notification implements ShouldQueue
         return (new MailMessage)
             ->subject("Plano {$plan} ativado!")
             ->greeting("Olá, {$notifiable->name}!")
-            ->line("O plano **{$plan}** do salão **{$subscription->tenant->name}** está ativo.")
+            ->line("O plano **{$plan}** do negócio **{$subscription->tenant->name}** está ativo.")
             ->line('Válido até: '.$subscription->expires_at?->format('d/m/Y'))
             ->line('Bom trabalho!');
     }

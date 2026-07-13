@@ -50,7 +50,7 @@ it('cliente compra pacote via pix', function () {
         ->andReturn($fakePayment));
 
     $response = $this->actingAs($client)
-        ->postJson("/api/v1/salao/{$tenant->slug}/packages/{$package->id}/purchase", [
+        ->postJson("/api/v1/negocio/{$tenant->slug}/packages/{$package->id}/purchase", [
             'method' => 'pix',
         ]);
 
@@ -84,7 +84,7 @@ it('cliente compra pacote via cartao de credito', function () {
         ->andReturn($fakePayment));
 
     $response = $this->actingAs($client)
-        ->postJson("/api/v1/salao/{$tenant->slug}/packages/{$package->id}/purchase", [
+        ->postJson("/api/v1/negocio/{$tenant->slug}/packages/{$package->id}/purchase", [
             'method' => 'credit_card',
         ]);
 
@@ -103,7 +103,7 @@ it('nao deixa PackagePurchase orfao quando a criacao do pagamento falha', functi
         ->andThrow(new RuntimeException('Falha simulada no MercadoPago')));
 
     $response = $this->actingAs($client)
-        ->postJson("/api/v1/salao/{$tenant->slug}/packages/{$package->id}/purchase", [
+        ->postJson("/api/v1/negocio/{$tenant->slug}/packages/{$package->id}/purchase", [
             'method' => 'pix',
         ]);
 
@@ -121,7 +121,7 @@ it('pacote copia sessions e price no momento da compra mesmo que o admin edite d
         ->shouldReceive('createPixForPackagePurchase')->once()->andReturn($fakePayment));
 
     $this->actingAs($client)
-        ->postJson("/api/v1/salao/{$tenant->slug}/packages/{$package->id}/purchase", ['method' => 'pix'])
+        ->postJson("/api/v1/negocio/{$tenant->slug}/packages/{$package->id}/purchase", ['method' => 'pix'])
         ->assertCreated();
 
     $package->update(['sessions' => 2, 'price' => 1000]);
@@ -264,7 +264,7 @@ it('cliente lista apenas as proprias compras de pacote', function () {
     PackagePurchase::factory(2)->create(['tenant_id' => $tenant->id, 'client_id' => $clientA->id, 'service_package_id' => $package->id]);
     PackagePurchase::factory(3)->create(['tenant_id' => $tenant->id, 'client_id' => $clientB->id, 'service_package_id' => $package->id]);
 
-    $response = $this->actingAs($clientA)->getJson("/api/v1/salao/{$tenant->slug}/package-purchases");
+    $response = $this->actingAs($clientA)->getJson("/api/v1/negocio/{$tenant->slug}/package-purchases");
 
     $response->assertOk()->assertJsonCount(2, 'data');
 });
@@ -282,7 +282,7 @@ it('inclui os servicos do pacote na listagem de compras (usado pelo booking para
         'service_package_id' => $package->id,
     ]);
 
-    $response = $this->actingAs($client)->getJson("/api/v1/salao/{$tenant->slug}/package-purchases");
+    $response = $this->actingAs($client)->getJson("/api/v1/negocio/{$tenant->slug}/package-purchases");
 
     $response->assertOk()
         ->assertJsonStructure(['data' => [['service_package' => ['services']]]])
@@ -297,7 +297,7 @@ it('owner lista todas as compras de pacote do tenant', function () {
 
     PackagePurchase::factory(4)->create(['tenant_id' => $tenant->id, 'client_id' => $client->id, 'service_package_id' => $package->id]);
 
-    $response = $this->actingAs($owner)->getJson("/api/v1/salao/{$tenant->slug}/package-purchases");
+    $response = $this->actingAs($owner)->getJson("/api/v1/negocio/{$tenant->slug}/package-purchases");
 
     $response->assertOk()->assertJsonCount(4, 'data');
 });
@@ -311,7 +311,7 @@ it('nao vaza compras de pacote entre tenants', function () {
 
     PackagePurchase::factory(3)->create(['tenant_id' => $tenantB->id, 'client_id' => $clientB->id, 'service_package_id' => $packageB->id]);
 
-    $response = $this->actingAs($ownerA)->getJson("/api/v1/salao/{$tenantA->slug}/package-purchases");
+    $response = $this->actingAs($ownerA)->getJson("/api/v1/negocio/{$tenantA->slug}/package-purchases");
 
     $response->assertOk()->assertJsonCount(0, 'data');
 });
@@ -325,6 +325,6 @@ it('cliente nao pode ver compra de pacote de outro cliente', function () {
     $purchase = PackagePurchase::factory()->create(['tenant_id' => $tenant->id, 'client_id' => $clientB->id, 'service_package_id' => $package->id]);
 
     $this->actingAs($clientA)
-        ->getJson("/api/v1/salao/{$tenant->slug}/package-purchases/{$purchase->id}")
+        ->getJson("/api/v1/negocio/{$tenant->slug}/package-purchases/{$purchase->id}")
         ->assertForbidden();
 });

@@ -37,7 +37,7 @@ it('lista apenas profissionais ativos do tenant', function () {
     Professional::factory(3)->create(['tenant_id' => $tenant->id, 'active' => true]);
     Professional::factory(1)->create(['tenant_id' => $tenant->id, 'active' => false]);
 
-    $response = $this->getJson("/api/v1/salao/{$tenant->slug}/professionals");
+    $response = $this->getJson("/api/v1/negocio/{$tenant->slug}/professionals");
 
     $response->assertOk()->assertJsonCount(3, 'data');
 });
@@ -48,7 +48,7 @@ it('nao vaza profissionais entre tenants', function () {
     Professional::factory(2)->create(['tenant_id' => $tenantA->id, 'active' => true]);
     Professional::factory(4)->create(['tenant_id' => $tenantB->id, 'active' => true]);
 
-    $response = $this->getJson("/api/v1/salao/{$tenantA->slug}/professionals");
+    $response = $this->getJson("/api/v1/negocio/{$tenantA->slug}/professionals");
 
     $response->assertOk()->assertJsonCount(2, 'data');
 });
@@ -62,7 +62,7 @@ it('exibe detalhe do profissional com horarios', function () {
         'day_of_week' => 1,
     ]);
 
-    $response = $this->getJson("/api/v1/salao/{$tenant->slug}/professionals/{$professional->id}");
+    $response = $this->getJson("/api/v1/negocio/{$tenant->slug}/professionals/{$professional->id}");
 
     $response->assertOk()
         ->assertJsonPath('data.id', $professional->id)
@@ -73,7 +73,7 @@ it('salon_owner cria profissional com 201', function () {
     $tenant = Tenant::factory()->create();
     $owner = profOwner($tenant);
 
-    $response = $this->actingAs($owner)->postJson("/api/v1/salao/{$tenant->slug}/professionals", [
+    $response = $this->actingAs($owner)->postJson("/api/v1/negocio/{$tenant->slug}/professionals", [
         'name' => 'Ana Silva',
         'bio' => 'Especialista em coloração',
     ]);
@@ -92,7 +92,7 @@ it('rejeita user_id de usuario que nao pertence ao tenant', function () {
     $owner = profOwner($tenant);
     $outsider = User::factory()->create();
 
-    $response = $this->actingAs($owner)->postJson("/api/v1/salao/{$tenant->slug}/professionals", [
+    $response = $this->actingAs($owner)->postJson("/api/v1/negocio/{$tenant->slug}/professionals", [
         'name' => 'Ana Silva',
         'user_id' => $outsider->id,
     ]);
@@ -106,7 +106,7 @@ it('aceita user_id de usuario que pertence ao tenant', function () {
     $owner = profOwner($tenant);
     $staff = profStaff($tenant);
 
-    $response = $this->actingAs($owner)->postJson("/api/v1/salao/{$tenant->slug}/professionals", [
+    $response = $this->actingAs($owner)->postJson("/api/v1/negocio/{$tenant->slug}/professionals", [
         'name' => 'Ana Silva',
         'user_id' => $staff->id,
     ]);
@@ -123,7 +123,7 @@ it('salon_owner edita profissional', function () {
     $owner = profOwner($tenant);
     $professional = Professional::factory()->create(['tenant_id' => $tenant->id]);
 
-    $response = $this->actingAs($owner)->putJson("/api/v1/salao/{$tenant->slug}/professionals/{$professional->id}", [
+    $response = $this->actingAs($owner)->putJson("/api/v1/negocio/{$tenant->slug}/professionals/{$professional->id}", [
         'name' => 'Ana Souza',
     ]);
 
@@ -136,7 +136,7 @@ it('salon_owner deleta profissional com 204', function () {
     $owner = profOwner($tenant);
     $professional = Professional::factory()->create(['tenant_id' => $tenant->id]);
 
-    $response = $this->actingAs($owner)->deleteJson("/api/v1/salao/{$tenant->slug}/professionals/{$professional->id}");
+    $response = $this->actingAs($owner)->deleteJson("/api/v1/negocio/{$tenant->slug}/professionals/{$professional->id}");
 
     $response->assertNoContent();
     $this->assertDatabaseMissing('professionals', ['id' => $professional->id]);
@@ -147,7 +147,7 @@ it('salon_staff nao pode deletar profissional', function () {
     $staff = profStaff($tenant);
     $professional = Professional::factory()->create(['tenant_id' => $tenant->id]);
 
-    $response = $this->actingAs($staff)->deleteJson("/api/v1/salao/{$tenant->slug}/professionals/{$professional->id}");
+    $response = $this->actingAs($staff)->deleteJson("/api/v1/negocio/{$tenant->slug}/professionals/{$professional->id}");
 
     $response->assertForbidden();
 });
@@ -160,7 +160,7 @@ it('salon_owner cria horario para profissional', function () {
     $professional = Professional::factory()->create(['tenant_id' => $tenant->id]);
 
     $response = $this->actingAs($owner)->postJson(
-        "/api/v1/salao/{$tenant->slug}/professionals/{$professional->id}/schedules",
+        "/api/v1/negocio/{$tenant->slug}/professionals/{$professional->id}/schedules",
         [
             'day_of_week' => 1,
             'start_time' => '09:00',
@@ -189,7 +189,7 @@ it('lista horarios do profissional', function () {
         ]);
     }
 
-    $response = $this->getJson("/api/v1/salao/{$tenant->slug}/professionals/{$professional->id}/schedules");
+    $response = $this->getJson("/api/v1/negocio/{$tenant->slug}/professionals/{$professional->id}/schedules");
 
     $response->assertOk()->assertJsonCount(3, 'data');
 });
@@ -207,7 +207,7 @@ it('salon_owner atualiza horario', function () {
     ]);
 
     $response = $this->actingAs($owner)->putJson(
-        "/api/v1/salao/{$tenant->slug}/professionals/{$professional->id}/schedules/{$schedule->id}",
+        "/api/v1/negocio/{$tenant->slug}/professionals/{$professional->id}/schedules/{$schedule->id}",
         ['start_time' => '09:00', 'end_time' => '18:00']
     );
 
@@ -226,7 +226,7 @@ it('salon_owner deleta horario', function () {
     ]);
 
     $response = $this->actingAs($owner)->deleteJson(
-        "/api/v1/salao/{$tenant->slug}/professionals/{$professional->id}/schedules/{$schedule->id}"
+        "/api/v1/negocio/{$tenant->slug}/professionals/{$professional->id}/schedules/{$schedule->id}"
     );
 
     $response->assertNoContent();
@@ -241,7 +241,7 @@ it('salon_owner cria data bloqueada para profissional', function () {
     $professional = Professional::factory()->create(['tenant_id' => $tenant->id]);
 
     $response = $this->actingAs($owner)->postJson(
-        "/api/v1/salao/{$tenant->slug}/professionals/{$professional->id}/blocked-dates",
+        "/api/v1/negocio/{$tenant->slug}/professionals/{$professional->id}/blocked-dates",
         [
             'date' => '2026-07-15',
             'reason' => 'Férias',
@@ -261,7 +261,7 @@ it('lista datas bloqueadas do profissional', function () {
         'professional_id' => $professional->id,
     ]);
 
-    $response = $this->getJson("/api/v1/salao/{$tenant->slug}/professionals/{$professional->id}/blocked-dates");
+    $response = $this->getJson("/api/v1/negocio/{$tenant->slug}/professionals/{$professional->id}/blocked-dates");
 
     $response->assertOk()->assertJsonCount(2, 'data');
 });
@@ -276,7 +276,7 @@ it('salon_owner deleta data bloqueada', function () {
     ]);
 
     $response = $this->actingAs($owner)->deleteJson(
-        "/api/v1/salao/{$tenant->slug}/professionals/{$professional->id}/blocked-dates/{$blocked->id}"
+        "/api/v1/negocio/{$tenant->slug}/professionals/{$professional->id}/blocked-dates/{$blocked->id}"
     );
 
     $response->assertNoContent();
@@ -289,7 +289,7 @@ it('cannot update professional from another tenant', function () {
     $ownerA = profOwner($tenantA);
     $professionalB = Professional::factory()->create(['tenant_id' => $tenantB->id]);
 
-    $response = $this->actingAs($ownerA)->putJson("/api/v1/salao/{$tenantA->slug}/professionals/{$professionalB->id}", [
+    $response = $this->actingAs($ownerA)->putJson("/api/v1/negocio/{$tenantA->slug}/professionals/{$professionalB->id}", [
         'name' => 'Profissional Invadido',
     ]);
 
@@ -302,7 +302,7 @@ it('cannot delete professional from another tenant', function () {
     $ownerA = profOwner($tenantA);
     $professionalB = Professional::factory()->create(['tenant_id' => $tenantB->id]);
 
-    $response = $this->actingAs($ownerA)->deleteJson("/api/v1/salao/{$tenantA->slug}/professionals/{$professionalB->id}");
+    $response = $this->actingAs($ownerA)->deleteJson("/api/v1/negocio/{$tenantA->slug}/professionals/{$professionalB->id}");
 
     $response->assertNotFound();
 });
@@ -320,7 +320,7 @@ it('nao vaza horarios entre tenants', function () {
         Schedule::factory()->create(['tenant_id' => $tenantB->id, 'professional_id' => $profB->id, 'day_of_week' => $day]);
     }
 
-    $response = $this->getJson("/api/v1/salao/{$tenantA->slug}/professionals/{$profA->id}/schedules");
+    $response = $this->getJson("/api/v1/negocio/{$tenantA->slug}/professionals/{$profA->id}/schedules");
 
     $response->assertOk()->assertJsonCount(2, 'data');
 });
@@ -332,7 +332,7 @@ it('plano starter bloqueia segundo profissional com 422', function () {
     $owner = profOwner($tenant);
     Professional::factory()->create(['tenant_id' => $tenant->id]);
 
-    $response = $this->actingAs($owner)->postJson("/api/v1/salao/{$tenant->slug}/professionals", [
+    $response = $this->actingAs($owner)->postJson("/api/v1/negocio/{$tenant->slug}/professionals", [
         'name' => 'Segundo Profissional',
     ]);
 
@@ -344,7 +344,7 @@ it('profissional inativo nao conta para o limite do plano', function () {
     $owner = profOwner($tenant);
     Professional::factory()->inactive()->create(['tenant_id' => $tenant->id]);
 
-    $this->actingAs($owner)->postJson("/api/v1/salao/{$tenant->slug}/professionals", [
+    $this->actingAs($owner)->postJson("/api/v1/negocio/{$tenant->slug}/professionals", [
         'name' => 'Novo Profissional',
     ])->assertCreated();
 });
@@ -354,11 +354,11 @@ it('plano pro permite ate cinco profissionais', function () {
     $owner = profOwner($tenant);
     Professional::factory(4)->create(['tenant_id' => $tenant->id]);
 
-    $this->actingAs($owner)->postJson("/api/v1/salao/{$tenant->slug}/professionals", [
+    $this->actingAs($owner)->postJson("/api/v1/negocio/{$tenant->slug}/professionals", [
         'name' => 'Quinto Profissional',
     ])->assertCreated();
 
-    $this->actingAs($owner)->postJson("/api/v1/salao/{$tenant->slug}/professionals", [
+    $this->actingAs($owner)->postJson("/api/v1/negocio/{$tenant->slug}/professionals", [
         'name' => 'Sexto Profissional',
     ])->assertUnprocessable();
 });
@@ -371,7 +371,7 @@ it('staff do salao ve profissionais inativos na listagem', function () {
     Professional::factory(2)->create(['tenant_id' => $tenant->id, 'active' => true]);
     Professional::factory(1)->create(['tenant_id' => $tenant->id, 'active' => false]);
 
-    $response = $this->actingAs($owner)->getJson("/api/v1/salao/{$tenant->slug}/professionals");
+    $response = $this->actingAs($owner)->getJson("/api/v1/negocio/{$tenant->slug}/professionals");
 
     $response->assertOk()->assertJsonCount(3, 'data');
 });
@@ -388,7 +388,7 @@ it('retorna 404 para schedule de outro profissional do mesmo tenant', function (
         'day_of_week' => 1,
     ]);
 
-    $this->getJson("/api/v1/salao/{$tenant->slug}/professionals/{$profA->id}/schedules/{$scheduleB->id}")
+    $this->getJson("/api/v1/negocio/{$tenant->slug}/professionals/{$profA->id}/schedules/{$scheduleB->id}")
         ->assertNotFound();
 });
 
@@ -402,7 +402,7 @@ it('rejeita schedule duplicado para o mesmo dia com 422', function () {
         'day_of_week' => 2,
     ]);
 
-    $this->actingAs($owner)->postJson("/api/v1/salao/{$tenant->slug}/professionals/{$professional->id}/schedules", [
+    $this->actingAs($owner)->postJson("/api/v1/negocio/{$tenant->slug}/professionals/{$professional->id}/schedules", [
         'day_of_week' => 2,
         'start_time' => '09:00',
         'end_time' => '18:00',

@@ -184,35 +184,35 @@ GET    /api/v1/auth/me
 POST   /api/v1/auth/forgot-password
 POST   /api/v1/auth/reset-password
 
-GET    /api/v1/salao/{slug}
-GET    /api/v1/salao/{slug}/availability
-GET    /api/v1/salao/{slug}/services
-GET    /api/v1/salao/{slug}/packages
-GET    /api/v1/salao/{slug}/professionals
+GET    /api/v1/negocio/{slug}
+GET    /api/v1/negocio/{slug}/availability
+GET    /api/v1/negocio/{slug}/services
+GET    /api/v1/negocio/{slug}/packages
+GET    /api/v1/negocio/{slug}/professionals
 
-GET    /api/v1/salao/{slug}/appointments
-POST   /api/v1/salao/{slug}/appointments
-PATCH  /api/v1/salao/{slug}/appointments/{id}/confirm
-PATCH  /api/v1/salao/{slug}/appointments/{id}/cancel
-PATCH  /api/v1/salao/{slug}/appointments/{id}/complete
-PATCH  /api/v1/salao/{slug}/appointments/{id}/no-show
-PATCH  /api/v1/salao/{slug}/appointments/{id}/reschedule
+GET    /api/v1/negocio/{slug}/appointments
+POST   /api/v1/negocio/{slug}/appointments
+PATCH  /api/v1/negocio/{slug}/appointments/{id}/confirm
+PATCH  /api/v1/negocio/{slug}/appointments/{id}/cancel
+PATCH  /api/v1/negocio/{slug}/appointments/{id}/complete
+PATCH  /api/v1/negocio/{slug}/appointments/{id}/no-show
+PATCH  /api/v1/negocio/{slug}/appointments/{id}/reschedule
 
-POST   /api/v1/salao/{slug}/appointments/{id}/payments
-GET    /api/v1/salao/{slug}/payments/{id}
+POST   /api/v1/negocio/{slug}/appointments/{id}/payments
+GET    /api/v1/negocio/{slug}/payments/{id}
 POST   /api/v1/payments/webhook
 
-GET    /api/v1/salao/{slug}/subscription
-POST   /api/v1/salao/{slug}/subscription
+GET    /api/v1/negocio/{slug}/subscription
+POST   /api/v1/negocio/{slug}/subscription
 
-GET    /api/v1/salao/{slug}/packages/{id}/purchases
-POST   /api/v1/salao/{slug}/packages/{id}/purchases
+GET    /api/v1/negocio/{slug}/packages/{id}/purchases
+POST   /api/v1/negocio/{slug}/packages/{id}/purchases
 
-GET    /api/v1/salao/{slug}/dashboard
+GET    /api/v1/negocio/{slug}/dashboard
 
-GET    /api/v1/salao/{slug}/team
-POST   /api/v1/salao/{slug}/team
-DELETE /api/v1/salao/{slug}/team/{userId}
+GET    /api/v1/negocio/{slug}/team
+POST   /api/v1/negocio/{slug}/team
+DELETE /api/v1/negocio/{slug}/team/{userId}
 
 GET    /api/v1/admin/metrics
 GET    /api/v1/admin/tenants

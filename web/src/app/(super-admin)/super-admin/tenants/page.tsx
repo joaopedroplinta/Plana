@@ -93,7 +93,7 @@ export default function TenantsPage() {
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b bg-muted">
-              <th className="px-5 py-3 text-left font-medium text-muted-foreground">Salão</th>
+              <th className="px-5 py-3 text-left font-medium text-muted-foreground">Negócio</th>
               <th className="px-5 py-3 text-left font-medium text-muted-foreground">Plano</th>
               <th className="px-5 py-3 text-center font-medium text-muted-foreground">Status</th>
               <th className="px-5 py-3 text-right font-medium text-muted-foreground">Usuários</th>

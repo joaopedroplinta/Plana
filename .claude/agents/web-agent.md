@@ -19,7 +19,7 @@ You are a Next.js frontend specialist for a multi-tenant SaaS scheduling platfor
 web/src/
 ├── app/
 │   ├── (public)/          # Public pages (landing, login, register)
-│   ├── (salon)/           # Salon-scoped pages: /salao/[slug]/
+│   ├── (salon)/           # Tenant-scoped pages: /[slug]/
 │   │   ├── dashboard/     # salon_owner / salon_staff dashboard
 │   │   ├── booking/       # Client booking flow
 │   │   └── admin/         # Salon management
@@ -46,10 +46,10 @@ import type { Service, PaginatedResponse } from '@/types'
 
 export const servicesService = {
   list: (slug: string) =>
-    api.get<PaginatedResponse<Service>>(`/salao/${slug}/services`),
+    api.get<PaginatedResponse<Service>>(`/negocio/${slug}/services`),
 
   create: (slug: string, data: CreateServiceData) =>
-    api.post<Service>(`/salao/${slug}/services`, data),
+    api.post<Service>(`/negocio/${slug}/services`, data),
 }
 ```
 

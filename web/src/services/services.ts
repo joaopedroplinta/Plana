@@ -12,14 +12,14 @@ export type UpdateServiceData = Partial<CreateServiceData>
 
 export const servicesService = {
   list: (slug: string) =>
-    api.get<PaginatedResponse<Service>>(`/salao/${slug}/services`),
+    api.get<PaginatedResponse<Service>>(`/negocio/${slug}/services`),
 
   create: (slug: string, data: CreateServiceData) =>
-    api.post<{ data: Service }>(`/salao/${slug}/services`, data),
+    api.post<{ data: Service }>(`/negocio/${slug}/services`, data),
 
   update: (slug: string, id: string, data: UpdateServiceData) =>
-    api.put<{ data: Service }>(`/salao/${slug}/services/${id}`, data),
+    api.put<{ data: Service }>(`/negocio/${slug}/services/${id}`, data),
 
   remove: (slug: string, id: string) =>
-    api.delete(`/salao/${slug}/services/${id}`),
+    api.delete(`/negocio/${slug}/services/${id}`),
 }

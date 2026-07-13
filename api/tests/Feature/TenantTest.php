@@ -11,14 +11,14 @@ uses(RefreshDatabase::class);
 test('tenant com slug válido é resolvido pelo middleware', function () {
     $tenant = Tenant::factory()->create(['slug' => 'salao-teste', 'active' => true]);
 
-    $response = $this->getJson('/api/v1/salao/salao-teste/ping');
+    $response = $this->getJson('/api/v1/negocio/salao-teste/ping');
 
     $response->assertOk()
         ->assertJson(['ok' => true]);
 });
 
 test('tenant inexistente retorna 404', function () {
-    $response = $this->getJson('/api/v1/salao/nao-existe/ping');
+    $response = $this->getJson('/api/v1/negocio/nao-existe/ping');
 
     $response->assertNotFound();
 });
@@ -26,7 +26,7 @@ test('tenant inexistente retorna 404', function () {
 test('tenant inativo retorna 404', function () {
     Tenant::factory()->inactive()->create(['slug' => 'salao-inativo']);
 
-    $response = $this->getJson('/api/v1/salao/salao-inativo/ping');
+    $response = $this->getJson('/api/v1/negocio/salao-inativo/ping');
 
     $response->assertNotFound();
 });
@@ -61,12 +61,12 @@ test('endpoint publico do tenant expõe current_tenant_role escopado por tenant,
     $user->assignRole('salon_owner');
 
     $this->actingAs($user)
-        ->getJson("/api/v1/salao/{$tenantA->slug}")
+        ->getJson("/api/v1/negocio/{$tenantA->slug}")
         ->assertOk()
         ->assertJsonPath('data.current_tenant_role', 'owner');
 
     $this->actingAs($user)
-        ->getJson("/api/v1/salao/{$tenantB->slug}")
+        ->getJson("/api/v1/negocio/{$tenantB->slug}")
         ->assertOk()
         ->assertJsonPath('data.current_tenant_role', 'staff');
 });
@@ -76,7 +76,7 @@ test('current_tenant_role é null para usuario sem vinculo com o tenant', functi
     $user = User::factory()->create();
 
     $this->actingAs($user)
-        ->getJson("/api/v1/salao/{$tenant->slug}")
+        ->getJson("/api/v1/negocio/{$tenant->slug}")
         ->assertOk()
         ->assertJsonPath('data.current_tenant_role', null);
 });
@@ -84,7 +84,7 @@ test('current_tenant_role é null para usuario sem vinculo com o tenant', functi
 test('current_tenant_role é null para requisicao nao autenticada', function () {
     $tenant = Tenant::factory()->create();
 
-    $this->getJson("/api/v1/salao/{$tenant->slug}")
+    $this->getJson("/api/v1/negocio/{$tenant->slug}")
         ->assertOk()
         ->assertJsonPath('data.current_tenant_role', null);
 });

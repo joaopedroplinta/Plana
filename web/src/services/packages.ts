@@ -14,14 +14,14 @@ export type UpdatePackageData = Partial<CreatePackageData>
 
 export const packagesService = {
   list: (slug: string) =>
-    api.get<{ data: ServicePackage[] }>(`/salao/${slug}/packages`),
+    api.get<{ data: ServicePackage[] }>(`/negocio/${slug}/packages`),
 
   create: (slug: string, data: CreatePackageData) =>
-    api.post<{ data: ServicePackage }>(`/salao/${slug}/packages`, data),
+    api.post<{ data: ServicePackage }>(`/negocio/${slug}/packages`, data),
 
   update: (slug: string, id: string, data: UpdatePackageData) =>
-    api.put<{ data: ServicePackage }>(`/salao/${slug}/packages/${id}`, data),
+    api.put<{ data: ServicePackage }>(`/negocio/${slug}/packages/${id}`, data),
 
   remove: (slug: string, id: string) =>
-    api.delete(`/salao/${slug}/packages/${id}`),
+    api.delete(`/negocio/${slug}/packages/${id}`),
 }

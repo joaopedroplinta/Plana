@@ -31,7 +31,7 @@ class StaffInvited extends Notification implements ShouldQueue
         $message = (new MailMessage)
             ->subject("Você foi convidado para a equipe de {$this->tenant->name}")
             ->greeting("Olá, {$notifiable->name}!")
-            ->line("Você agora faz parte da equipe do salão **{$this->tenant->name}** e pode acessar a agenda e os agendamentos.");
+            ->line("Você agora faz parte da equipe do negócio **{$this->tenant->name}** e pode acessar a agenda e os agendamentos.");
 
         if ($this->resetToken) {
             $resetUrl = "{$frontendUrl}/reset-password?token={$this->resetToken}&email=".urlencode($notifiable->email);

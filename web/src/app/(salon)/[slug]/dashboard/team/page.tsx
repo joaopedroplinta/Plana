@@ -98,7 +98,7 @@ export default function TeamPage() {
       <div>
         <h1 className="text-2xl font-bold text-foreground">Equipe</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Convide funcionários para acessar a agenda do salão
+          Convide funcionários para acessar a agenda do negócio
         </p>
       </div>
 

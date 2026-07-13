@@ -33,7 +33,7 @@ it('lista pacotes do tenant publicamente', function () {
     $tenant = Tenant::factory()->create();
     ServicePackage::factory(3)->create(['tenant_id' => $tenant->id]);
 
-    $response = $this->getJson("/api/v1/salao/{$tenant->slug}/packages");
+    $response = $this->getJson("/api/v1/negocio/{$tenant->slug}/packages");
 
     $response->assertOk()->assertJsonCount(3, 'data');
 });
@@ -44,7 +44,7 @@ it('nao vaza pacotes entre tenants', function () {
     ServicePackage::factory(2)->create(['tenant_id' => $tenantA->id]);
     ServicePackage::factory(4)->create(['tenant_id' => $tenantB->id]);
 
-    $response = $this->getJson("/api/v1/salao/{$tenantA->slug}/packages");
+    $response = $this->getJson("/api/v1/negocio/{$tenantA->slug}/packages");
 
     $response->assertOk()->assertJsonCount(2, 'data');
 });
@@ -55,7 +55,7 @@ it('exibe detalhe do pacote com servicos', function () {
     $services = Service::factory(2)->create(['tenant_id' => $tenant->id]);
     $package->services()->sync($services->pluck('id')->toArray());
 
-    $response = $this->getJson("/api/v1/salao/{$tenant->slug}/packages/{$package->id}");
+    $response = $this->getJson("/api/v1/negocio/{$tenant->slug}/packages/{$package->id}");
 
     $response->assertOk()
         ->assertJsonPath('data.id', $package->id)
@@ -67,7 +67,7 @@ it('salon_owner cria pacote com servicos', function () {
     $owner = pkgOwner($tenant);
     $services = Service::factory(2)->create(['tenant_id' => $tenant->id]);
 
-    $response = $this->actingAs($owner)->postJson("/api/v1/salao/{$tenant->slug}/packages", [
+    $response = $this->actingAs($owner)->postJson("/api/v1/negocio/{$tenant->slug}/packages", [
         'name' => 'Pacote Verão',
         'price' => 20000,
         'sessions' => 5,
@@ -88,7 +88,7 @@ it('salon_owner atualiza pacote e sincroniza servicos', function () {
     $newService = Service::factory()->create(['tenant_id' => $tenant->id]);
     $package->services()->sync($oldServices->pluck('id')->toArray());
 
-    $response = $this->actingAs($owner)->putJson("/api/v1/salao/{$tenant->slug}/packages/{$package->id}", [
+    $response = $this->actingAs($owner)->putJson("/api/v1/negocio/{$tenant->slug}/packages/{$package->id}", [
         'name' => 'Pacote Atualizado',
         'service_ids' => [$newService->id],
     ]);
@@ -103,7 +103,7 @@ it('salon_owner deleta pacote com 204', function () {
     $owner = pkgOwner($tenant);
     $package = ServicePackage::factory()->create(['tenant_id' => $tenant->id]);
 
-    $response = $this->actingAs($owner)->deleteJson("/api/v1/salao/{$tenant->slug}/packages/{$package->id}");
+    $response = $this->actingAs($owner)->deleteJson("/api/v1/negocio/{$tenant->slug}/packages/{$package->id}");
 
     $response->assertNoContent();
     $this->assertDatabaseMissing('service_packages', ['id' => $package->id]);
@@ -114,7 +114,7 @@ it('salon_staff nao pode deletar pacote', function () {
     $staff = pkgStaff($tenant);
     $package = ServicePackage::factory()->create(['tenant_id' => $tenant->id]);
 
-    $response = $this->actingAs($staff)->deleteJson("/api/v1/salao/{$tenant->slug}/packages/{$package->id}");
+    $response = $this->actingAs($staff)->deleteJson("/api/v1/negocio/{$tenant->slug}/packages/{$package->id}");
 
     $response->assertForbidden();
 });
@@ -122,7 +122,7 @@ it('salon_staff nao pode deletar pacote', function () {
 it('usuario nao autenticado nao pode criar pacote', function () {
     $tenant = Tenant::factory()->create();
 
-    $response = $this->postJson("/api/v1/salao/{$tenant->slug}/packages", [
+    $response = $this->postJson("/api/v1/negocio/{$tenant->slug}/packages", [
         'name' => 'Pacote X',
         'price' => 10000,
         'sessions' => 3,
@@ -138,7 +138,7 @@ it('cannot update package from another tenant', function () {
     $ownerA = pkgOwner($tenantA);
     $packageB = ServicePackage::factory()->create(['tenant_id' => $tenantB->id]);
 
-    $response = $this->actingAs($ownerA)->putJson("/api/v1/salao/{$tenantA->slug}/packages/{$packageB->id}", [
+    $response = $this->actingAs($ownerA)->putJson("/api/v1/negocio/{$tenantA->slug}/packages/{$packageB->id}", [
         'name' => 'Pacote Invadido',
     ]);
 
@@ -151,7 +151,7 @@ it('cannot reference services from another tenant in service_ids', function () {
     $ownerA = pkgOwner($tenantA);
     $servicesB = Service::factory(2)->create(['tenant_id' => $tenantB->id]);
 
-    $response = $this->actingAs($ownerA)->postJson("/api/v1/salao/{$tenantA->slug}/packages", [
+    $response = $this->actingAs($ownerA)->postJson("/api/v1/negocio/{$tenantA->slug}/packages", [
         'name' => 'Pacote Cross-Tenant',
         'price' => 15000,
         'sessions' => 3,

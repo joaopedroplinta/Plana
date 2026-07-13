@@ -246,13 +246,13 @@ jobs:
         run: |
           echo "Aguardando API em :8000..."
           for i in $(seq 1 30); do
-            if curl -sf http://127.0.0.1:8000/api/v1/salao/salao-demo/ping > /dev/null; then
+            if curl -sf http://127.0.0.1:8000/api/v1/negocio/salao-demo/ping > /dev/null; then
               echo "API respondeu."
               break
             fi
             sleep 2
           done
-          curl -sf http://127.0.0.1:8000/api/v1/salao/salao-demo/ping > /dev/null || {
+          curl -sf http://127.0.0.1:8000/api/v1/negocio/salao-demo/ping > /dev/null || {
             echo "API não respondeu a tempo."; cat /tmp/api-serve.log; exit 1;
           }
 

@@ -76,7 +76,7 @@ it('consome sessao de pacote ativo e zera o preco do agendamento', function () {
         'sessions_used' => 0,
     ]);
 
-    $response = $this->actingAs($client)->postJson("/api/v1/salao/{$tenant->slug}/appointments", [
+    $response = $this->actingAs($client)->postJson("/api/v1/negocio/{$tenant->slug}/appointments", [
         'professional_id' => $professional->id,
         'service_id' => $service->id,
         'starts_at' => now()->addDay()->setTime(10, 0)->toIso8601String(),
@@ -101,7 +101,7 @@ it('rejeita pacote que nao pertence ao cliente autenticado', function () {
         'service_package_id' => $package->id,
     ]);
 
-    $response = $this->actingAs($client)->postJson("/api/v1/salao/{$tenant->slug}/appointments", [
+    $response = $this->actingAs($client)->postJson("/api/v1/negocio/{$tenant->slug}/appointments", [
         'professional_id' => $professional->id,
         'service_id' => $service->id,
         'starts_at' => now()->addDay()->setTime(10, 0)->toIso8601String(),
@@ -122,7 +122,7 @@ it('rejeita pacote de outro tenant', function () {
         'service_package_id' => $packageB->id,
     ]);
 
-    $response = $this->actingAs($client)->postJson("/api/v1/salao/{$tenant->slug}/appointments", [
+    $response = $this->actingAs($client)->postJson("/api/v1/negocio/{$tenant->slug}/appointments", [
         'professional_id' => $professional->id,
         'service_id' => $service->id,
         'starts_at' => now()->addDay()->setTime(10, 0)->toIso8601String(),
@@ -142,7 +142,7 @@ it('rejeita pacote expirado', function () {
         'expires_at' => now()->subDay(),
     ]);
 
-    $response = $this->actingAs($client)->postJson("/api/v1/salao/{$tenant->slug}/appointments", [
+    $response = $this->actingAs($client)->postJson("/api/v1/negocio/{$tenant->slug}/appointments", [
         'professional_id' => $professional->id,
         'service_id' => $service->id,
         'starts_at' => now()->addDay()->setTime(10, 0)->toIso8601String(),
@@ -162,7 +162,7 @@ it('rejeita pacote ainda pendente (nao ativo)', function () {
         'status' => 'pending',
     ]);
 
-    $response = $this->actingAs($client)->postJson("/api/v1/salao/{$tenant->slug}/appointments", [
+    $response = $this->actingAs($client)->postJson("/api/v1/negocio/{$tenant->slug}/appointments", [
         'professional_id' => $professional->id,
         'service_id' => $service->id,
         'starts_at' => now()->addDay()->setTime(10, 0)->toIso8601String(),
@@ -183,7 +183,7 @@ it('rejeita pacote sem sessoes disponiveis', function () {
         'sessions_used' => 3,
     ]);
 
-    $response = $this->actingAs($client)->postJson("/api/v1/salao/{$tenant->slug}/appointments", [
+    $response = $this->actingAs($client)->postJson("/api/v1/negocio/{$tenant->slug}/appointments", [
         'professional_id' => $professional->id,
         'service_id' => $service->id,
         'starts_at' => now()->addDay()->setTime(10, 0)->toIso8601String(),
@@ -203,7 +203,7 @@ it('rejeita quando o servico do agendamento nao esta incluido no pacote', functi
         'service_package_id' => $package->id,
     ]);
 
-    $response = $this->actingAs($client)->postJson("/api/v1/salao/{$tenant->slug}/appointments", [
+    $response = $this->actingAs($client)->postJson("/api/v1/negocio/{$tenant->slug}/appointments", [
         'professional_id' => $professional->id,
         'service_id' => $otherService->id,
         'starts_at' => now()->addDay()->setTime(10, 0)->toIso8601String(),
@@ -225,7 +225,7 @@ it('esgota as sessoes do pacote apos a ultima reserva valida', function () {
     ]);
 
     // Última sessão disponível: sucesso.
-    $this->actingAs($client)->postJson("/api/v1/salao/{$tenant->slug}/appointments", [
+    $this->actingAs($client)->postJson("/api/v1/negocio/{$tenant->slug}/appointments", [
         'professional_id' => $professional->id,
         'service_id' => $service->id,
         'starts_at' => now()->addDay()->setTime(10, 0)->toIso8601String(),
@@ -236,7 +236,7 @@ it('esgota as sessoes do pacote apos a ultima reserva valida', function () {
 
     // Sem sessões restantes: falha (o lockForUpdate no controller garante
     // que isso vale mesmo com duas requisições concorrentes).
-    $this->actingAs($client)->postJson("/api/v1/salao/{$tenant->slug}/appointments", [
+    $this->actingAs($client)->postJson("/api/v1/negocio/{$tenant->slug}/appointments", [
         'professional_id' => $professional->id,
         'service_id' => $service->id,
         'starts_at' => now()->addDay()->setTime(11, 0)->toIso8601String(),
@@ -267,7 +267,7 @@ it('devolve a sessao do pacote ao cancelar o agendamento', function () {
     ]);
 
     $this->actingAs($client)
-        ->patchJson("/api/v1/salao/{$tenant->slug}/appointments/{$appointment->id}/cancel")
+        ->patchJson("/api/v1/negocio/{$tenant->slug}/appointments/{$appointment->id}/cancel")
         ->assertOk()
         ->assertJsonPath('data.status', 'cancelled');
 
@@ -295,7 +295,7 @@ it('nao permite sessions_used negativo ao cancelar agendamento com pacote ja sem
     ]);
 
     $this->actingAs($client)
-        ->patchJson("/api/v1/salao/{$tenant->slug}/appointments/{$appointment->id}/cancel")
+        ->patchJson("/api/v1/negocio/{$tenant->slug}/appointments/{$appointment->id}/cancel")
         ->assertOk();
 
     expect($purchase->fresh()->sessions_used)->toBe(0);
@@ -313,7 +313,7 @@ it('nao devolve sessao quando agendamento sem pacote e cancelado', function () {
     ]);
 
     $this->actingAs($client)
-        ->patchJson("/api/v1/salao/{$tenant->slug}/appointments/{$appointment->id}/cancel")
+        ->patchJson("/api/v1/negocio/{$tenant->slug}/appointments/{$appointment->id}/cancel")
         ->assertOk()
         ->assertJsonPath('data.status', 'cancelled');
 });

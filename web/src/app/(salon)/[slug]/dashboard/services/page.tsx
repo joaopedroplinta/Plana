@@ -186,7 +186,7 @@ export default function ServicesPage() {
         <div>
           <h1 className="text-2xl font-bold text-foreground">Serviços</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Gerencie os serviços oferecidos pelo seu salão
+            Gerencie os serviços oferecidos pelo seu negócio
           </p>
         </div>
         <Button onClick={openCreate} className="gap-2">

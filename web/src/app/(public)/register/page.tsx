@@ -118,7 +118,7 @@ function RegisterForm() {
                   : 'text-muted-foreground hover:text-foreground'
               }`}
             >
-              Tenho um salão
+              Tenho um negócio
             </button>
           </div>
 
@@ -142,7 +142,7 @@ function RegisterForm() {
 
             {accountType === 'owner' && (
               <div className="space-y-1.5">
-                <Label htmlFor="salon_name">Nome do salão</Label>
+                <Label htmlFor="salon_name">Nome do negócio</Label>
                 <Input
                   id="salon_name"
                   type="text"
@@ -150,7 +150,7 @@ function RegisterForm() {
                   required
                   value={salonName}
                   onChange={(e) => setSalonName(e.target.value)}
-                  placeholder="Ex: Salão da Maria"
+                  placeholder="Ex: Espaço da Maria"
                   disabled={isLoading}
                 />
                 {fieldErrors.salon_name && (

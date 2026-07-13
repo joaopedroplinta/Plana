@@ -26,11 +26,11 @@ class NewAppointmentReceived extends Notification implements ShouldQueue
         $appointment = $this->appointment;
 
         return (new MailMessage)
-            ->subject('Novo agendamento no seu salão')
+            ->subject('Novo agendamento no seu negócio')
             ->greeting("Olá, {$notifiable->name}!")
             ->line("**{$appointment->client->name}** agendou **{$appointment->service->name}** com {$appointment->professional->name}.")
             ->line('Data: '.$appointment->starts_at->format('d/m/Y').' às '.$appointment->starts_at->format('H:i'))
-            ->line('Acesse a agenda do salão para confirmar o horário.');
+            ->line('Acesse a agenda do negócio para confirmar o horário.');
     }
 
     /** @return array<string, mixed> */

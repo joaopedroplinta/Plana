@@ -127,7 +127,7 @@ export default function BookingPage() {
         setProfessionals(proRes.data.data)
       })
       .catch(() => {
-        setError('Erro ao carregar dados do salão. Tente novamente.')
+        setError('Erro ao carregar dados do negócio. Tente novamente.')
       })
       .finally(() => {
         setInitialLoading(false)
@@ -303,7 +303,7 @@ export default function BookingPage() {
         </div>
         <h2 className="mt-4 text-2xl font-bold text-foreground">Agendamento realizado!</h2>
         <p className="mt-2 text-sm text-muted-foreground">
-          Seu horário foi reservado com sucesso. Aguarde a confirmação do salão.
+          Seu horário foi reservado com sucesso. Aguarde a confirmação do negócio.
         </p>
         <div className="mt-6 space-y-2 rounded-xl border bg-muted px-6 py-4 text-left text-sm">
           <p>

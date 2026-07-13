@@ -129,7 +129,7 @@ export default function SchedulePage() {
       <div>
         <h1 className="text-2xl font-bold text-foreground">Agenda</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Visualize e gerencie os agendamentos do seu salão
+          Visualize e gerencie os agendamentos do seu negócio
         </p>
       </div>
 

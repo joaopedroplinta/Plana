@@ -42,7 +42,7 @@ sistema-agendamentos/
 - Models com tenant scope: sempre use o global scope `TenantScope` ou trait `BelongsToTenant`
 - Controllers: sempre resolva o tenant via middleware `ResolveTenant` antes de qualquer query
 - Policies: dupla verificação — `$user->belongsToTenant($currentTenant) && $resource->tenant_id === $currentTenant->id`
-- Rotas: prefixo `/api/v1/salao/{tenant:slug}/` para endpoints do salão
+- Rotas: prefixo `/api/v1/negocio/{tenant:slug}/` para endpoints do tenant
 - FKs de outros tenants em requests: sempre usar `Rule::exists('tabela', 'id')->where('tenant_id', app('currentTenant')->id)`
 
 ## Convenções da API (Laravel)

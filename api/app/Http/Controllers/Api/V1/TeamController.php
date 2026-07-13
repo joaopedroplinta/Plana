@@ -49,7 +49,7 @@ class TeamController extends Controller
 
         if (in_array($membership, ['owner', 'staff'], true)) {
             throw ValidationException::withMessages([
-                'email' => ['Este usuário já faz parte da equipe do salão.'],
+                'email' => ['Este usuário já faz parte da equipe do negócio.'],
             ]);
         }
 
@@ -61,7 +61,7 @@ class TeamController extends Controller
             ]);
         }
 
-        // Cliente do salão convidado para a equipe é promovido a staff.
+        // Cliente do negócio convidado para a equipe é promovido a staff.
         if ($membership === 'client') {
             $tenant->users()->updateExistingPivot($user->id, ['role' => 'staff']);
         } else {
@@ -98,7 +98,7 @@ class TeamController extends Controller
 
         if ($membership === 'owner') {
             throw ValidationException::withMessages([
-                'user' => ['Não é possível remover o dono do salão.'],
+                'user' => ['Não é possível remover o dono do negócio.'],
             ]);
         }
 

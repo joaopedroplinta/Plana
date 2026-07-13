@@ -87,7 +87,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       icon: <Calendar className="h-4 w-4" />,
     },
     {
-      label: 'Meu salão',
+      label: 'Meu negócio',
       href: `/${slug}/dashboard/settings`,
       icon: <Store className="h-4 w-4" />,
     },

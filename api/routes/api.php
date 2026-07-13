@@ -38,7 +38,7 @@ Route::prefix('v1')->middleware('throttle:api')->group(function () {
     });
 
     // Rotas públicas do tenant
-    Route::prefix('salao/{tenant:slug}')->middleware('tenant')->group(function () {
+    Route::prefix('negocio/{tenant:slug}')->middleware('tenant')->group(function () {
         Route::get('/', fn (Request $request) => new TenantResource($request->tenant));
         Route::get('ping', fn () => response()->json(['ok' => true]))->name('tenant.ping');
 
@@ -52,7 +52,7 @@ Route::prefix('v1')->middleware('throttle:api')->group(function () {
     });
 
     // Rotas autenticadas do tenant
-    Route::prefix('salao/{tenant:slug}')
+    Route::prefix('negocio/{tenant:slug}')
         ->middleware(['tenant', 'auth:sanctum'])
         ->group(function () {
             Route::apiResource('services', ServiceController::class)->except(['index', 'show']);

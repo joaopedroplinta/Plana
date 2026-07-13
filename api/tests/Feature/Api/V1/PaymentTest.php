@@ -62,7 +62,7 @@ it('client can create a pix payment', function () {
     $this->mock(PaymentService::class, fn ($mock) => $mock->shouldReceive('createPix')->once()->andReturn($fakePayment));
 
     $response = $this->actingAs($client)
-        ->postJson("/api/v1/salao/{$tenant->slug}/appointments/{$appointment->id}/payments", [
+        ->postJson("/api/v1/negocio/{$tenant->slug}/appointments/{$appointment->id}/payments", [
             'method' => 'pix',
         ]);
 
@@ -87,7 +87,7 @@ it('client can create a credit card payment and receives preference_url', functi
     $this->mock(PaymentService::class, fn ($mock) => $mock->shouldReceive('createCheckoutPro')->once()->andReturn($fakePayment));
 
     $response = $this->actingAs($client)
-        ->postJson("/api/v1/salao/{$tenant->slug}/appointments/{$appointment->id}/payments", [
+        ->postJson("/api/v1/negocio/{$tenant->slug}/appointments/{$appointment->id}/payments", [
             'method' => 'credit_card',
         ]);
 
@@ -103,7 +103,7 @@ it('client from another tenant cannot create payment', function () {
     $appointment = payAppointmentForClient($tenantB, $clientB);
 
     $this->actingAs($clientA)
-        ->postJson("/api/v1/salao/{$tenantA->slug}/appointments/{$appointment->id}/payments", [
+        ->postJson("/api/v1/negocio/{$tenantA->slug}/appointments/{$appointment->id}/payments", [
             'method' => 'pix',
         ])
         ->assertNotFound();
@@ -119,7 +119,7 @@ it('client cannot pay for another clients appointment', function () {
     $appointment = payAppointmentForClient($tenant, $clientB);
 
     $this->actingAs($clientA)
-        ->postJson("/api/v1/salao/{$tenant->slug}/appointments/{$appointment->id}/payments", [
+        ->postJson("/api/v1/negocio/{$tenant->slug}/appointments/{$appointment->id}/payments", [
             'method' => 'pix',
         ])
         ->assertForbidden();
@@ -139,7 +139,7 @@ it('client can view own payment status', function () {
     $this->mock(PaymentService::class, fn ($mock) => $mock->shouldReceive('syncStatus')->once()->andReturn($payment->fresh()));
 
     $this->actingAs($client)
-        ->getJson("/api/v1/salao/{$tenant->slug}/payments/{$payment->id}")
+        ->getJson("/api/v1/negocio/{$tenant->slug}/payments/{$payment->id}")
         ->assertOk()
         ->assertJsonPath('data.id', $payment->id);
 });
@@ -161,7 +161,7 @@ it('client can view own package purchase payment', function () {
     $this->mock(PaymentService::class, fn ($mock) => $mock->shouldReceive('syncStatus')->once()->andReturn($payment->fresh()));
 
     $this->actingAs($client)
-        ->getJson("/api/v1/salao/{$tenant->slug}/payments/{$payment->id}")
+        ->getJson("/api/v1/negocio/{$tenant->slug}/payments/{$payment->id}")
         ->assertOk()
         ->assertJsonPath('data.id', $payment->id);
 });
@@ -181,7 +181,7 @@ it('client cannot view payment from another client', function () {
     ]);
 
     $this->actingAs($clientA)
-        ->getJson("/api/v1/salao/{$tenant->slug}/payments/{$payment->id}")
+        ->getJson("/api/v1/negocio/{$tenant->slug}/payments/{$payment->id}")
         ->assertForbidden();
 });
 
@@ -203,7 +203,7 @@ it('salon owner can view any payment in tenant', function () {
     $this->mock(PaymentService::class, fn ($mock) => $mock->shouldReceive('syncStatus')->once()->andReturn($payment->fresh()));
 
     $this->actingAs($owner)
-        ->getJson("/api/v1/salao/{$tenant->slug}/payments/{$payment->id}")
+        ->getJson("/api/v1/negocio/{$tenant->slug}/payments/{$payment->id}")
         ->assertOk();
 });
 
@@ -387,7 +387,7 @@ it('nao permite pagar agendamento cancelado', function () {
     $appointment->update(['status' => 'cancelled']);
 
     $this->actingAs($client)
-        ->postJson("/api/v1/salao/{$tenant->slug}/appointments/{$appointment->id}/payments", [
+        ->postJson("/api/v1/negocio/{$tenant->slug}/appointments/{$appointment->id}/payments", [
             'method' => 'pix',
         ])
         ->assertUnprocessable()
@@ -405,7 +405,7 @@ it('nao permite pagar agendamento que ja tem pagamento aprovado', function () {
     ]);
 
     $this->actingAs($client)
-        ->postJson("/api/v1/salao/{$tenant->slug}/appointments/{$appointment->id}/payments", [
+        ->postJson("/api/v1/negocio/{$tenant->slug}/appointments/{$appointment->id}/payments", [
             'method' => 'pix',
         ])
         ->assertUnprocessable()

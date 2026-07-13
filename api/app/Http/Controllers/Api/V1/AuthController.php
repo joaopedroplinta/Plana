@@ -31,7 +31,7 @@ class AuthController extends Controller
         if ($request->input('account_type', 'owner') === 'client') {
             $tenant = null;
 
-            // Cliente pode já sair vinculado a um salão (fluxo de agendamento).
+            // Cliente pode já sair vinculado a um negócio (fluxo de agendamento).
             $slug = $request->string('tenant_slug')->toString();
             if ($slug) {
                 $tenant = Tenant::where('slug', $slug)->where('active', true)->first();
@@ -79,7 +79,7 @@ class AuthController extends Controller
             : $user->tenants()->wherePivot('role', 'owner')->first() ?? $user->tenants()->first();
 
         if ($slug && ! $tenant) {
-            return response()->json(['message' => 'Você não tem acesso a este salão.'], 403);
+            return response()->json(['message' => 'Você não tem acesso a este negócio.'], 403);
         }
 
         $token = $user->createToken('auth')->plainTextToken;
