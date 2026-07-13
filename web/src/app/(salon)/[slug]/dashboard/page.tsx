@@ -171,15 +171,15 @@ export default function DashboardPage() {
             {metrics.appointments_by_status.length === 0 ? (
               <p className="py-12 text-center text-sm text-muted-foreground">Sem agendamentos</p>
             ) : (
-              <ResponsiveContainer width="100%" height={200}>
-                <PieChart>
+              <ResponsiveContainer width="100%" height={240}>
+                <PieChart margin={{ top: 20, right: 20, bottom: 4, left: 20 }}>
                   <Pie
                     data={metrics.appointments_by_status}
                     dataKey="count"
                     nameKey="status"
                     cx="50%"
                     cy="50%"
-                    outerRadius={75}
+                    outerRadius={65}
                     label={(props) => {
                       const status = (props as { status?: string }).status ?? ''
                       const percent = (props as { percent?: number }).percent ?? 0
@@ -205,19 +205,18 @@ export default function DashboardPage() {
       {!isLoading && metrics && metrics.top_services.length > 0 && (
         <div className="rounded-lg border bg-card p-5">
           <h2 className="mb-4 text-sm font-semibold text-foreground">Top Serviços</h2>
-          <ResponsiveContainer width="100%" height={200}>
-            <BarChart data={metrics.top_services} layout="vertical">
-              <XAxis type="number" tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
-              <YAxis
+          <ResponsiveContainer width="100%" height={220}>
+            <BarChart data={metrics.top_services}>
+              <XAxis
                 type="category"
                 dataKey="name"
-                width={140}
                 tick={{ fontSize: 11 }}
                 tickLine={false}
                 axisLine={false}
               />
+              <YAxis type="number" allowDecimals={false} tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
               <Tooltip formatter={(v) => [`${Number(v)} agendamentos`, '']} />
-              <Bar dataKey="count" fill="var(--primary)" radius={[0, 4, 4, 0]} />
+              <Bar dataKey="count" fill="var(--primary)" radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>

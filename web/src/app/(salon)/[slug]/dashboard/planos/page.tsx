@@ -192,67 +192,68 @@ export default function PlanosPage() {
         {plans.map((plan) => {
           const isActive = plan.key === currentPlan
           return (
-            <Card
-              key={plan.key}
-              className={[
-                'relative flex flex-col transition-shadow',
-                isActive ? 'ring-2 ring-primary shadow-md' : 'hover:shadow-md',
-              ].join(' ')}
-            >
+            <div key={plan.key} className="relative">
               {isActive && (
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                <div className="absolute -top-3 left-1/2 z-10 -translate-x-1/2">
                   <Badge className="bg-primary text-white px-3 py-0.5 text-xs">
                     Plano atual
                   </Badge>
                 </div>
               )}
-              <CardHeader className="pb-3">
-                <CardTitle className="flex items-center justify-between">
-                  <span>{plan.name}</span>
-                  <span className={`text-xs font-medium px-2 py-1 rounded-full ${planBadgeColors[plan.key]}`}>
-                    {plan.key.toUpperCase()}
-                  </span>
-                </CardTitle>
-                <div className="mt-2">
-                  {plan.price === 0 ? (
-                    <span className="text-3xl font-bold text-foreground">Gratis</span>
-                  ) : (
-                    <span className="text-3xl font-bold text-foreground">
-                      {formatPrice(plan.price)}
-                      <span className="text-sm font-normal text-muted-foreground">/mes</span>
+              <Card
+                className={[
+                  'flex flex-col transition-shadow',
+                  isActive ? 'ring-2 ring-primary shadow-md' : 'hover:shadow-md',
+                ].join(' ')}
+              >
+                <CardHeader className="pb-3">
+                  <CardTitle className="flex items-center justify-between">
+                    <span>{plan.name}</span>
+                    <span className={`text-xs font-medium px-2 py-1 rounded-full ${planBadgeColors[plan.key]}`}>
+                      {plan.key.toUpperCase()}
                     </span>
-                  )}
-                </div>
-              </CardHeader>
-              <CardContent className="flex-1 space-y-2">
-                <ul className="space-y-1.5">
-                  {plan.features.map((feature) => (
-                    <li key={feature} className="flex items-center gap-2 text-sm text-foreground">
-                      <svg
-                        className="h-4 w-4 shrink-0 text-green-500"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                        strokeWidth={2}
-                      >
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                      </svg>
-                      {feature}
-                    </li>
-                  ))}
-                </ul>
-              </CardContent>
-              <CardFooter>
-                <Button
-                  className="w-full"
-                  variant={isActive ? 'outline' : 'default'}
-                  disabled={isActive || !isOwner || isSubmitting}
-                  onClick={() => handlePlanClick(plan)}
-                >
-                  {isActive ? 'Plano atual' : 'Selecionar'}
-                </Button>
-              </CardFooter>
-            </Card>
+                  </CardTitle>
+                  <div className="mt-2">
+                    {plan.price === 0 ? (
+                      <span className="text-3xl font-bold text-foreground">Gratis</span>
+                    ) : (
+                      <span className="text-3xl font-bold text-foreground">
+                        {formatPrice(plan.price)}
+                        <span className="text-sm font-normal text-muted-foreground">/mes</span>
+                      </span>
+                    )}
+                  </div>
+                </CardHeader>
+                <CardContent className="flex-1 space-y-2">
+                  <ul className="space-y-1.5">
+                    {plan.features.map((feature) => (
+                      <li key={feature} className="flex items-center gap-2 text-sm text-foreground">
+                        <svg
+                          className="h-4 w-4 shrink-0 text-green-500"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                          strokeWidth={2}
+                        >
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                        </svg>
+                        {feature}
+                      </li>
+                    ))}
+                  </ul>
+                </CardContent>
+                <CardFooter>
+                  <Button
+                    className="w-full"
+                    variant={isActive ? 'outline' : 'default'}
+                    disabled={isActive || !isOwner || isSubmitting}
+                    onClick={() => handlePlanClick(plan)}
+                  >
+                    {isActive ? 'Plano atual' : 'Selecionar'}
+                  </Button>
+                </CardFooter>
+              </Card>
+            </div>
           )
         })}
       </div>
