@@ -540,10 +540,10 @@ export default function BookingPage() {
                       setSelectedSlot(slot)
                       setStep(5)
                     }}
-                    className={`rounded-lg border px-3 py-2.5 text-sm font-medium transition-all ${
+                    className={`rounded-lg border px-3 py-2.5 text-sm font-medium tabular-nums transition-all ${
                       isSelected
                         ? 'border-primary bg-primary text-white'
-                        : 'border-border bg-card text-foreground hover:border-primary/60 hover:bg-secondary dark:hover:bg-primary/15'
+                        : 'border-[var(--lima-500)]/40 bg-[var(--lima-100)] text-[var(--teal-900)] hover:border-[var(--lima-500)]/70 dark:bg-[var(--lima-500)]/15 dark:text-[var(--lima-500)]'
                     }`}
                   >
                     {slot.starts_at} – {slot.ends_at}

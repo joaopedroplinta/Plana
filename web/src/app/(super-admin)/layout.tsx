@@ -71,20 +71,20 @@ export default function SuperAdminLayout({ children }: { children: React.ReactNo
       {/* Sidebar */}
       <aside
         className={[
-          'fixed inset-y-0 left-0 z-30 flex w-64 flex-col border-r bg-gray-900 transition-transform duration-200 lg:static lg:translate-x-0',
+          'fixed inset-y-0 left-0 z-30 flex w-64 flex-col border-r border-border bg-card transition-transform duration-200 lg:static lg:translate-x-0',
           sidebarOpen ? 'translate-x-0' : '-translate-x-full',
         ].join(' ')}
       >
         {/* Header */}
-        <div className="flex h-16 items-center justify-between border-b border-gray-700 px-5">
+        <div className="flex h-16 items-center justify-between border-b border-border px-5">
           <div className="flex items-center gap-2">
-            <Logo className="text-base text-white" markSize={20} />
+            <Logo className="text-base text-foreground" markSize={20} />
             <span className="rounded bg-primary px-1.5 py-0.5 text-xs font-semibold text-white">
               ADMIN
             </span>
           </div>
           <button
-            className="rounded p-1 text-gray-400 hover:text-gray-200 lg:hidden"
+            className="rounded p-1 text-muted-foreground hover:text-foreground lg:hidden"
             onClick={() => setSidebarOpen(false)}
           >
             <X className="h-5 w-5" />
@@ -106,8 +106,8 @@ export default function SuperAdminLayout({ children }: { children: React.ReactNo
                 className={[
                   'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
                   isActive
-                    ? 'bg-primary text-white'
-                    : 'text-gray-400 hover:bg-gray-800 hover:text-white',
+                    ? 'bg-secondary text-secondary-foreground dark:bg-primary/15 dark:text-primary'
+                    : 'text-muted-foreground hover:bg-muted hover:text-foreground',
                 ].join(' ')}
               >
                 {item.icon}
@@ -118,10 +118,10 @@ export default function SuperAdminLayout({ children }: { children: React.ReactNo
         </nav>
 
         {/* Logout */}
-        <div className="border-t border-gray-700 p-4">
+        <div className="border-t border-border p-4">
           <Button
             variant="ghost"
-            className="w-full justify-start gap-3 text-sm text-gray-400 hover:text-red-400"
+            className="w-full justify-start gap-3 text-sm text-muted-foreground hover:text-red-600 dark:hover:text-red-400"
             onClick={handleLogout}
           >
             <LogOut className="h-4 w-4" />
