@@ -1,3 +1,5 @@
+<img src="web/src/app/icon.svg" width="64" height="64" alt="Plana" />
+
 # Plana
 
 [![CI](https://github.com/joaopedroplinta/sistema-agendamentos/actions/workflows/ci.yml/badge.svg)](https://github.com/joaopedroplinta/sistema-agendamentos/actions/workflows/ci.yml)
