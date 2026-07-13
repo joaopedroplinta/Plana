@@ -1,0 +1,78 @@
+# Blueprint do Render — deploy 100% grátis (api + web), sem worker/cron
+# persistente (não disponíveis no plano free). Banco fica fora, no Neon
+# (Postgres gratuito e persistente — ver DEPLOY.md).
+#
+# Uso: Render → New → Blueprint → aponta pra este repositório.
+# Depois do primeiro deploy, preencha no dashboard as variáveis marcadas
+# `sync: false` abaixo (ver passo a passo em DEPLOY.md).
+
+services:
+  - type: web
+    name: plana-api
+    runtime: docker
+    dockerfilePath: ./api/Dockerfile
+    dockerContext: ./api
+    plan: free
+    envVars:
+      - key: APP_NAME
+        value: Plana
+      - key: APP_ENV
+        value: production
+      - key: APP_DEBUG
+        value: "false"
+      - key: APP_LOCALE
+        value: pt_BR
+      - key: APP_FALLBACK_LOCALE
+        value: pt_BR
+      - key: APP_KEY
+        sync: false # gere com: php artisan key:generate --show
+      - key: APP_URL
+        sync: false # URL pública deste serviço (ex: https://plana-api.onrender.com)
+      - key: FRONTEND_URL
+        sync: false # URL pública do serviço plana-web
+      - key: RUN_MIGRATIONS
+        value: "1"
+      - key: DB_CONNECTION
+        value: pgsql
+      - key: DB_URL
+        sync: false # connection string do Neon, com ?sslmode=require
+      - key: QUEUE_CONNECTION
+        value: sync # sem worker persistente no free tier — processa inline
+      - key: CACHE_STORE
+        value: database
+      - key: SESSION_DRIVER
+        value: database
+      - key: MAIL_MAILER
+        sync: false # smtp em produção — sem isso, e-mails não saem
+      - key: MAIL_HOST
+        sync: false
+      - key: MAIL_PORT
+        sync: false
+      - key: MAIL_USERNAME
+        sync: false
+      - key: MAIL_PASSWORD
+        sync: false
+      - key: MAIL_FROM_ADDRESS
+        sync: false
+      - key: MERCADOPAGO_ACCESS_TOKEN
+        sync: false
+      - key: MERCADOPAGO_PUBLIC_KEY
+        sync: false
+      - key: MERCADOPAGO_WEBHOOK_SECRET
+        sync: false
+      - key: SCHEDULER_TOKEN
+        generateValue: true # cron-job.org usa esse valor no header X-Scheduler-Token
+      - key: CORS_ALLOWED_ORIGINS
+        sync: false # URL pública do plana-web
+
+  - type: web
+    name: plana-web
+    runtime: docker
+    dockerfilePath: ./web/Dockerfile
+    dockerContext: ./web
+    plan: free
+    envVars:
+      - key: NEXT_PUBLIC_API_URL
+        sync: false # URL pública do plana-api + /api/v1
+      - key: NEXT_PUBLIC_MERCADOPAGO_PUBLIC_KEY
+        sync: false

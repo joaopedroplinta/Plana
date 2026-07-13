@@ -87,3 +87,28 @@ it('aceita webhook com assinatura valida', function () {
 
     Queue::assertPushed(ProcessPaymentWebhook::class);
 });
+
+// --- Scheduler via HTTP (deploys sem worker/cron persistente) ---
+
+it('rejeita disparo do scheduler sem token configurado em producao com 503', function () {
+    config(['app.scheduler_token' => null]);
+    $this->app->detectEnvironment(fn () => 'production');
+
+    $this->postJson('/api/v1/system/scheduler')->assertStatus(503);
+});
+
+it('rejeita disparo do scheduler com token invalido quando configurado', function () {
+    config(['app.scheduler_token' => 'segredo-teste']);
+
+    $this->postJson('/api/v1/system/scheduler', [], [
+        'X-Scheduler-Token' => 'token-errado',
+    ])->assertStatus(401);
+});
+
+it('aceita disparo do scheduler com token valido', function () {
+    config(['app.scheduler_token' => 'segredo-teste']);
+
+    $this->postJson('/api/v1/system/scheduler', [], [
+        'X-Scheduler-Token' => 'segredo-teste',
+    ])->assertOk()->assertJsonStructure(['output']);
+});
