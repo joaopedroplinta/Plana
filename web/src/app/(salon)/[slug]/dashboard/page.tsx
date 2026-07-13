@@ -86,7 +86,7 @@ export default function DashboardPage() {
             setMetrics(null)
             setPeriod(Number(e.target.value))
           }}
-          className="rounded-md border border-border bg-card px-3 py-1.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          className="rounded-md border border-border bg-card px-3 py-1.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
         >
           <option value={7}>Últimos 7 dias</option>
           <option value={30}>Últimos 30 dias</option>

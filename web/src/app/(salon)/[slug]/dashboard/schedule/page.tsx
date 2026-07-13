@@ -169,7 +169,7 @@ export default function SchedulePage() {
               }}
               className={`rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
                 status === f.value
-                  ? 'bg-indigo-600 text-white'
+                  ? 'bg-primary text-white'
                   : 'bg-muted text-muted-foreground hover:bg-muted'
               }`}
             >
@@ -189,8 +189,8 @@ export default function SchedulePage() {
         </div>
       ) : appointments.length === 0 ? (
         <div className="flex flex-col items-center justify-center rounded-xl border bg-card py-24 text-center">
-          <div className="rounded-full bg-indigo-50 dark:bg-indigo-500/15 p-4">
-            <Calendar className="h-10 w-10 text-indigo-400" />
+          <div className="rounded-full bg-secondary dark:bg-primary/15 p-4">
+            <Calendar className="h-10 w-10 text-primary/70" />
           </div>
           <h2 className="mt-4 text-lg font-semibold text-foreground">
             Nenhum agendamento encontrado
@@ -231,7 +231,7 @@ export default function SchedulePage() {
                           </p>
                         </div>
                         <div className="flex shrink-0 items-center gap-3">
-                          <span className="text-sm font-semibold text-indigo-600">
+                          <span className="text-sm font-semibold text-primary">
                             {formatPrice(appt.price)}
                           </span>
                           <StatusBadge status={appt.status} />

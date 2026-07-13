@@ -105,7 +105,7 @@ export default function TeamPage() {
       {isOwner && (
         <Card className="p-5">
           <h2 className="mb-4 flex items-center gap-2 text-sm font-semibold text-foreground">
-            <UserPlus className="h-4 w-4 text-indigo-500" />
+            <UserPlus className="h-4 w-4 text-primary" />
             Convidar funcionário
           </h2>
           <form onSubmit={handleInvite} className="flex flex-wrap items-end gap-3">
@@ -149,8 +149,8 @@ export default function TeamPage() {
         </div>
       ) : members.length === 0 ? (
         <div className="flex flex-col items-center justify-center rounded-xl border bg-card py-24 text-center">
-          <div className="rounded-full bg-indigo-50 dark:bg-indigo-500/15 p-4">
-            <Users className="h-10 w-10 text-indigo-400" />
+          <div className="rounded-full bg-secondary dark:bg-primary/15 p-4">
+            <Users className="h-10 w-10 text-primary/70" />
           </div>
           <p className="mt-4 text-sm text-muted-foreground">Nenhum membro na equipe ainda.</p>
         </div>
@@ -159,7 +159,7 @@ export default function TeamPage() {
           <ul className="divide-y">
             {members.map((member) => (
               <li key={member.id} className="flex items-center gap-4 px-4 py-3">
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-indigo-100 dark:bg-indigo-500/15 text-sm font-bold text-indigo-600 dark:text-indigo-300">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-secondary dark:bg-primary/15 text-sm font-bold text-secondary-foreground dark:text-primary">
                   {member.name.charAt(0).toUpperCase()}
                 </div>
                 <div className="min-w-0 flex-1">
@@ -170,7 +170,7 @@ export default function TeamPage() {
                   variant="secondary"
                   className={
                     member.role === 'owner'
-                      ? 'bg-indigo-100 dark:bg-indigo-500/15 text-indigo-700 dark:text-indigo-300'
+                      ? 'bg-secondary dark:bg-primary/15 text-secondary-foreground dark:text-primary'
                       : 'bg-muted text-muted-foreground'
                   }
                 >

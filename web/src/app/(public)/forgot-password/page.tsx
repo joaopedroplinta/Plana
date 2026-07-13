@@ -44,7 +44,7 @@ export default function ForgotPasswordPage() {
             Lembrou a senha?{' '}
             <Link
               href="/login"
-              className="font-medium text-indigo-600 hover:text-indigo-500"
+              className="font-medium text-primary hover:text-primary"
             >
               Voltar ao login
             </Link>
@@ -61,7 +61,7 @@ export default function ForgotPasswordPage() {
               </div>
               <Link
                 href="/login"
-                className="block text-sm font-medium text-indigo-600 hover:text-indigo-500"
+                className="block text-sm font-medium text-primary hover:text-primary"
               >
                 Voltar para o login
               </Link>
@@ -99,7 +99,7 @@ export default function ForgotPasswordPage() {
               <p className="text-center text-sm text-muted-foreground">
                 <Link
                   href="/login"
-                  className="font-medium text-indigo-600 hover:text-indigo-500"
+                  className="font-medium text-primary hover:text-primary"
                 >
                   Voltar para o login
                 </Link>

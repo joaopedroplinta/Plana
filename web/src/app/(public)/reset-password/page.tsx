@@ -60,7 +60,7 @@ function ResetPasswordForm() {
         </p>
         <Link
           href="/forgot-password"
-          className="mt-3 block text-sm font-medium text-indigo-600 hover:text-indigo-500"
+          className="mt-3 block text-sm font-medium text-primary hover:text-primary"
         >
           Solicitar novo link
         </Link>
@@ -125,7 +125,7 @@ export default function ResetPasswordPage() {
             Lembrou a senha?{' '}
             <Link
               href="/login"
-              className="font-medium text-indigo-600 hover:text-indigo-500"
+              className="font-medium text-primary hover:text-primary"
             >
               Voltar ao login
             </Link>

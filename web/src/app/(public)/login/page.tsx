@@ -68,7 +68,7 @@ function LoginForm() {
             Ainda não tem conta?{' '}
             <Link
               href={redirect ? `/register?redirect=${encodeURIComponent(redirect)}` : '/register'}
-              className="font-medium text-indigo-600 hover:text-indigo-500"
+              className="font-medium text-primary hover:text-primary"
             >
               Criar conta grátis
             </Link>
@@ -96,7 +96,7 @@ function LoginForm() {
                 <Label htmlFor="password">Senha</Label>
                 <Link
                   href="/forgot-password"
-                  className="text-xs font-medium text-indigo-600 hover:text-indigo-500"
+                  className="text-xs font-medium text-primary hover:text-primary"
                 >
                   Esqueceu a senha?
                 </Link>

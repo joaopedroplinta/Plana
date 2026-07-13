@@ -37,13 +37,13 @@ function PaymentSuccessContent() {
         <div className="flex flex-col gap-3">
           <a
             href={`/${slug}`}
-            className="px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+            className="px-6 py-3 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
           >
             Voltar ao negócio
           </a>
           <a
             href={`/${slug}/booking`}
-            className="px-6 py-3 border border-indigo-600 text-indigo-600 rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-500/15 transition-colors"
+            className="px-6 py-3 border border-primary text-primary rounded-lg hover:bg-secondary dark:hover:bg-primary/15 transition-colors"
           >
             Fazer outro agendamento
           </a>

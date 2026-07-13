@@ -79,7 +79,7 @@ export default function SuperAdminLayout({ children }: { children: React.ReactNo
         <div className="flex h-16 items-center justify-between border-b border-gray-700 px-5">
           <div className="flex items-center gap-2">
             <Logo className="text-base text-white" markSize={20} />
-            <span className="rounded bg-indigo-600 px-1.5 py-0.5 text-xs font-semibold text-white">
+            <span className="rounded bg-primary px-1.5 py-0.5 text-xs font-semibold text-white">
               ADMIN
             </span>
           </div>
@@ -106,7 +106,7 @@ export default function SuperAdminLayout({ children }: { children: React.ReactNo
                 className={[
                   'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
                   isActive
-                    ? 'bg-indigo-600 text-white'
+                    ? 'bg-primary text-white'
                     : 'text-gray-400 hover:bg-gray-800 hover:text-white',
                 ].join(' ')}
               >

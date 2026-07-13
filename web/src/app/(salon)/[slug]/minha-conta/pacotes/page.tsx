@@ -78,7 +78,7 @@ export default function MeusPacotesPage() {
           <p className="mt-4 text-sm text-muted-foreground">Você ainda não comprou nenhum pacote.</p>
           <a
             href={`/${slug}`}
-            className="mt-4 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-500 transition-colors"
+            className="mt-4 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary/90 transition-colors"
           >
             Ver pacotes disponíveis
           </a>
@@ -105,7 +105,7 @@ export default function MeusPacotesPage() {
                     <Badge variant="secondary" className={`text-xs ${badge.className}`}>
                       {badge.label}
                     </Badge>
-                    <p className="text-sm font-bold text-indigo-600">
+                    <p className="text-sm font-bold text-primary">
                       {formatPrice(purchase.price_paid)}
                     </p>
                   </div>

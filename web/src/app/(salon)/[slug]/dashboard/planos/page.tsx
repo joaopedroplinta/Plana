@@ -156,7 +156,7 @@ export default function PlanosPage() {
 
   const planBadgeColors: Record<string, string> = {
     starter: 'bg-muted text-foreground',
-    pro: 'bg-indigo-100 dark:bg-indigo-500/15 text-indigo-700 dark:text-indigo-300',
+    pro: 'bg-secondary dark:bg-primary/15 text-secondary-foreground dark:text-primary',
     enterprise: 'bg-purple-100 dark:bg-purple-500/15 text-purple-700 dark:text-purple-300',
   }
 
@@ -196,12 +196,12 @@ export default function PlanosPage() {
               key={plan.key}
               className={[
                 'relative flex flex-col transition-shadow',
-                isActive ? 'ring-2 ring-indigo-500 shadow-md' : 'hover:shadow-md',
+                isActive ? 'ring-2 ring-primary shadow-md' : 'hover:shadow-md',
               ].join(' ')}
             >
               {isActive && (
                 <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                  <Badge className="bg-indigo-600 text-white px-3 py-0.5 text-xs">
+                  <Badge className="bg-primary text-white px-3 py-0.5 text-xs">
                     Plano atual
                   </Badge>
                 </div>

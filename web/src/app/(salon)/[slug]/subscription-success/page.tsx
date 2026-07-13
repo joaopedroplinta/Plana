@@ -35,13 +35,13 @@ export default function SubscriptionSuccessPage() {
         <div className="flex flex-col gap-3">
           <Link
             href={`/${slug}/dashboard/planos`}
-            className="px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+            className="px-6 py-3 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
           >
             Ver meu plano
           </Link>
           <Link
             href={`/${slug}/dashboard`}
-            className="px-6 py-3 border border-indigo-600 text-indigo-600 rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-500/15 transition-colors"
+            className="px-6 py-3 border border-primary text-primary rounded-lg hover:bg-secondary dark:hover:bg-primary/15 transition-colors"
           >
             Ir para o dashboard
           </Link>
