@@ -10,6 +10,13 @@ Fechamento da auditoria de hardening pré-lançamento (#40–#61): correções d
 segurança, produto novo (equipe, pacotes de sessões, reagendamento), testes
 E2E e empacotamento Docker para deploy.
 
+### Marca
+- Rebrand de "Agendei" para **Plana** — o nome anterior já era usado por
+  múltiplos produtos ativos no mesmo mercado (#70)
+- Novo ícone/logo (marca de barras teal/lima) aplicado como favicon, app icon
+  e componente reutilizável no header, footer e sidebar do super-admin (#70)
+- Repositório tornado público
+
 ### Segurança
 - Fix de vazamento cross-tenant: `SubscriptionController` e gate do dashboard
   usavam role Spatie global em vez do papel por tenant (`ownsTenant()`) (#47, #50)
