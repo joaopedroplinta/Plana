@@ -126,4 +126,17 @@ return [
         'store' => env('APP_MAINTENANCE_STORE', 'database'),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Scheduler Token
+    |--------------------------------------------------------------------------
+    |
+    | Token compartilhado que protege o endpoint POST /api/v1/system/scheduler.
+    | Usado em deploys sem worker/cron persistente (ex: Render free tier), onde
+    | um serviço externo (cron-job.org) dispara `schedule:run` via HTTP.
+    |
+    */
+
+    'scheduler_token' => env('SCHEDULER_TOKEN'),
+
 ];

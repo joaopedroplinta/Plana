@@ -153,6 +153,7 @@ npm run dev              # http://localhost:3000
 | `SANCTUM_TOKEN_EXPIRATION` | não | Minutos até o token expirar (padrão 10080 = 7 dias) |
 | `CORS_ALLOWED_ORIGINS` | sim | Lista separada por vírgula das origens do frontend permitidas |
 | `AUTH_RATE_LIMIT_PER_MINUTE` | não | Limite de tentativas de login/registro por minuto (padrão 5) |
+| `SCHEDULER_TOKEN` | só em deploys sem worker/cron persistente | Protege `POST /api/v1/system/scheduler`, que dispara `schedule:run` via HTTP (ver [DEPLOY.md](DEPLOY.md), Opção B) |
 
 **`web/.env.local`** (copie de `web/.env.local.example`)
 
@@ -201,6 +202,7 @@ PATCH  /api/v1/negocio/{slug}/appointments/{id}/reschedule
 POST   /api/v1/negocio/{slug}/appointments/{id}/payments
 GET    /api/v1/negocio/{slug}/payments/{id}
 POST   /api/v1/payments/webhook
+POST   /api/v1/system/scheduler
 
 GET    /api/v1/negocio/{slug}/subscription
 POST   /api/v1/negocio/{slug}/subscription
@@ -231,17 +233,21 @@ cd web && npm run test:e2e             # Playwright (golden paths E2E)
 ## Deploy em produção
 
 O projeto é empacotado como imagens Docker (`api/Dockerfile`, `web/Dockerfile`), publicadas
-automaticamente no GitHub Container Registry a cada release (`.github/workflows/release.yml`),
-e orquestradas em `docker-compose.prod.yml` com Postgres, Redis, worker de fila, agendador e
-Caddy fazendo reverse proxy com HTTPS automático (Let's Encrypt).
+automaticamente no GitHub Container Registry a cada release (`.github/workflows/release.yml`).
+Duas formas de rodar de graça:
 
-```bash
-cp .env.prod.example .env   # preencha domínios, banco, MercadoPago e SMTP reais
-docker compose -f docker-compose.prod.yml up -d --build
-```
+- **VM (Oracle Cloud)** — `docker-compose.prod.yml` com Postgres, Redis, worker de fila,
+  agendador e Caddy fazendo reverse proxy com HTTPS automático (Let's Encrypt)
 
-Guia completo — incluindo como subir uma VM **always-free** na Oracle Cloud e apontar o
-DNS — em [DEPLOY.md](DEPLOY.md).
+  ```bash
+  cp .env.prod.example .env   # preencha domínios, banco, MercadoPago e SMTP reais
+  docker compose -f docker-compose.prod.yml up -d --build
+  ```
+
+- **Render + Neon (PaaS)** — sem VM pra gerenciar, `render.yaml` (Blueprint) sobe `api` e
+  `web` como serviços separados, banco no Neon
+
+Guia completo das duas opções, incluindo trade-offs e passo a passo, em [DEPLOY.md](DEPLOY.md).
 
 ## Licença
 

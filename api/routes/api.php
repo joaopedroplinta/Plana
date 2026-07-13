@@ -11,6 +11,7 @@ use App\Http\Controllers\Api\V1\PackagePurchaseController;
 use App\Http\Controllers\Api\V1\PaymentController;
 use App\Http\Controllers\Api\V1\ProfessionalController;
 use App\Http\Controllers\Api\V1\ScheduleController;
+use App\Http\Controllers\Api\V1\SchedulerController;
 use App\Http\Controllers\Api\V1\ServiceController;
 use App\Http\Controllers\Api\V1\ServicePackageController;
 use App\Http\Controllers\Api\V1\SubscriptionController;
@@ -22,6 +23,10 @@ use Illuminate\Support\Facades\Route;
 
 // Webhook — public, outside tenant prefix, no auth required
 Route::post('v1/payments/webhook', [PaymentController::class, 'webhook']);
+
+// Disparo do scheduler via HTTP — protegido por SCHEDULER_TOKEN, usado em
+// deploys sem worker/cron persistente (ver config/app.php).
+Route::post('v1/system/scheduler', SchedulerController::class);
 
 Route::prefix('v1')->middleware('throttle:api')->group(function () {
     Route::prefix('auth')->group(function () {
