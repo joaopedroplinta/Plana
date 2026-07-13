@@ -1,4 +1,4 @@
-# Agendei
+# Plana
 
 [![CI](https://github.com/joaopedroplinta/sistema-agendamentos/actions/workflows/ci.yml/badge.svg)](https://github.com/joaopedroplinta/sistema-agendamentos/actions/workflows/ci.yml)
 [![Release](https://img.shields.io/github/v/release/joaopedroplinta/sistema-agendamentos)](https://github.com/joaopedroplinta/sistema-agendamentos/releases/latest)

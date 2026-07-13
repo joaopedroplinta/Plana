@@ -2,9 +2,10 @@ import Link from 'next/link'
 import type { Metadata } from 'next'
 import { ThemeToggle } from '@/components/theme-toggle'
 import { Footer } from '@/components/shared/Footer'
+import { Logo } from '@/components/shared/Logo'
 
 export const metadata: Metadata = {
-  title: 'Sistema de Agendamentos',
+  title: 'Plana',
   description: 'Plataforma de agendamentos para salões de beleza',
 }
 
@@ -13,7 +14,7 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
     <div className="flex min-h-screen flex-col">
       <header className="border-b border-border bg-background px-6 py-4">
         <div className="mx-auto flex max-w-7xl items-center justify-between">
-          <span className="text-lg font-bold text-foreground">Agendei</span>
+          <Logo className="text-lg text-foreground" markSize={24} />
           <nav className="flex items-center gap-6">
             <Link
               href="/register"

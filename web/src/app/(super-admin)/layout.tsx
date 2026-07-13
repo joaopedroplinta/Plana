@@ -7,6 +7,7 @@ import { useAuth } from '@/hooks/useAuth'
 import { Button } from '@/components/ui/button'
 import { ThemeToggle } from '@/components/theme-toggle'
 import { Footer } from '@/components/shared/Footer'
+import { Logo } from '@/components/shared/Logo'
 import { LayoutDashboard, Building2, LogOut, Menu, X } from 'lucide-react'
 
 interface NavItem {
@@ -77,7 +78,7 @@ export default function SuperAdminLayout({ children }: { children: React.ReactNo
         {/* Header */}
         <div className="flex h-16 items-center justify-between border-b border-gray-700 px-5">
           <div className="flex items-center gap-2">
-            <span className="text-base font-bold text-white">Agendei</span>
+            <Logo className="text-base text-white" markSize={20} />
             <span className="rounded bg-indigo-600 px-1.5 py-0.5 text-xs font-semibold text-white">
               ADMIN
             </span>
@@ -144,7 +145,7 @@ export default function SuperAdminLayout({ children }: { children: React.ReactNo
             </span>
             <div className="flex items-center gap-3">
               <span className="hidden text-xs text-muted-foreground sm:block">
-                Plataforma Agendei
+                Plataforma Plana
               </span>
               <ThemeToggle />
             </div>
