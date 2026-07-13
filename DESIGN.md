@@ -1,7 +1,11 @@
 # Design — spec de refresh visual do Plana
 
-> Documento de planejamento. Nada aqui foi implementado ainda — é a spec pra
-> quando formos executar essa rodada.
+> Documento de planejamento original. Implementado na branch
+> `design/visual-refresh-tokens` (2026-07-13) — os 5 passos do "Plano de
+> execução" abaixo foram concluídos e verificados visualmente (Playwright,
+> light/dark, logado como salon_owner e super_admin) e o contraste
+> WCAG AA de todos os pares de token foi validado (todos ≥ 4.5:1). Mantido
+> aqui como referência da direção original.
 
 ## Por que isso importa agora
 
