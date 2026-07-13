@@ -16,6 +16,12 @@ E2E e empacotamento Docker para deploy.
 - Novo ícone/logo (marca de barras teal/lima) aplicado como favicon, app icon
   e componente reutilizável no header, footer e sidebar do super-admin (#70)
 - Repositório tornado público
+- Primeira etapa de generalização pra vários ramos de negócio (não só salão
+  de beleza): rota da API `/api/v1/salao/{slug}/` → `/api/v1/negocio/{slug}/`
+  e toda a copy voltada ao usuário (landing page, dashboard, e-mails,
+  mensagens de validação) trocada de "salão" para "negócio" (#75).
+  Identificadores internos (roles `salon_owner`/`salon_staff`, campo
+  `salon_name`) ficam para uma refatoração completa posterior
 
 ### Segurança
 - Fix de vazamento cross-tenant: `SubscriptionController` e gate do dashboard
@@ -55,6 +61,9 @@ E2E e empacotamento Docker para deploy.
 - Empacotamento Docker (`api/Dockerfile`, `web/Dockerfile`,
   `docker-compose.prod.yml` + Caddy com HTTPS automático) e workflow de
   release publicando imagens no GHCR
+- Job de `docker build` (sem push) no CI, rodando em todo PR/push pra main —
+  pega quebra no Dockerfile antes do release, não só na hora de publicar
+  uma tag (#74)
 
 ---
 
