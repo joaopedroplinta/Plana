@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { Logo } from '@/components/shared/Logo'
 
 interface FooterProps {
   /**
@@ -15,7 +16,7 @@ export function Footer({ variant = 'public' }: FooterProps) {
     return (
       <footer className="border-t border-border px-6 py-3">
         <p className="text-xs text-muted-foreground">
-          &copy; {year} Agendei. Todos os direitos reservados.
+          &copy; {year} Plana. Todos os direitos reservados.
         </p>
       </footer>
     )
@@ -24,9 +25,9 @@ export function Footer({ variant = 'public' }: FooterProps) {
   return (
     <footer className="border-t border-border bg-background px-6 py-8">
       <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-3 sm:flex-row">
-        <span className="text-sm font-medium text-foreground">Agendei</span>
+        <Logo className="text-sm text-foreground" markSize={18} />
         <p className="text-sm text-muted-foreground">
-          &copy; {year} Agendei. Todos os direitos reservados.
+          &copy; {year} Plana. Todos os direitos reservados.
         </p>
         <nav className="flex items-center gap-4">
           <Link

@@ -1,6 +1,6 @@
 # Deploy — Oracle Cloud Free Tier
 
-Guia pra colocar o Agendei no ar de graça, numa VM **always-free** da Oracle Cloud
+Guia pra colocar o Plana no ar de graça, numa VM **always-free** da Oracle Cloud
 (sem expiração, sem cold start — diferente de PaaS gratuitos que dormem ou apagam
 o banco depois de um tempo). Leva ~30-40 min na primeira vez.
 
