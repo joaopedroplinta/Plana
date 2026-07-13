@@ -60,7 +60,7 @@ php artisan make:test Api/V1/ServiceTest --pest --no-interaction
 ```php
 Route::prefix('v1')->group(function () {
     // Rotas autenticadas do salão
-    Route::prefix('salao/{tenant:slug}')
+    Route::prefix('negocio/{tenant:slug}')
         ->middleware(['auth:sanctum', 'role:salon_owner|salon_staff'])
         ->group(function () {
             Route::apiResource('services', ServiceController::class)->except(['index']);
@@ -99,7 +99,7 @@ it('does not leak across tenants', function () {
     $tenantB = Tenant::factory()->create();
     Service::factory(2)->create(['tenant_id' => $tenantA->id]);
 
-    $response = $this->getJson("/api/v1/salao/{$tenantB->slug}/services");
+    $response = $this->getJson("/api/v1/negocio/{$tenantB->slug}/services");
 
     $response->assertOk()->assertJsonCount(0, 'data');
 });

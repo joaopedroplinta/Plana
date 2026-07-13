@@ -164,7 +164,7 @@ export default function ProfessionalsPage() {
         <div>
           <h1 className="text-2xl font-bold text-foreground">Profissionais</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Gerencie os profissionais do seu salão
+            Gerencie os profissionais do seu negócio
           </p>
         </div>
         <Button onClick={openCreate} className="gap-2">

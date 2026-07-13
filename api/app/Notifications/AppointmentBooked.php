@@ -30,7 +30,7 @@ class AppointmentBooked extends Notification implements ShouldQueue
             ->greeting("Olá, {$notifiable->name}!")
             ->line("Recebemos seu agendamento de **{$appointment->service->name}** com {$appointment->professional->name}.")
             ->line('Data: '.$appointment->starts_at->format('d/m/Y').' às '.$appointment->starts_at->format('H:i'))
-            ->line('Assim que o salão confirmar, você receberá um novo e-mail.');
+            ->line('Assim que o negócio confirmar, você receberá um novo e-mail.');
     }
 
     /** @return array<string, mixed> */

@@ -30,7 +30,7 @@ class ResolveTenant
         }
 
         if (! $tenant || ! $tenant->active) {
-            abort(404, 'Salão não encontrado ou inativo.');
+            abort(404, 'Negócio não encontrado ou inativo.');
         }
 
         // Bind tenant globally and on the request object.

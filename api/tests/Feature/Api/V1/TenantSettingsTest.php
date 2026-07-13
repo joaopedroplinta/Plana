@@ -21,7 +21,7 @@ it('owner atualiza perfil do salao e os campos aparecem no endpoint publico', fu
     $tenant = Tenant::factory()->create();
     $owner = settingsOwner($tenant);
 
-    $response = $this->actingAs($owner)->patchJson("/api/v1/salao/{$tenant->slug}/settings", [
+    $response = $this->actingAs($owner)->patchJson("/api/v1/negocio/{$tenant->slug}/settings", [
         'name' => 'Salão Renovado',
         'description' => 'O melhor corte da cidade.',
         'phone' => '(42) 99999-0000',
@@ -36,7 +36,7 @@ it('owner atualiza perfil do salao e os campos aparecem no endpoint publico', fu
         ->assertJsonPath('data.whatsapp', '5542999990000');
 
     // Endpoint público do tenant reflete o perfil
-    $this->getJson("/api/v1/salao/{$tenant->slug}")
+    $this->getJson("/api/v1/negocio/{$tenant->slug}")
         ->assertOk()
         ->assertJsonPath('data.instagram', 'salao.renovado')
         ->assertJsonPath('data.address', 'Rua das Flores, 123 — Centro');
@@ -46,7 +46,7 @@ it('atualizacao parcial nao apaga os demais campos do settings', function () {
     $tenant = Tenant::factory()->create(['settings' => ['phone' => '(42) 1111-1111', 'description' => 'Original']]);
     $owner = settingsOwner($tenant);
 
-    $this->actingAs($owner)->patchJson("/api/v1/salao/{$tenant->slug}/settings", [
+    $this->actingAs($owner)->patchJson("/api/v1/negocio/{$tenant->slug}/settings", [
         'description' => 'Atualizada',
     ])->assertOk();
 
@@ -62,7 +62,7 @@ it('staff nao pode atualizar o perfil do salao', function () {
     $staff->assignRole('salon_staff');
     $tenant->users()->attach($staff->id, ['role' => 'staff']);
 
-    $this->actingAs($staff)->patchJson("/api/v1/salao/{$tenant->slug}/settings", [
+    $this->actingAs($staff)->patchJson("/api/v1/negocio/{$tenant->slug}/settings", [
         'name' => 'Hack',
     ])->assertForbidden();
 });
@@ -72,7 +72,7 @@ it('owner de outro tenant nao atualiza este salao', function () {
     $tenantB = Tenant::factory()->create();
     $ownerB = settingsOwner($tenantB);
 
-    $this->actingAs($ownerB)->patchJson("/api/v1/salao/{$tenantA->slug}/settings", [
+    $this->actingAs($ownerB)->patchJson("/api/v1/negocio/{$tenantA->slug}/settings", [
         'name' => 'Invasão',
     ])->assertForbidden();
 });
@@ -80,6 +80,6 @@ it('owner de outro tenant nao atualiza este salao', function () {
 it('exige autenticacao', function () {
     $tenant = Tenant::factory()->create();
 
-    $this->patchJson("/api/v1/salao/{$tenant->slug}/settings", ['name' => 'X'])
+    $this->patchJson("/api/v1/negocio/{$tenant->slug}/settings", ['name' => 'X'])
         ->assertUnauthorized();
 });

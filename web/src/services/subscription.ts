@@ -3,11 +3,11 @@ import type { CardPaymentData, Subscription, SubscriptionResponse } from '@/type
 
 export const subscriptionService = {
   get: (slug: string) =>
-    api.get<{ data: SubscriptionResponse }>(`/salao/${slug}/subscription`),
+    api.get<{ data: SubscriptionResponse }>(`/negocio/${slug}/subscription`),
 
   create: (
     slug: string,
     data: { plan: string; method: 'pix' | 'credit_card' },
     card?: CardPaymentData,
-  ) => api.post<{ data: Subscription }>(`/salao/${slug}/subscription`, { ...data, ...card }),
+  ) => api.post<{ data: Subscription }>(`/negocio/${slug}/subscription`, { ...data, ...card }),
 }

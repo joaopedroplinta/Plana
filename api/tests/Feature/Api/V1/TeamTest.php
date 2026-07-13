@@ -40,7 +40,7 @@ it('owner lista a equipe do salao com papeis', function () {
     $client = User::factory()->create();
     $tenant->users()->attach($client->id, ['role' => 'client']);
 
-    $response = $this->actingAs($owner)->getJson("/api/v1/salao/{$tenant->slug}/team");
+    $response = $this->actingAs($owner)->getJson("/api/v1/negocio/{$tenant->slug}/team");
 
     $response->assertOk()->assertJsonCount(2, 'data');
 });
@@ -51,13 +51,13 @@ it('cliente nao acessa a lista da equipe', function () {
     $client = User::factory()->create();
     $tenant->users()->attach($client->id, ['role' => 'client']);
 
-    $this->actingAs($client)->getJson("/api/v1/salao/{$tenant->slug}/team")->assertForbidden();
+    $this->actingAs($client)->getJson("/api/v1/negocio/{$tenant->slug}/team")->assertForbidden();
 });
 
 it('exige autenticacao para listar equipe', function () {
     $tenant = Tenant::factory()->create();
 
-    $this->getJson("/api/v1/salao/{$tenant->slug}/team")->assertUnauthorized();
+    $this->getJson("/api/v1/negocio/{$tenant->slug}/team")->assertUnauthorized();
 });
 
 // --- Convidar staff ---
@@ -68,7 +68,7 @@ it('owner convida novo staff que recebe email com link de senha', function () {
     $tenant = Tenant::factory()->create();
     $owner = teamOwner($tenant);
 
-    $response = $this->actingAs($owner)->postJson("/api/v1/salao/{$tenant->slug}/team", [
+    $response = $this->actingAs($owner)->postJson("/api/v1/negocio/{$tenant->slug}/team", [
         'name' => 'Nova Funcionária',
         'email' => 'func@salao.com',
     ]);
@@ -96,7 +96,7 @@ it('convidar usuario existente vincula sem criar conta nova', function () {
     $existing = User::factory()->create(['email' => 'ja-existe@test.com']);
     $before = User::count();
 
-    $this->actingAs($owner)->postJson("/api/v1/salao/{$tenant->slug}/team", [
+    $this->actingAs($owner)->postJson("/api/v1/negocio/{$tenant->slug}/team", [
         'name' => 'Já Existe',
         'email' => 'ja-existe@test.com',
     ])->assertCreated();
@@ -110,7 +110,7 @@ it('nao convida quem ja faz parte do salao', function () {
     $owner = teamOwner($tenant);
     $staff = teamStaff($tenant);
 
-    $this->actingAs($owner)->postJson("/api/v1/salao/{$tenant->slug}/team", [
+    $this->actingAs($owner)->postJson("/api/v1/negocio/{$tenant->slug}/team", [
         'name' => $staff->name,
         'email' => $staff->email,
     ])->assertUnprocessable()->assertJsonValidationErrors(['email']);
@@ -121,7 +121,7 @@ it('staff nao pode convidar membros', function () {
     teamOwner($tenant);
     $staff = teamStaff($tenant);
 
-    $this->actingAs($staff)->postJson("/api/v1/salao/{$tenant->slug}/team", [
+    $this->actingAs($staff)->postJson("/api/v1/negocio/{$tenant->slug}/team", [
         'name' => 'Alguém',
         'email' => 'alguem@test.com',
     ])->assertForbidden();
@@ -132,7 +132,7 @@ it('owner de outro tenant nao convida staff neste salao', function () {
     $tenantB = Tenant::factory()->create();
     $ownerB = teamOwner($tenantB);
 
-    $this->actingAs($ownerB)->postJson("/api/v1/salao/{$tenantA->slug}/team", [
+    $this->actingAs($ownerB)->postJson("/api/v1/negocio/{$tenantA->slug}/team", [
         'name' => 'Invasor',
         'email' => 'invasor@test.com',
     ])->assertForbidden();
@@ -146,7 +146,7 @@ it('owner remove staff da equipe', function () {
     $staff = teamStaff($tenant);
 
     $this->actingAs($owner)
-        ->deleteJson("/api/v1/salao/{$tenant->slug}/team/{$staff->id}")
+        ->deleteJson("/api/v1/negocio/{$tenant->slug}/team/{$staff->id}")
         ->assertNoContent();
 
     $this->assertDatabaseMissing('tenant_user', [
@@ -160,7 +160,7 @@ it('nao remove o dono do salao', function () {
     $owner = teamOwner($tenant);
 
     $this->actingAs($owner)
-        ->deleteJson("/api/v1/salao/{$tenant->slug}/team/{$owner->id}")
+        ->deleteJson("/api/v1/negocio/{$tenant->slug}/team/{$owner->id}")
         ->assertUnprocessable();
 });
 
@@ -170,7 +170,7 @@ it('remover usuario de fora do tenant retorna 404', function () {
     $stranger = User::factory()->create();
 
     $this->actingAs($owner)
-        ->deleteJson("/api/v1/salao/{$tenant->slug}/team/{$stranger->id}")
+        ->deleteJson("/api/v1/negocio/{$tenant->slug}/team/{$stranger->id}")
         ->assertNotFound();
 });
 
@@ -182,7 +182,7 @@ it('cliente do salao convidado para a equipe e promovido a staff', function () {
     $client = User::factory()->create();
     $tenant->users()->attach($client->id, ['role' => 'client']);
 
-    $this->actingAs($owner)->postJson("/api/v1/salao/{$tenant->slug}/team", [
+    $this->actingAs($owner)->postJson("/api/v1/negocio/{$tenant->slug}/team", [
         'name' => $client->name,
         'email' => $client->email,
     ])->assertCreated();

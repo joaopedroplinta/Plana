@@ -39,7 +39,7 @@ function PaymentSuccessContent() {
             href={`/${slug}`}
             className="px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
           >
-            Voltar ao salão
+            Voltar ao negócio
           </a>
           <a
             href={`/${slug}/booking`}

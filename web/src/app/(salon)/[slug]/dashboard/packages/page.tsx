@@ -196,7 +196,7 @@ export default function PackagesPage() {
         <div>
           <h1 className="text-2xl font-bold text-foreground">Pacotes</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Gerencie os pacotes de serviços do seu salão
+            Gerencie os pacotes de serviços do seu negócio
           </p>
         </div>
         <Button onClick={openCreate} className="gap-2">

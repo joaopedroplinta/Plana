@@ -21,7 +21,7 @@ export function useTenant(slug: string): UseTenantReturn {
     tenantsService
       .show(slug)
       .then((res) => setTenant(res.data.data))
-      .catch(() => setError('Salao nao encontrado'))
+      .catch(() => setError('Negócio não encontrado'))
       .finally(() => setIsLoading(false))
   }, [slug])
 

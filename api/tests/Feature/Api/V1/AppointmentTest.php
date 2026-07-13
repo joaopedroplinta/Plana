@@ -73,7 +73,7 @@ it('cria agendamento com slot valido e retorna 201', function () {
 
     $startsAt = now()->addDay()->setHour(10)->setMinute(0)->setSecond(0)->toIso8601String();
 
-    $response = $this->actingAs($client)->postJson("/api/v1/salao/{$tenant->slug}/appointments", [
+    $response = $this->actingAs($client)->postJson("/api/v1/negocio/{$tenant->slug}/appointments", [
         'professional_id' => $professional->id,
         'service_id' => $service->id,
         'starts_at' => $startsAt,
@@ -112,7 +112,7 @@ it('rejeita agendamento em slot ocupado com 422', function () {
         'price' => 5000,
     ]);
 
-    $response = $this->actingAs($client)->postJson("/api/v1/salao/{$tenant->slug}/appointments", [
+    $response = $this->actingAs($client)->postJson("/api/v1/negocio/{$tenant->slug}/appointments", [
         'professional_id' => $professional->id,
         'service_id' => $service->id,
         'starts_at' => $startsAt->toIso8601String(),
@@ -129,7 +129,7 @@ it('rejeita agendamento com profissional de outro tenant com 422', function () {
     $professionalB = Professional::factory()->create(['tenant_id' => $tenantB->id]);
     $service = Service::factory()->create(['tenant_id' => $tenantA->id, 'duration_minutes' => 60]);
 
-    $response = $this->actingAs($client)->postJson("/api/v1/salao/{$tenantA->slug}/appointments", [
+    $response = $this->actingAs($client)->postJson("/api/v1/negocio/{$tenantA->slug}/appointments", [
         'professional_id' => $professionalB->id,
         'service_id' => $service->id,
         'starts_at' => now()->addDay()->setHour(10)->toIso8601String(),
@@ -162,7 +162,7 @@ it('salon_owner lista todos os agendamentos do tenant', function () {
         'service_id' => $service->id,
     ]);
 
-    $response = $this->actingAs($owner)->getJson("/api/v1/salao/{$tenant->slug}/appointments");
+    $response = $this->actingAs($owner)->getJson("/api/v1/negocio/{$tenant->slug}/appointments");
 
     $response->assertOk()->assertJsonCount(5, 'data');
 });
@@ -187,7 +187,7 @@ it('client lista apenas os proprios agendamentos', function () {
         'service_id' => $service->id,
     ]);
 
-    $response = $this->actingAs($clientA)->getJson("/api/v1/salao/{$tenant->slug}/appointments");
+    $response = $this->actingAs($clientA)->getJson("/api/v1/negocio/{$tenant->slug}/appointments");
 
     $response->assertOk()->assertJsonCount(2, 'data');
 });
@@ -206,7 +206,7 @@ it('salon_owner confirma agendamento com sucesso', function () {
     ]);
 
     $response = $this->actingAs($owner)
-        ->patchJson("/api/v1/salao/{$tenant->slug}/appointments/{$appointment->id}/confirm");
+        ->patchJson("/api/v1/negocio/{$tenant->slug}/appointments/{$appointment->id}/confirm");
 
     $response->assertOk()
         ->assertJsonPath('data.status', 'confirmed');
@@ -227,7 +227,7 @@ it('client nao pode confirmar agendamento', function () {
     ]);
 
     $response = $this->actingAs($client)
-        ->patchJson("/api/v1/salao/{$tenant->slug}/appointments/{$appointment->id}/confirm");
+        ->patchJson("/api/v1/negocio/{$tenant->slug}/appointments/{$appointment->id}/confirm");
 
     $response->assertForbidden();
 });
@@ -247,7 +247,7 @@ it('client cancela o proprio agendamento com sucesso', function () {
     ]);
 
     $response = $this->actingAs($client)
-        ->patchJson("/api/v1/salao/{$tenant->slug}/appointments/{$appointment->id}/cancel");
+        ->patchJson("/api/v1/negocio/{$tenant->slug}/appointments/{$appointment->id}/cancel");
 
     $response->assertOk()
         ->assertJsonPath('data.status', 'cancelled');
@@ -267,7 +267,7 @@ it('client nao pode cancelar agendamento de outro cliente', function () {
     ]);
 
     $response = $this->actingAs($clientA)
-        ->patchJson("/api/v1/salao/{$tenant->slug}/appointments/{$appointment->id}/cancel");
+        ->patchJson("/api/v1/negocio/{$tenant->slug}/appointments/{$appointment->id}/cancel");
 
     $response->assertForbidden();
 });
@@ -286,7 +286,7 @@ it('salon_owner conclui agendamento confirmado com sucesso', function () {
     ]);
 
     $response = $this->actingAs($owner)
-        ->patchJson("/api/v1/salao/{$tenant->slug}/appointments/{$appointment->id}/complete");
+        ->patchJson("/api/v1/negocio/{$tenant->slug}/appointments/{$appointment->id}/complete");
 
     $response->assertOk()
         ->assertJsonPath('data.status', 'completed');
@@ -306,7 +306,7 @@ it('nao conclui agendamento ja concluido', function () {
     ]);
 
     $this->actingAs($owner)
-        ->patchJson("/api/v1/salao/{$tenant->slug}/appointments/{$appointment->id}/complete")
+        ->patchJson("/api/v1/negocio/{$tenant->slug}/appointments/{$appointment->id}/complete")
         ->assertUnprocessable()
         ->assertJsonValidationErrors(['status']);
 });
@@ -328,7 +328,7 @@ it('retorna slots corretos para profissional com schedule', function () {
         'end_time' => '12:00:00',
     ]);
 
-    $response = $this->getJson("/api/v1/salao/{$tenant->slug}/availability?professional_id={$professional->id}&service_id={$service->id}&date={$date->format('Y-m-d')}");
+    $response = $this->getJson("/api/v1/negocio/{$tenant->slug}/availability?professional_id={$professional->id}&service_id={$service->id}&date={$date->format('Y-m-d')}");
 
     $response->assertOk()
         ->assertJsonCount(3, 'data');
@@ -347,7 +347,7 @@ it('retorna array vazio para dia sem schedule', function () {
     $date = now()->addDays(10);
 
     // Explicitly ensure there is no schedule for this day_of_week
-    $response = $this->getJson("/api/v1/salao/{$tenant->slug}/availability?professional_id={$professional->id}&service_id={$service->id}&date={$date->format('Y-m-d')}");
+    $response = $this->getJson("/api/v1/negocio/{$tenant->slug}/availability?professional_id={$professional->id}&service_id={$service->id}&date={$date->format('Y-m-d')}");
 
     $response->assertOk()
         ->assertJsonCount(0, 'data');
@@ -374,7 +374,7 @@ it('retorna array vazio para dia bloqueado', function () {
         'date' => $date->format('Y-m-d'),
     ]);
 
-    $response = $this->getJson("/api/v1/salao/{$tenant->slug}/availability?professional_id={$professional->id}&service_id={$service->id}&date={$date->format('Y-m-d')}");
+    $response = $this->getJson("/api/v1/negocio/{$tenant->slug}/availability?professional_id={$professional->id}&service_id={$service->id}&date={$date->format('Y-m-d')}");
 
     $response->assertOk()
         ->assertJsonCount(0, 'data');
@@ -406,7 +406,7 @@ it('slot ocupado por agendamento existente nao aparece na disponibilidade', func
         'price' => 5000,
     ]);
 
-    $response = $this->getJson("/api/v1/salao/{$tenant->slug}/availability?professional_id={$professional->id}&service_id={$service->id}&date={$date->format('Y-m-d')}");
+    $response = $this->getJson("/api/v1/negocio/{$tenant->slug}/availability?professional_id={$professional->id}&service_id={$service->id}&date={$date->format('Y-m-d')}");
 
     $response->assertOk()
         ->assertJsonCount(2, 'data');
@@ -441,12 +441,12 @@ it('ignore_appointment_id faz o proprio slot do agendamento aparecer disponivel 
     ]);
 
     // Sem ignore_appointment_id, o próprio slot aparece ocupado.
-    $withoutIgnore = $this->getJson("/api/v1/salao/{$tenant->slug}/availability?professional_id={$professional->id}&service_id={$service->id}&date={$date->format('Y-m-d')}");
+    $withoutIgnore = $this->getJson("/api/v1/negocio/{$tenant->slug}/availability?professional_id={$professional->id}&service_id={$service->id}&date={$date->format('Y-m-d')}");
     $withoutIgnore->assertOk()->assertJsonCount(2, 'data');
     $withoutIgnore->assertJsonMissing(['starts_at' => '09:00', 'ends_at' => '10:00']);
 
     // Com ignore_appointment_id apontando para o próprio agendamento, o slot volta a aparecer livre.
-    $withIgnore = $this->getJson("/api/v1/salao/{$tenant->slug}/availability?professional_id={$professional->id}&service_id={$service->id}&date={$date->format('Y-m-d')}&ignore_appointment_id={$appointment->id}");
+    $withIgnore = $this->getJson("/api/v1/negocio/{$tenant->slug}/availability?professional_id={$professional->id}&service_id={$service->id}&date={$date->format('Y-m-d')}&ignore_appointment_id={$appointment->id}");
     $withIgnore->assertOk()->assertJsonCount(3, 'data');
     $withIgnore->assertJsonFragment(['starts_at' => '09:00', 'ends_at' => '10:00']);
 });
@@ -466,7 +466,7 @@ it('nao lista slots para profissional inativo', function () {
         'end_time' => '12:00:00',
     ]);
 
-    $response = $this->getJson("/api/v1/salao/{$tenant->slug}/availability?professional_id={$professional->id}&service_id={$service->id}&date={$date->format('Y-m-d')}");
+    $response = $this->getJson("/api/v1/negocio/{$tenant->slug}/availability?professional_id={$professional->id}&service_id={$service->id}&date={$date->format('Y-m-d')}");
 
     $response->assertOk()->assertJsonCount(0, 'data');
 });
@@ -486,7 +486,7 @@ it('nao lista slots para servico inativo', function () {
         'end_time' => '12:00:00',
     ]);
 
-    $response = $this->getJson("/api/v1/salao/{$tenant->slug}/availability?professional_id={$professional->id}&service_id={$service->id}&date={$date->format('Y-m-d')}");
+    $response = $this->getJson("/api/v1/negocio/{$tenant->slug}/availability?professional_id={$professional->id}&service_id={$service->id}&date={$date->format('Y-m-d')}");
 
     $response->assertOk()->assertJsonCount(0, 'data');
 });
@@ -508,7 +508,7 @@ it('nao lista slots que ja passaram no dia de hoje', function () {
         'end_time' => '12:00:00',
     ]);
 
-    $response = $this->getJson("/api/v1/salao/{$tenant->slug}/availability?professional_id={$professional->id}&service_id={$service->id}&date={$now->format('Y-m-d')}");
+    $response = $this->getJson("/api/v1/negocio/{$tenant->slug}/availability?professional_id={$professional->id}&service_id={$service->id}&date={$now->format('Y-m-d')}");
 
     $response->assertOk()->assertJsonCount(1, 'data');
     $response->assertJsonFragment(['starts_at' => '11:00', 'ends_at' => '12:00']);
@@ -533,7 +533,7 @@ it('rejeita agendamento fora do expediente do profissional com 422', function ()
         'end_time' => '12:00:00',
     ]);
 
-    $response = $this->actingAs($client)->postJson("/api/v1/salao/{$tenant->slug}/appointments", [
+    $response = $this->actingAs($client)->postJson("/api/v1/negocio/{$tenant->slug}/appointments", [
         'professional_id' => $professional->id,
         'service_id' => $service->id,
         'starts_at' => $date->copy()->setTime(15, 0)->toIso8601String(),
@@ -548,7 +548,7 @@ it('rejeita agendamento em dia sem schedule com 422', function () {
     $professional = Professional::factory()->create(['tenant_id' => $tenant->id]);
     $service = Service::factory()->create(['tenant_id' => $tenant->id, 'duration_minutes' => 60, 'price' => 5000]);
 
-    $response = $this->actingAs($client)->postJson("/api/v1/salao/{$tenant->slug}/appointments", [
+    $response = $this->actingAs($client)->postJson("/api/v1/negocio/{$tenant->slug}/appointments", [
         'professional_id' => $professional->id,
         'service_id' => $service->id,
         'starts_at' => now()->addDay()->setTime(10, 0)->toIso8601String(),
@@ -571,7 +571,7 @@ it('rejeita agendamento em data bloqueada com 422', function () {
         'date' => $date->format('Y-m-d'),
     ]);
 
-    $response = $this->actingAs($client)->postJson("/api/v1/salao/{$tenant->slug}/appointments", [
+    $response = $this->actingAs($client)->postJson("/api/v1/negocio/{$tenant->slug}/appointments", [
         'professional_id' => $professional->id,
         'service_id' => $service->id,
         'starts_at' => $date->copy()->setTime(10, 0)->toIso8601String(),
@@ -589,7 +589,7 @@ it('rejeita agendamento com profissional inativo com 422', function () {
     $service = Service::factory()->create(['tenant_id' => $tenant->id, 'duration_minutes' => 60, 'price' => 5000]);
     apptFullWeekSchedule($tenant, $professional);
 
-    $response = $this->actingAs($client)->postJson("/api/v1/salao/{$tenant->slug}/appointments", [
+    $response = $this->actingAs($client)->postJson("/api/v1/negocio/{$tenant->slug}/appointments", [
         'professional_id' => $professional->id,
         'service_id' => $service->id,
         'starts_at' => now()->addDay()->setTime(10, 0)->toIso8601String(),
@@ -605,7 +605,7 @@ it('rejeita agendamento com servico inativo com 422', function () {
     $service = Service::factory()->inactive()->create(['tenant_id' => $tenant->id, 'duration_minutes' => 60, 'price' => 5000]);
     apptFullWeekSchedule($tenant, $professional);
 
-    $response = $this->actingAs($client)->postJson("/api/v1/salao/{$tenant->slug}/appointments", [
+    $response = $this->actingAs($client)->postJson("/api/v1/negocio/{$tenant->slug}/appointments", [
         'professional_id' => $professional->id,
         'service_id' => $service->id,
         'starts_at' => now()->addDay()->setTime(10, 0)->toIso8601String(),
@@ -633,7 +633,7 @@ it('rejeita reagendamento quando profissional fica inativo com 422', function ()
     $professional->update(['active' => false]);
 
     $response = $this->actingAs($client)
-        ->patchJson("/api/v1/salao/{$tenant->slug}/appointments/{$appointment->id}/reschedule", [
+        ->patchJson("/api/v1/negocio/{$tenant->slug}/appointments/{$appointment->id}/reschedule", [
             'starts_at' => now()->addDays(2)->setTime(10, 0)->toIso8601String(),
         ]);
 
@@ -648,7 +648,7 @@ it('rejeita agendamento em horario fora da grade de slots com 422', function () 
     apptFullWeekSchedule($tenant, $professional);
 
     // Expediente 08:00-20:00, grade de 60min: 08:00, 09:00, 10:00... 10:07 não é um horário válido.
-    $response = $this->actingAs($client)->postJson("/api/v1/salao/{$tenant->slug}/appointments", [
+    $response = $this->actingAs($client)->postJson("/api/v1/negocio/{$tenant->slug}/appointments", [
         'professional_id' => $professional->id,
         'service_id' => $service->id,
         'starts_at' => now()->addDay()->setTime(10, 7)->toIso8601String(),
@@ -674,7 +674,7 @@ it('rejeita reagendamento em horario fora da grade de slots com 422', function (
     ]);
 
     $response = $this->actingAs($client)
-        ->patchJson("/api/v1/salao/{$tenant->slug}/appointments/{$appointment->id}/reschedule", [
+        ->patchJson("/api/v1/negocio/{$tenant->slug}/appointments/{$appointment->id}/reschedule", [
             'starts_at' => now()->addDays(2)->setTime(14, 15)->toIso8601String(),
         ]);
 
@@ -691,7 +691,7 @@ it('usuario de outro tenant pode agendar e vira cliente do salao', function () {
     $service = Service::factory()->create(['tenant_id' => $tenantB->id, 'duration_minutes' => 60, 'price' => 5000]);
     apptFullWeekSchedule($tenantB, $professional);
 
-    $response = $this->actingAs($clientOfA)->postJson("/api/v1/salao/{$tenantB->slug}/appointments", [
+    $response = $this->actingAs($clientOfA)->postJson("/api/v1/negocio/{$tenantB->slug}/appointments", [
         'professional_id' => $professional->id,
         'service_id' => $service->id,
         'starts_at' => now()->addDay()->setTime(10, 0)->toIso8601String(),
@@ -722,14 +722,14 @@ it('salon_owner de outro salao que agenda vira client e nao ve agendamentos alhe
         'service_id' => $service->id,
     ]);
 
-    $this->actingAs($ownerOfA)->postJson("/api/v1/salao/{$tenantB->slug}/appointments", [
+    $this->actingAs($ownerOfA)->postJson("/api/v1/negocio/{$tenantB->slug}/appointments", [
         'professional_id' => $professional->id,
         'service_id' => $service->id,
         'starts_at' => now()->addDay()->setTime(10, 0)->toIso8601String(),
     ])->assertCreated();
 
     // No salão B ele é apenas client: lista só o próprio agendamento.
-    $response = $this->actingAs($ownerOfA)->getJson("/api/v1/salao/{$tenantB->slug}/appointments");
+    $response = $this->actingAs($ownerOfA)->getJson("/api/v1/negocio/{$tenantB->slug}/appointments");
 
     $response->assertOk()->assertJsonCount(1, 'data');
 });
@@ -749,7 +749,7 @@ it('nao confirma agendamento cancelado', function () {
     ]);
 
     $this->actingAs($owner)
-        ->patchJson("/api/v1/salao/{$tenant->slug}/appointments/{$appointment->id}/confirm")
+        ->patchJson("/api/v1/negocio/{$tenant->slug}/appointments/{$appointment->id}/confirm")
         ->assertUnprocessable()
         ->assertJsonValidationErrors(['status']);
 });
@@ -767,7 +767,7 @@ it('nao cancela agendamento concluido', function () {
     ]);
 
     $this->actingAs($owner)
-        ->patchJson("/api/v1/salao/{$tenant->slug}/appointments/{$appointment->id}/cancel")
+        ->patchJson("/api/v1/negocio/{$tenant->slug}/appointments/{$appointment->id}/cancel")
         ->assertUnprocessable()
         ->assertJsonValidationErrors(['status']);
 });
@@ -795,7 +795,7 @@ it('bloqueia agendamento acima do limite mensal do plano starter', function () {
         ]);
     }
 
-    $response = $this->actingAs($client)->postJson("/api/v1/salao/{$tenant->slug}/appointments", [
+    $response = $this->actingAs($client)->postJson("/api/v1/negocio/{$tenant->slug}/appointments", [
         'professional_id' => $professional->id,
         'service_id' => $service->id,
         'starts_at' => $startsAt->toIso8601String(),
@@ -825,7 +825,7 @@ it('plano pro nao tem limite mensal de agendamentos', function () {
         ]);
     }
 
-    $this->actingAs($client)->postJson("/api/v1/salao/{$tenant->slug}/appointments", [
+    $this->actingAs($client)->postJson("/api/v1/negocio/{$tenant->slug}/appointments", [
         'professional_id' => $professional->id,
         'service_id' => $service->id,
         'starts_at' => $startsAt->toIso8601String(),
@@ -844,7 +844,7 @@ it('envia emails ao criar agendamento (cliente e owner)', function () {
     $service = Service::factory()->create(['tenant_id' => $tenant->id, 'duration_minutes' => 60, 'price' => 5000]);
     apptFullWeekSchedule($tenant, $professional);
 
-    $this->actingAs($client)->postJson("/api/v1/salao/{$tenant->slug}/appointments", [
+    $this->actingAs($client)->postJson("/api/v1/negocio/{$tenant->slug}/appointments", [
         'professional_id' => $professional->id,
         'service_id' => $service->id,
         'starts_at' => now()->addDay()->setTime(10, 0)->toIso8601String(),
@@ -870,13 +870,13 @@ it('envia email ao confirmar e ao cancelar agendamento', function () {
     ]);
 
     $this->actingAs($owner)
-        ->patchJson("/api/v1/salao/{$tenant->slug}/appointments/{$appointment->id}/confirm")
+        ->patchJson("/api/v1/negocio/{$tenant->slug}/appointments/{$appointment->id}/confirm")
         ->assertOk();
 
     Notification::assertSentTo($client, AppointmentConfirmed::class);
 
     $this->actingAs($owner)
-        ->patchJson("/api/v1/salao/{$tenant->slug}/appointments/{$appointment->id}/cancel")
+        ->patchJson("/api/v1/negocio/{$tenant->slug}/appointments/{$appointment->id}/cancel")
         ->assertOk();
 
     Notification::assertSentTo($client, AppointmentCancelled::class);

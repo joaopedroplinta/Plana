@@ -43,7 +43,7 @@ it('lista apenas servicos ativos do tenant', function () {
     Service::factory(3)->create(['tenant_id' => $tenant->id, 'active' => true]);
     Service::factory(2)->create(['tenant_id' => $tenant->id, 'active' => false]);
 
-    $response = $this->getJson("/api/v1/salao/{$tenant->slug}/services");
+    $response = $this->getJson("/api/v1/negocio/{$tenant->slug}/services");
 
     $response->assertOk()->assertJsonCount(3, 'data');
 });
@@ -54,7 +54,7 @@ it('nao vaza servicos entre tenants', function () {
     Service::factory(2)->create(['tenant_id' => $tenantA->id, 'active' => true]);
     Service::factory(3)->create(['tenant_id' => $tenantB->id, 'active' => true]);
 
-    $response = $this->getJson("/api/v1/salao/{$tenantA->slug}/services");
+    $response = $this->getJson("/api/v1/negocio/{$tenantA->slug}/services");
 
     $response->assertOk()->assertJsonCount(2, 'data');
 });
@@ -63,7 +63,7 @@ it('retorna detalhe de servico publicamente', function () {
     $tenant = Tenant::factory()->create();
     $service = Service::factory()->create(['tenant_id' => $tenant->id, 'active' => true]);
 
-    $response = $this->getJson("/api/v1/salao/{$tenant->slug}/services/{$service->id}");
+    $response = $this->getJson("/api/v1/negocio/{$tenant->slug}/services/{$service->id}");
 
     $response->assertOk()
         ->assertJsonPath('data.id', $service->id)
@@ -74,7 +74,7 @@ it('salon_owner cria servico com 201', function () {
     $tenant = Tenant::factory()->create();
     $owner = makeOwner($tenant);
 
-    $response = $this->actingAs($owner)->postJson("/api/v1/salao/{$tenant->slug}/services", [
+    $response = $this->actingAs($owner)->postJson("/api/v1/negocio/{$tenant->slug}/services", [
         'name' => 'Corte Feminino',
         'price' => 8000,
         'duration_minutes' => 60,
@@ -94,7 +94,7 @@ it('salon_staff cria servico com 201', function () {
     $tenant = Tenant::factory()->create();
     $staff = makeStaff($tenant);
 
-    $response = $this->actingAs($staff)->postJson("/api/v1/salao/{$tenant->slug}/services", [
+    $response = $this->actingAs($staff)->postJson("/api/v1/negocio/{$tenant->slug}/services", [
         'name' => 'Hidratação',
         'price' => 5000,
         'duration_minutes' => 45,
@@ -107,7 +107,7 @@ it('client nao pode criar servico', function () {
     $tenant = Tenant::factory()->create();
     $client = makeClient($tenant);
 
-    $response = $this->actingAs($client)->postJson("/api/v1/salao/{$tenant->slug}/services", [
+    $response = $this->actingAs($client)->postJson("/api/v1/negocio/{$tenant->slug}/services", [
         'name' => 'Corte',
         'price' => 3000,
         'duration_minutes' => 30,
@@ -121,7 +121,7 @@ it('salon_owner edita servico com 200', function () {
     $owner = makeOwner($tenant);
     $service = Service::factory()->create(['tenant_id' => $tenant->id]);
 
-    $response = $this->actingAs($owner)->putJson("/api/v1/salao/{$tenant->slug}/services/{$service->id}", [
+    $response = $this->actingAs($owner)->putJson("/api/v1/negocio/{$tenant->slug}/services/{$service->id}", [
         'name' => 'Corte Atualizado',
     ]);
 
@@ -134,7 +134,7 @@ it('salon_owner deleta servico com 204', function () {
     $owner = makeOwner($tenant);
     $service = Service::factory()->create(['tenant_id' => $tenant->id]);
 
-    $response = $this->actingAs($owner)->deleteJson("/api/v1/salao/{$tenant->slug}/services/{$service->id}");
+    $response = $this->actingAs($owner)->deleteJson("/api/v1/negocio/{$tenant->slug}/services/{$service->id}");
 
     $response->assertNoContent();
     $this->assertDatabaseMissing('services', ['id' => $service->id]);
@@ -145,7 +145,7 @@ it('salon_staff nao pode deletar servico', function () {
     $staff = makeStaff($tenant);
     $service = Service::factory()->create(['tenant_id' => $tenant->id]);
 
-    $response = $this->actingAs($staff)->deleteJson("/api/v1/salao/{$tenant->slug}/services/{$service->id}");
+    $response = $this->actingAs($staff)->deleteJson("/api/v1/negocio/{$tenant->slug}/services/{$service->id}");
 
     $response->assertForbidden();
 });
@@ -154,7 +154,7 @@ it('validacao falha se name esta ausente ao criar servico', function () {
     $tenant = Tenant::factory()->create();
     $owner = makeOwner($tenant);
 
-    $response = $this->actingAs($owner)->postJson("/api/v1/salao/{$tenant->slug}/services", [
+    $response = $this->actingAs($owner)->postJson("/api/v1/negocio/{$tenant->slug}/services", [
         'price' => 3000,
         'duration_minutes' => 30,
     ]);
@@ -169,7 +169,7 @@ it('cannot update service from another tenant', function () {
     $ownerA = makeOwner($tenantA);
     $serviceB = Service::factory()->create(['tenant_id' => $tenantB->id]);
 
-    $response = $this->actingAs($ownerA)->putJson("/api/v1/salao/{$tenantA->slug}/services/{$serviceB->id}", [
+    $response = $this->actingAs($ownerA)->putJson("/api/v1/negocio/{$tenantA->slug}/services/{$serviceB->id}", [
         'name' => 'Serviço Invadido',
     ]);
 
@@ -182,7 +182,7 @@ it('cannot delete service from another tenant', function () {
     $ownerA = makeOwner($tenantA);
     $serviceB = Service::factory()->create(['tenant_id' => $tenantB->id]);
 
-    $response = $this->actingAs($ownerA)->deleteJson("/api/v1/salao/{$tenantA->slug}/services/{$serviceB->id}");
+    $response = $this->actingAs($ownerA)->deleteJson("/api/v1/negocio/{$tenantA->slug}/services/{$serviceB->id}");
 
     $response->assertNotFound();
 });
@@ -192,7 +192,7 @@ it('cannot create service in another tenant via route', function () {
     $tenantB = Tenant::factory()->create();
     $ownerA = makeOwner($tenantA);
 
-    $response = $this->actingAs($ownerA)->postJson("/api/v1/salao/{$tenantA->slug}/services", [
+    $response = $this->actingAs($ownerA)->postJson("/api/v1/negocio/{$tenantA->slug}/services", [
         'name' => 'Serviço Novo',
         'price' => 5000,
         'duration_minutes' => 60,

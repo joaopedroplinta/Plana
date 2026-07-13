@@ -13,7 +13,7 @@ export const appointmentsService = {
     date: string,
     ignoreAppointmentId?: string,
   ) =>
-    api.get<AvailabilityResponse>(`/salao/${slug}/availability`, {
+    api.get<AvailabilityResponse>(`/negocio/${slug}/availability`, {
       params: {
         professional_id: professionalId,
         service_id: serviceId,
@@ -23,25 +23,25 @@ export const appointmentsService = {
     }),
 
   create: (slug: string, data: CreateAppointmentData) =>
-    api.post<{ data: Appointment }>(`/salao/${slug}/appointments`, data),
+    api.post<{ data: Appointment }>(`/negocio/${slug}/appointments`, data),
 
   list: (slug: string, params?: Record<string, string>) =>
-    api.get<PaginatedResponse<Appointment>>(`/salao/${slug}/appointments`, { params }),
+    api.get<PaginatedResponse<Appointment>>(`/negocio/${slug}/appointments`, { params }),
 
   confirm: (slug: string, id: string) =>
-    api.patch<{ data: Appointment }>(`/salao/${slug}/appointments/${id}/confirm`),
+    api.patch<{ data: Appointment }>(`/negocio/${slug}/appointments/${id}/confirm`),
 
   cancel: (slug: string, id: string) =>
-    api.patch<{ data: Appointment }>(`/salao/${slug}/appointments/${id}/cancel`),
+    api.patch<{ data: Appointment }>(`/negocio/${slug}/appointments/${id}/cancel`),
 
   complete: (slug: string, id: string) =>
-    api.patch<{ data: Appointment }>(`/salao/${slug}/appointments/${id}/complete`),
+    api.patch<{ data: Appointment }>(`/negocio/${slug}/appointments/${id}/complete`),
 
   noShow: (slug: string, id: string) =>
-    api.patch<{ data: Appointment }>(`/salao/${slug}/appointments/${id}/no-show`),
+    api.patch<{ data: Appointment }>(`/negocio/${slug}/appointments/${id}/no-show`),
 
   reschedule: (slug: string, id: string, startsAt: string) =>
-    api.patch<{ data: Appointment }>(`/salao/${slug}/appointments/${id}/reschedule`, {
+    api.patch<{ data: Appointment }>(`/negocio/${slug}/appointments/${id}/reschedule`, {
       starts_at: startsAt,
     }),
 }

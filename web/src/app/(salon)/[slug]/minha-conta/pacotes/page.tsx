@@ -61,7 +61,7 @@ export default function MeusPacotesPage() {
 
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-foreground">Meus pacotes</h1>
-        <p className="mt-1 text-sm text-muted-foreground">Pacotes de sessões comprados neste salão</p>
+        <p className="mt-1 text-sm text-muted-foreground">Pacotes de sessões comprados neste negócio</p>
       </div>
 
       {error && (

@@ -49,7 +49,7 @@ it('salon_owner acessa dashboard e retorna estrutura completa', function () {
     $tenant = Tenant::factory()->create();
     $owner = dashOwner($tenant);
 
-    $response = $this->actingAs($owner)->getJson("/api/v1/salao/{$tenant->slug}/dashboard");
+    $response = $this->actingAs($owner)->getJson("/api/v1/negocio/{$tenant->slug}/dashboard");
 
     $response->assertOk()
         ->assertJsonStructure([
@@ -76,7 +76,7 @@ it('salon_staff acessa dashboard normalmente', function () {
     $staff = dashStaff($tenant);
 
     $this->actingAs($staff)
-        ->getJson("/api/v1/salao/{$tenant->slug}/dashboard")
+        ->getJson("/api/v1/negocio/{$tenant->slug}/dashboard")
         ->assertOk();
 });
 
@@ -85,14 +85,14 @@ it('client recebe 403', function () {
     $client = dashClient($tenant);
 
     $this->actingAs($client)
-        ->getJson("/api/v1/salao/{$tenant->slug}/dashboard")
+        ->getJson("/api/v1/negocio/{$tenant->slug}/dashboard")
         ->assertForbidden();
 });
 
 it('requisicao sem autenticacao recebe 401', function () {
     $tenant = Tenant::factory()->create();
 
-    $this->getJson("/api/v1/salao/{$tenant->slug}/dashboard")
+    $this->getJson("/api/v1/negocio/{$tenant->slug}/dashboard")
         ->assertUnauthorized();
 });
 
@@ -101,7 +101,7 @@ it('period e limitado a 90 dias', function () {
     $owner = dashOwner($tenant);
 
     $response = $this->actingAs($owner)
-        ->getJson("/api/v1/salao/{$tenant->slug}/dashboard?period=200");
+        ->getJson("/api/v1/negocio/{$tenant->slug}/dashboard?period=200");
 
     $response->assertOk()
         ->assertJsonPath('period', 90);
@@ -139,7 +139,7 @@ it('receita soma apenas pagamentos aprovados', function () {
     ]);
 
     $response = $this->actingAs($owner)
-        ->getJson("/api/v1/salao/{$tenant->slug}/dashboard");
+        ->getJson("/api/v1/negocio/{$tenant->slug}/dashboard");
 
     $response->assertOk()
         ->assertJsonPath('data.summary.total_revenue', 5000);

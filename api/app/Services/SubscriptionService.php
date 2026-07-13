@@ -98,7 +98,7 @@ class SubscriptionService
 
         if ($count >= $limit) {
             throw ValidationException::withMessages([
-                'starts_at' => ["O salão atingiu o limite de {$limit} agendamentos neste mês. Fale com o salão para mais informações."],
+                'starts_at' => ["O negócio atingiu o limite de {$limit} agendamentos neste mês. Fale com o negócio para mais informações."],
             ]);
         }
     }

@@ -74,7 +74,7 @@ it('owner marca falta em agendamento passado', function () {
     ]);
 
     $this->actingAs($owner)
-        ->patchJson("/api/v1/salao/{$tenant->slug}/appointments/{$appointment->id}/no-show")
+        ->patchJson("/api/v1/negocio/{$tenant->slug}/appointments/{$appointment->id}/no-show")
         ->assertOk()
         ->assertJsonPath('data.status', 'no_show');
 });
@@ -83,7 +83,7 @@ it('nao marca falta em agendamento futuro', function () {
     [$tenant, $owner, , $appointment] = lcSetup();
 
     $this->actingAs($owner)
-        ->patchJson("/api/v1/salao/{$tenant->slug}/appointments/{$appointment->id}/no-show")
+        ->patchJson("/api/v1/negocio/{$tenant->slug}/appointments/{$appointment->id}/no-show")
         ->assertUnprocessable()
         ->assertJsonValidationErrors(['status']);
 });
@@ -95,7 +95,7 @@ it('cliente nao pode marcar falta', function () {
     ]);
 
     $this->actingAs($client)
-        ->patchJson("/api/v1/salao/{$tenant->slug}/appointments/{$appointment->id}/no-show")
+        ->patchJson("/api/v1/negocio/{$tenant->slug}/appointments/{$appointment->id}/no-show")
         ->assertForbidden();
 });
 
@@ -107,7 +107,7 @@ it('nao marca falta em agendamento cancelado', function () {
     ]);
 
     $this->actingAs($owner)
-        ->patchJson("/api/v1/salao/{$tenant->slug}/appointments/{$appointment->id}/no-show")
+        ->patchJson("/api/v1/negocio/{$tenant->slug}/appointments/{$appointment->id}/no-show")
         ->assertUnprocessable();
 });
 
@@ -120,7 +120,7 @@ it('cliente remarca o proprio agendamento e status volta para pending', function
     $newStart = now()->addDays(2)->setTime(14, 0);
 
     $response = $this->actingAs($client)
-        ->patchJson("/api/v1/salao/{$tenant->slug}/appointments/{$appointment->id}/reschedule", [
+        ->patchJson("/api/v1/negocio/{$tenant->slug}/appointments/{$appointment->id}/reschedule", [
             'starts_at' => $newStart->toIso8601String(),
         ]);
 
@@ -139,7 +139,7 @@ it('owner remarca mantendo o status confirmado', function () {
     [$tenant, $owner, , $appointment] = lcSetup();
 
     $this->actingAs($owner)
-        ->patchJson("/api/v1/salao/{$tenant->slug}/appointments/{$appointment->id}/reschedule", [
+        ->patchJson("/api/v1/negocio/{$tenant->slug}/appointments/{$appointment->id}/reschedule", [
             'starts_at' => now()->addDays(2)->setTime(9, 0)->toIso8601String(),
         ])
         ->assertOk()
@@ -152,7 +152,7 @@ it('remarcar para o proprio horario atual nao conflita consigo mesmo', function 
     // Mantém o mesmo horário (10:00) — sem ignoreAppointmentId isso
     // conflitaria com o próprio registro no banco.
     $this->actingAs($client)
-        ->patchJson("/api/v1/salao/{$tenant->slug}/appointments/{$appointment->id}/reschedule", [
+        ->patchJson("/api/v1/negocio/{$tenant->slug}/appointments/{$appointment->id}/reschedule", [
             'starts_at' => $appointment->starts_at->copy()->toIso8601String(),
         ])
         ->assertOk();
@@ -171,7 +171,7 @@ it('remarcar para slot ocupado por outro agendamento retorna 422', function () {
     ]);
 
     $this->actingAs($client)
-        ->patchJson("/api/v1/salao/{$tenant->slug}/appointments/{$appointment->id}/reschedule", [
+        ->patchJson("/api/v1/negocio/{$tenant->slug}/appointments/{$appointment->id}/reschedule", [
             'starts_at' => now()->addDays(2)->setTime(15, 0)->toIso8601String(),
         ])
         ->assertUnprocessable()
@@ -183,7 +183,7 @@ it('cliente nao remarca agendamento de outro cliente', function () {
     $otherClient = lcClient($tenant);
 
     $this->actingAs($otherClient)
-        ->patchJson("/api/v1/salao/{$tenant->slug}/appointments/{$appointment->id}/reschedule", [
+        ->patchJson("/api/v1/negocio/{$tenant->slug}/appointments/{$appointment->id}/reschedule", [
             'starts_at' => now()->addDays(2)->setTime(9, 0)->toIso8601String(),
         ])
         ->assertForbidden();
@@ -193,7 +193,7 @@ it('nao remarca agendamento cancelado', function () {
     [$tenant, , $client, $appointment] = lcSetup(['status' => 'cancelled']);
 
     $this->actingAs($client)
-        ->patchJson("/api/v1/salao/{$tenant->slug}/appointments/{$appointment->id}/reschedule", [
+        ->patchJson("/api/v1/negocio/{$tenant->slug}/appointments/{$appointment->id}/reschedule", [
             'starts_at' => now()->addDays(2)->setTime(9, 0)->toIso8601String(),
         ])
         ->assertUnprocessable();
@@ -204,7 +204,7 @@ it('remarcar zera o reminder_sent_at para novo lembrete', function () {
     $appointment->update(['reminder_sent_at' => now()]);
 
     $this->actingAs($client)
-        ->patchJson("/api/v1/salao/{$tenant->slug}/appointments/{$appointment->id}/reschedule", [
+        ->patchJson("/api/v1/negocio/{$tenant->slug}/appointments/{$appointment->id}/reschedule", [
             'starts_at' => now()->addDays(2)->setTime(9, 0)->toIso8601String(),
         ])
         ->assertOk();

@@ -29,10 +29,10 @@ export default function LandingPage() {
         <div className="mx-auto max-w-3xl">
           <h1 className="text-4xl font-extrabold tracking-tight text-foreground sm:text-5xl">
             Sistema de Agendamentos{' '}
-            <span className="text-indigo-600">para Salões</span>
+            <span className="text-indigo-600">para o seu Negócio</span>
           </h1>
           <p className="mt-6 text-lg leading-8 text-muted-foreground">
-            Simplifique a gestão do seu salão. Agendamentos online, controle de
+            Simplifique a gestão do seu negócio. Agendamentos online, controle de
             profissionais e relatórios — tudo em um só lugar.
           </p>
           <div className="mt-10 flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
@@ -56,7 +56,7 @@ export default function LandingPage() {
       <section id="features" className="bg-background px-6 py-20">
         <div className="mx-auto max-w-5xl">
           <h2 className="text-center text-2xl font-bold text-foreground">
-            Tudo que você precisa para gerenciar seu salão
+            Tudo que você precisa para gerenciar seu negócio
           </h2>
           <div className="mt-12 grid gap-8 sm:grid-cols-3">
             {features.map((feature) => (
@@ -81,7 +81,7 @@ export default function LandingPage() {
       <section className="bg-indigo-600 px-6 py-16 text-center">
         <div className="mx-auto max-w-2xl">
           <h2 className="text-2xl font-bold text-white">
-            Pronto para modernizar seu salão?
+            Pronto para modernizar seu negócio?
           </h2>
           <p className="mt-4 text-indigo-100">
             Crie sua conta grátis e comece a receber agendamentos ainda hoje.

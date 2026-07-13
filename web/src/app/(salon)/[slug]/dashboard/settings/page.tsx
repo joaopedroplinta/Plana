@@ -54,7 +54,7 @@ export default function SalonSettingsPage() {
           instagram: t.instagram ?? '',
         })
       })
-      .catch(() => setError('Erro ao carregar os dados do salão.'))
+      .catch(() => setError('Erro ao carregar os dados do negócio.'))
       .finally(() => setIsLoading(false))
   }, [slug])
 
@@ -76,7 +76,7 @@ export default function SalonSettingsPage() {
         address: form.address.trim() || null,
         instagram: form.instagram.trim().replace(/^@/, '') || null,
       })
-      setSuccess('Perfil do salão atualizado! As mudanças já aparecem na sua página pública.')
+      setSuccess('Perfil do negócio atualizado! As mudanças já aparecem na sua página pública.')
     } catch (err) {
       if (isAxiosError(err)) {
         const apiError = err.response?.data as ApiError | undefined
@@ -92,9 +92,9 @@ export default function SalonSettingsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-foreground">Meu salão</h1>
+        <h1 className="text-2xl font-bold text-foreground">Meu negócio</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Essas informações aparecem na página pública do seu salão
+          Essas informações aparecem na página pública do seu negócio
         </p>
       </div>
 
@@ -106,7 +106,7 @@ export default function SalonSettingsPage() {
         <Card className="max-w-2xl p-6">
           <form onSubmit={handleSubmit} className="space-y-5">
             <div className="space-y-1.5">
-              <Label htmlFor="salon-name">Nome do salão</Label>
+              <Label htmlFor="salon-name">Nome do negócio</Label>
               <Input
                 id="salon-name"
                 required
@@ -121,7 +121,7 @@ export default function SalonSettingsPage() {
               <Textarea
                 id="salon-description"
                 rows={3}
-                placeholder="Conte aos clientes o que torna seu salão especial..."
+                placeholder="Conte aos clientes o que torna seu negócio especial..."
                 value={form.description}
                 onChange={(e) => setField('description', e.target.value)}
                 disabled={isSaving}
@@ -166,7 +166,7 @@ export default function SalonSettingsPage() {
               <Label htmlFor="salon-instagram">Instagram</Label>
               <Input
                 id="salon-instagram"
-                placeholder="meusalao (sem @)"
+                placeholder="meunegocio (sem @)"
                 value={form.instagram}
                 onChange={(e) => setField('instagram', e.target.value)}
                 disabled={isSaving}

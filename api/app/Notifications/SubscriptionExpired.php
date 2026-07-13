@@ -31,8 +31,8 @@ class SubscriptionExpired extends Notification implements ShouldQueue
         return (new MailMessage)
             ->subject('Sua assinatura expirou')
             ->greeting("Olá, {$notifiable->name}!")
-            ->line("A assinatura do plano **{$plan}** do salão **{$this->tenant->name}** expirou e o salão voltou para o plano Starter.")
-            ->line('Para manter os recursos do seu plano, renove a assinatura no painel do salão em Planos.');
+            ->line("A assinatura do plano **{$plan}** do negócio **{$this->tenant->name}** expirou e o negócio voltou para o plano Starter.")
+            ->line('Para manter os recursos do seu plano, renove a assinatura no painel do negócio em Planos.');
     }
 
     /** @return array<string, mixed> */

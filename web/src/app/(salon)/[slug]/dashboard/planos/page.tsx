@@ -184,7 +184,7 @@ export default function PlanosPage() {
       <div>
         <h1 className="text-2xl font-bold text-foreground">Planos e assinatura</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Escolha o plano ideal para o seu salao.
+          Escolha o plano ideal para o seu negócio.
         </p>
       </div>
 

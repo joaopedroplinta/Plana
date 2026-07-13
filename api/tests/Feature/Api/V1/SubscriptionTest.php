@@ -49,7 +49,7 @@ it('returns current plan and list of plans for tenant', function () {
     );
 
     $response = $this->actingAs($owner)
-        ->getJson("/api/v1/salao/{$tenant->slug}/subscription");
+        ->getJson("/api/v1/negocio/{$tenant->slug}/subscription");
 
     $response->assertOk()
         ->assertJsonPath('data.current_plan', 'pro')
@@ -77,7 +77,7 @@ it('includes recent subscriptions in index response', function () {
     );
 
     $response = $this->actingAs($owner)
-        ->getJson("/api/v1/salao/{$tenant->slug}/subscription");
+        ->getJson("/api/v1/negocio/{$tenant->slug}/subscription");
 
     $response->assertOk()
         ->assertJsonCount(1, 'data.subscriptions');
@@ -86,7 +86,7 @@ it('includes recent subscriptions in index response', function () {
 it('returns 401 when unauthenticated on GET', function () {
     $tenant = Tenant::factory()->create();
 
-    $this->getJson("/api/v1/salao/{$tenant->slug}/subscription")
+    $this->getJson("/api/v1/negocio/{$tenant->slug}/subscription")
         ->assertUnauthorized();
 });
 
@@ -97,7 +97,7 @@ it('switches to starter plan for free without calling MercadoPago', function () 
     $owner = subOwner($tenant);
 
     $response = $this->actingAs($owner)
-        ->postJson("/api/v1/salao/{$tenant->slug}/subscription", [
+        ->postJson("/api/v1/negocio/{$tenant->slug}/subscription", [
             'plan' => 'starter',
             'method' => 'pix',
         ]);
@@ -137,7 +137,7 @@ it('creates a pending pix subscription for pro plan', function () {
     );
 
     $response = $this->actingAs($owner)
-        ->postJson("/api/v1/salao/{$tenant->slug}/subscription", [
+        ->postJson("/api/v1/negocio/{$tenant->slug}/subscription", [
             'plan' => 'pro',
             'method' => 'pix',
         ]);
@@ -156,7 +156,7 @@ it('returns 403 for salon_staff trying to subscribe', function () {
     $staff = subStaff($tenant);
 
     $this->actingAs($staff)
-        ->postJson("/api/v1/salao/{$tenant->slug}/subscription", [
+        ->postJson("/api/v1/negocio/{$tenant->slug}/subscription", [
             'plan' => 'pro',
             'method' => 'pix',
         ])
@@ -166,7 +166,7 @@ it('returns 403 for salon_staff trying to subscribe', function () {
 it('returns 401 when unauthenticated on POST', function () {
     $tenant = Tenant::factory()->create();
 
-    $this->postJson("/api/v1/salao/{$tenant->slug}/subscription", [
+    $this->postJson("/api/v1/negocio/{$tenant->slug}/subscription", [
         'plan' => 'pro',
         'method' => 'pix',
     ])->assertUnauthorized();
@@ -181,7 +181,7 @@ it('salon_owner from another tenant cannot subscribe for a different tenant', fu
 
     // ownerA acts on tenantB — they have no relation to tenantB
     $this->actingAs($ownerA)
-        ->postJson("/api/v1/salao/{$tenantB->slug}/subscription", [
+        ->postJson("/api/v1/negocio/{$tenantB->slug}/subscription", [
             'plan' => 'pro',
             'method' => 'pix',
         ])
@@ -198,7 +198,7 @@ it('owner of one tenant who is staff at another cannot change that tenant subscr
     $tenantB->users()->attach($user->id, ['role' => 'staff']);
 
     $this->actingAs($user)
-        ->postJson("/api/v1/salao/{$tenantB->slug}/subscription", [
+        ->postJson("/api/v1/negocio/{$tenantB->slug}/subscription", [
             'plan' => 'pro',
             'method' => 'pix',
         ])
@@ -213,7 +213,7 @@ it('owner can change the subscription of their own tenant', function () {
     $owner = subOwner($tenant);
 
     $response = $this->actingAs($owner)
-        ->postJson("/api/v1/salao/{$tenant->slug}/subscription", [
+        ->postJson("/api/v1/negocio/{$tenant->slug}/subscription", [
             'plan' => 'starter',
             'method' => 'pix',
         ]);
@@ -249,7 +249,7 @@ it('subscription records do not leak across tenants', function () {
     );
 
     $response = $this->actingAs($ownerB)
-        ->getJson("/api/v1/salao/{$tenantB->slug}/subscription");
+        ->getJson("/api/v1/negocio/{$tenantB->slug}/subscription");
 
     $response->assertOk()
         ->assertJsonCount(0, 'data.subscriptions');

@@ -67,19 +67,19 @@ php artisan make:test Api/V1/ServiceTest --pest --no-interaction
 // routes/api.php — always versioned under /v1/
 Route::prefix('v1')->group(function () {
     // Public tenant routes
-    Route::prefix('salao/{tenant:slug}')->group(function () {
+    Route::prefix('negocio/{tenant:slug}')->group(function () {
         Route::get('services', [ServiceController::class, 'index']);
     });
 
     // Authenticated tenant routes
-    Route::prefix('salao/{tenant:slug}')
+    Route::prefix('negocio/{tenant:slug}')
         ->middleware(['auth:sanctum', 'tenant.member'])
         ->group(function () {
             Route::post('appointments', [AppointmentController::class, 'store']);
         });
 
     // Salon admin routes
-    Route::prefix('salao/{tenant:slug}')
+    Route::prefix('negocio/{tenant:slug}')
         ->middleware(['auth:sanctum', 'role:salon_owner|salon_staff'])
         ->group(function () {
             Route::apiResource('services', ServiceController::class)->except(['index']);
@@ -163,7 +163,7 @@ it('lists services for a tenant', function () {
     $tenant = Tenant::factory()->create();
     $services = Service::factory(3)->create(['tenant_id' => $tenant->id]);
 
-    $response = $this->getJson("/api/v1/salao/{$tenant->slug}/services");
+    $response = $this->getJson("/api/v1/negocio/{$tenant->slug}/services");
 
     $response->assertOk()->assertJsonCount(3, 'data');
 });
@@ -174,7 +174,7 @@ it('does not leak services across tenants', function () {
     Service::factory(2)->create(['tenant_id' => $tenantA->id]);
     Service::factory(3)->create(['tenant_id' => $tenantB->id]);
 
-    $response = $this->getJson("/api/v1/salao/{$tenantA->slug}/services");
+    $response = $this->getJson("/api/v1/negocio/{$tenantA->slug}/services");
 
     $response->assertOk()->assertJsonCount(2, 'data');
 });

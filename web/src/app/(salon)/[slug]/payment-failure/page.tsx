@@ -36,7 +36,7 @@ function PaymentFailureContent() {
             href={`/${slug}`}
             className="px-6 py-3 border border-border text-muted-foreground rounded-lg hover:bg-muted transition-colors"
           >
-            Voltar ao salão
+            Voltar ao negócio
           </a>
         </div>
       </div>

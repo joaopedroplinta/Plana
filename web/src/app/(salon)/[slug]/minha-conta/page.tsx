@@ -164,7 +164,7 @@ export default function MinhaContaPage() {
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-foreground">Meus agendamentos</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Acompanhe seus horários e histórico neste salão
+          Acompanhe seus horários e histórico neste negócio
         </p>
       </div>
 
@@ -296,7 +296,7 @@ export default function MinhaContaPage() {
               ))}
 
             <p className="text-xs text-muted-foreground">
-              Ao remarcar, o salão precisa confirmar o novo horário.
+              Ao remarcar, o negócio precisa confirmar o novo horário.
             </p>
           </div>
         </DialogContent>
