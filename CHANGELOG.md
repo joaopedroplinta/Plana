@@ -57,13 +57,18 @@ E2E e empacotamento Docker para deploy.
   confirma, reagendamento) e job `e2e` no CI — encontrou e corrigiu 2 bugs
   reais de frontend (redirect de login quebrado, gate de `/super-admin`
   travado) (#54)
-- Suite final: 227 testes Pest + 4 specs E2E, todos passando
 - Empacotamento Docker (`api/Dockerfile`, `web/Dockerfile`,
   `docker-compose.prod.yml` + Caddy com HTTPS automático) e workflow de
   release publicando imagens no GHCR
 - Job de `docker build` (sem push) no CI, rodando em todo PR/push pra main —
   pega quebra no Dockerfile antes do release, não só na hora de publicar
   uma tag (#74)
+- Segunda opção de deploy gratuito: `render.yaml` (Blueprint) pra Render +
+  Neon, sem exigir VM nem domínio próprio. Endpoint
+  `POST /api/v1/system/scheduler` (protegido por `SCHEDULER_TOKEN`) permite
+  disparar o scheduler via cron externo em ambientes sem worker/cron
+  persistente (#77)
+- Suite final: 230 testes Pest + 4 specs E2E, todos passando
 
 ---
 
