@@ -4,6 +4,47 @@ Todas as mudanças relevantes deste projeto são documentadas aqui.
 
 ---
 
+## [v1.0.1] — Polimento pós-lançamento (2026-07-15)
+
+Ajustes de UX, segurança e documentação levantados nos primeiros dias em
+produção depois do lançamento (v1.0.0).
+
+### Design
+- Tokens de marca (teal/lima) e tipografia Sora/Manrope aplicados em
+  `globals.css` e no layout raiz, no lugar do tema cinza padrão do shadcn —
+  corrige também um bug onde a fonte Geist Sans nunca era de fato aplicada
+  (nome da CSS variable não batia com o token referenciado no tema). Limpeza
+  de todas as cores `indigo-*` hardcoded pros tokens `primary`/`secondary` (#79)
+
+### Produto
+- Ícone da marca (header e footer) agora é sempre um link: leva pra home
+  pública quando deslogado, ou pro destino certo de quem está logado
+  (dashboard do dono/staff, "minha conta" do cliente, painel do super admin) —
+  antes não tinha link nenhum (#80, #81)
+- Seção de preços dos planos na landing page, espelhando os valores de
+  `SubscriptionService::PLANS` (#80)
+
+### Segurança
+- Mensagens de erro do frontend não confiam mais cegamente no `message` que
+  a API devolve: só é exibido quando vem de um status com texto fixo e
+  seguro (422 em geral; 401/403 no login) — qualquer outro erro (500, rede)
+  sempre mostra um texto genérico, evitando vazar detalhe de exceção interna
+  do backend pra tela do usuário. Aplicado em todas as telas com formulário
+  (auth, agendamento, dashboard, minha-conta) (#80, #82)
+
+### Infra e documentação
+- Branch `main` protegida no GitHub: CI (API, Web, Docker) obrigatório antes
+  de merge, 1 aprovação obrigatória, force-push e delete bloqueados
+- `DEPLOY.md`: checklist pós-deploy pra Render + Neon cobrindo dois
+  incidentes reais de produção logo após o lançamento (`CORS_ALLOWED_ORIGINS`
+  e `DB_URL` em branco, migrations não rodando) (#80), e correção do passo de
+  promoção a `super_admin` — o snippet antigo quebrava em produção porque a
+  role nunca é criada fora do `DatabaseSeeder`, que não roda lá (#82)
+- `api/README.md` e `web/README.md` reescritos — estavam intocados desde o
+  scaffold (boilerplate padrão do Laravel/create-next-app) (#82)
+
+---
+
 ## [v1.0.0] — Lançamento (2026-07-12)
 
 Fechamento da auditoria de hardening pré-lançamento (#40–#61): correções de
@@ -47,22 +88,10 @@ E2E e empacotamento Docker para deploy.
   agendamento com lock (sem condição de corrida), devolução no cancelamento,
   pagamento via PIX/cartão reaproveitando o `PaymentService` (#53, #56)
 - Dark mode funcional e footer em todos os layouts (#58)
-- Ícone da marca (header e footer) agora é sempre um link: leva pra home
-  pública quando deslogado, ou pro destino certo de quem está logado
-  (dashboard do dono/staff, "minha conta" do cliente, painel do super admin) —
-  antes não tinha link nenhum (#80, #81)
-- Seção de preços dos planos na landing page, espelhando os valores de
-  `SubscriptionService::PLANS` (#80)
 - Fix de horário de agendamento inconsistente entre telas (timezone) (#60)
 - Fix de bloqueio de `/login` por cookie órfão + logout no cliente (#59)
 - Limite de profissionais do plano conta apenas ativos (#61)
 - Migração da integração MercadoPago de `/v1/payments` para a API Orders (#57)
-- Mensagens de erro do frontend não confiam mais cegamente no `message` que
-  a API devolve: só é exibido quando vem de um status com texto fixo e
-  seguro (422 em geral; 401/403 no login) — qualquer outro erro (500, rede)
-  sempre mostra um texto genérico, evitando vazar detalhe de exceção interna
-  do backend pra tela do usuário. Aplicado em todas as telas com formulário
-  (auth, agendamento, dashboard, minha-conta) (#80)
 
 ### Testes e infra
 - Suite E2E com Playwright (registro/login, booking + cancelamento, staff
@@ -81,13 +110,6 @@ E2E e empacotamento Docker para deploy.
   disparar o scheduler via cron externo em ambientes sem worker/cron
   persistente (#77)
 - Suite final: 230 testes Pest + 4 specs E2E, todos passando
-- Branch `main` protegida no GitHub: CI (API, Web, Docker) obrigatório antes
-  de merge, 1 aprovação obrigatória, force-push e delete bloqueados
-- `DEPLOY.md`: checklist pós-deploy pra Render + Neon cobrindo os dois
-  incidentes reais de produção do lançamento (`CORS_ALLOWED_ORIGINS` e
-  `DB_URL` em branco, migrations não rodando) e correção do passo de
-  promoção a `super_admin` — o snippet antigo quebrava em produção porque a
-  role nunca é criada fora do `DatabaseSeeder` (que não roda lá)
 
 ---
 
