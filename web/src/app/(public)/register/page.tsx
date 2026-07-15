@@ -7,6 +7,8 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { authService } from '@/services/auth'
+import { resolveHomePath } from '@/lib/auth-routes'
+import { getSafeErrorMessage } from '@/lib/api-error'
 import type { ApiError } from '@/types/index'
 import { isAxiosError } from 'axios'
 
@@ -54,27 +56,23 @@ function RegisterForm() {
         ...(accountType === 'owner' && salonName ? { salon_name: salonName } : {}),
         ...(accountType === 'client' && redirectSlug ? { tenant_slug: redirectSlug } : {}),
       })
-      const { token, tenant } = response.data.data
+      const { token, user } = response.data.data
       localStorage.setItem('token', token)
       document.cookie = `token=${token}; path=/; SameSite=Lax`
 
       if (redirect && redirect.startsWith('/')) {
         router.push(redirect)
-      } else if (accountType === 'owner' && tenant) {
-        router.push(`/${tenant.slug}/dashboard`)
       } else {
-        router.push('/')
+        router.push(resolveHomePath(user))
       }
     } catch (err) {
-      if (isAxiosError(err)) {
+      if (isAxiosError(err) && err.response?.status === 422) {
         const apiError = err.response?.data as ApiError | undefined
         if (apiError?.errors) {
           setFieldErrors(apiError.errors as FieldErrors)
         }
-        setError(apiError?.message ?? 'Erro ao criar conta. Tente novamente.')
-      } else {
-        setError('Erro inesperado. Tente novamente.')
       }
+      setError(getSafeErrorMessage(err, 'Erro ao criar conta. Tente novamente.'))
     } finally {
       setIsLoading(false)
     }
