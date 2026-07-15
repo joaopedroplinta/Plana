@@ -2,15 +2,15 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useParams } from 'next/navigation'
-import { isAxiosError } from 'axios'
 import { Calendar, Check, CheckCheck, UserX, X } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { appointmentsService } from '@/services/appointments'
-import type { ApiError, Appointment } from '@/types/index'
+import type { Appointment } from '@/types/index'
 import { formatPrice, formatTime } from '@/lib/format'
+import { getSafeErrorMessage } from '@/lib/api-error'
 
 type StatusFilter = '' | 'pending' | 'confirmed' | 'completed' | 'cancelled' | 'no_show'
 
@@ -102,12 +102,7 @@ export default function SchedulePage() {
       await appointmentsService[action](slug, appointment.id)
       loadAppointments()
     } catch (err) {
-      if (isAxiosError(err)) {
-        const apiError = err.response?.data as ApiError | undefined
-        setError(apiError?.message ?? 'Erro ao atualizar agendamento.')
-      } else {
-        setError('Erro inesperado. Tente novamente.')
-      }
+      setError(getSafeErrorMessage(err, 'Erro ao atualizar agendamento.'))
     } finally {
       setActingId(null)
     }

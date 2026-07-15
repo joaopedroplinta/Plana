@@ -6,8 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { api } from '@/lib/api'
-import type { ApiError } from '@/types/index'
-import { isAxiosError } from 'axios'
+import { getSafeErrorMessage } from '@/lib/api-error'
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('')
@@ -24,12 +23,7 @@ export default function ForgotPasswordPage() {
       await api.post('auth/forgot-password', { email })
       setSent(true)
     } catch (err) {
-      if (isAxiosError(err)) {
-        const apiError = err.response?.data as ApiError | undefined
-        setError(apiError?.message ?? 'Erro ao enviar email. Tente novamente.')
-      } else {
-        setError('Erro inesperado. Tente novamente.')
-      }
+      setError(getSafeErrorMessage(err, 'Erro ao enviar email. Tente novamente.'))
     } finally {
       setIsLoading(false)
     }

@@ -122,9 +122,15 @@ banco:
 
 ```bash
 docker compose -f docker-compose.prod.yml exec api php artisan tinker
+>>> $role = \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'super_admin', 'guard_name' => 'web']);
 >>> $user = \App\Models\User::where('email', 'voce@seudominio.com.br')->firstOrFail();
->>> $user->assignRole('super_admin');
+>>> $user->assignRole($role);
 ```
+
+> A role `super_admin` só é criada pelo `DatabaseSeeder` (que não roda em
+> produção) — por isso o `firstOrCreate` acima é necessário antes do
+> `assignRole`. Passar direto a string `'super_admin'` pro `assignRole` falha
+> com `RoleDoesNotExist` se a role ainda não existir no banco.
 
 ### Manutenção
 
@@ -221,13 +227,37 @@ Depois de preencher tudo, dispare **Manual Deploy** nos dois serviços.
 
 Mesma lógica da Opção A — **não rode `php artisan db:seed`** em produção.
 Registre o primeiro negócio pelo fluxo normal
-(`https://<url-do-plana-web>/register`) e promova o usuário a `super_admin`
-pelo **Shell** do serviço `plana-api` no dashboard do Render:
+(`https://<url-do-plana-web>/register`) e promova o usuário a `super_admin`.
+
+O plano free do Render não inclui Shell interativo (é recurso pago), então
+faça direto pelo **SQL Editor do Neon** (gratuito — dashboard do projeto →
+SQL Editor). A role `super_admin` só é criada pelo `DatabaseSeeder`, que não
+roda em produção, então o primeiro `INSERT` abaixo garante que ela exista
+antes de vincular o usuário:
+
+```sql
+-- 1. Garante que a role super_admin existe (idempotente)
+INSERT INTO roles (name, guard_name, created_at, updated_at)
+VALUES ('super_admin', 'web', now(), now())
+ON CONFLICT (name, guard_name) DO NOTHING;
+
+-- 2. Vincula o usuário à role (troque o e-mail)
+INSERT INTO model_has_roles (role_id, model_type, model_id)
+SELECT r.id, 'App\Models\User', u.id
+FROM roles r, users u
+WHERE r.name = 'super_admin'
+  AND r.guard_name = 'web'
+  AND u.email = 'voce@example.com'
+ON CONFLICT DO NOTHING;
+```
+
+Se seu serviço tiver Shell (plano pago do Render), o equivalente via tinker é:
 
 ```bash
 php artisan tinker
+>>> $role = \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'super_admin', 'guard_name' => 'web']);
 >>> $user = \App\Models\User::where('email', 'voce@example.com')->firstOrFail();
->>> $user->assignRole('super_admin');
+>>> $user->assignRole($role);
 ```
 
 ### 5. Configurar o cron externo do scheduler

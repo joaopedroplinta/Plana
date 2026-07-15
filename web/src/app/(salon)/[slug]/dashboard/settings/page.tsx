@@ -2,14 +2,13 @@
 
 import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
-import { isAxiosError } from 'axios'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { tenantsService } from '@/services/tenants'
-import type { ApiError } from '@/types/index'
+import { getSafeErrorMessage } from '@/lib/api-error'
 
 interface FormState {
   name: string
@@ -78,12 +77,7 @@ export default function SalonSettingsPage() {
       })
       setSuccess('Perfil do negócio atualizado! As mudanças já aparecem na sua página pública.')
     } catch (err) {
-      if (isAxiosError(err)) {
-        const apiError = err.response?.data as ApiError | undefined
-        setError(apiError?.message ?? 'Erro ao salvar. Tente novamente.')
-      } else {
-        setError('Erro inesperado. Tente novamente.')
-      }
+      setError(getSafeErrorMessage(err, 'Erro ao salvar. Tente novamente.'))
     } finally {
       setIsSaving(false)
     }

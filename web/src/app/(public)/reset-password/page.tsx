@@ -7,8 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { api } from '@/lib/api'
-import type { ApiError } from '@/types/index'
-import { isAxiosError } from 'axios'
+import { getSafeErrorMessage } from '@/lib/api-error'
 
 function ResetPasswordForm() {
   const router = useRouter()
@@ -41,12 +40,7 @@ function ResetPasswordForm() {
       })
       router.push('/login')
     } catch (err) {
-      if (isAxiosError(err)) {
-        const apiError = err.response?.data as ApiError | undefined
-        setError(apiError?.message ?? 'Erro ao redefinir senha. Tente novamente.')
-      } else {
-        setError('Erro inesperado. Tente novamente.')
-      }
+      setError(getSafeErrorMessage(err, 'Erro ao redefinir senha. Tente novamente.'))
     } finally {
       setIsLoading(false)
     }

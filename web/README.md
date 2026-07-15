@@ -1,36 +1,36 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Plana — Web
 
-## Getting Started
+Frontend do [Plana](../README.md), SaaS multi-tenant de agendamentos. Este
+README cobre só o essencial pra rodar esta pasta — visão geral do produto e
+regras de negócio estão no [README da raiz](../README.md); convenções de
+código em [`CLAUDE.md`](../CLAUDE.md) e
+[`.claude/rules/web-conventions.md`](../.claude/rules/web-conventions.md).
 
-First, run the development server:
+## Stack
+
+Next.js 15 (App Router) · TypeScript estrito · Tailwind CSS · shadcn/ui · Axios
+
+## Rodando localmente
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+cp .env.local.example .env.local   # aponte NEXT_PUBLIC_API_URL pra API local
+npm install
+npm run dev   # http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Precisa da API rodando em paralelo — ver [`api/README.md`](../api/README.md).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Comandos essenciais
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm run build   # build de produção — também serve de type-check do TypeScript
+npm run lint    # ESLint
+npm run test:e2e   # Playwright (golden paths E2E), precisa da stack completa de pé
+npx shadcn@latest add <component>   # adicionar um novo componente shadcn/ui
+```
 
-## Learn More
+## Deploy
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+`NEXT_PUBLIC_*` é inlinada em **build time**, não runtime — ao trocar a URL
+da API é preciso rebuildar a imagem, não só reiniciar o container. Ver
+[`DEPLOY.md`](../DEPLOY.md) na raiz para as opções de produção.

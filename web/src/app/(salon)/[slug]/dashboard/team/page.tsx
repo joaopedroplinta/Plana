@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
-import { isAxiosError } from 'axios'
 import { UserPlus, Users, X } from 'lucide-react'
 import { toast } from 'sonner'
 import {
@@ -22,6 +21,8 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useTenant } from '@/hooks/useTenant'
 import { teamService } from '@/services/team'
+import { getSafeErrorMessage } from '@/lib/api-error'
+import { isAxiosError } from 'axios'
 import type { ApiError, TeamMember } from '@/types/index'
 
 export default function TeamPage() {
@@ -65,14 +66,11 @@ export default function TeamPage() {
       setEmail('')
       loadMembers()
     } catch (err) {
-      if (isAxiosError(err)) {
-        const apiError = err.response?.data as ApiError | undefined
-        toast.error(
-          apiError?.errors?.email?.[0] ?? apiError?.message ?? 'Erro ao enviar convite.',
-        )
-      } else {
-        toast.error('Erro inesperado. Tente novamente.')
-      }
+      const fieldError =
+        isAxiosError(err) && err.response?.status === 422
+          ? ((err.response?.data as ApiError | undefined)?.errors?.email?.[0] ?? null)
+          : null
+      toast.error(fieldError ?? getSafeErrorMessage(err, 'Erro ao enviar convite.'))
     } finally {
       setIsInviting(false)
     }

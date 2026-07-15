@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
-import { isAxiosError } from 'axios'
 import { Plus, Pencil, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -27,8 +26,9 @@ import {
 } from '@/components/ui/dialog'
 import { servicesService } from '@/services/services'
 import type { CreateServiceData } from '@/services/services'
-import type { Service, ApiError } from '@/types/index'
+import type { Service } from '@/types/index'
 import { formatPrice, formatDuration } from '@/lib/format'
+import { getSafeErrorMessage } from '@/lib/api-error'
 
 interface ServiceFormState {
   name: string
@@ -155,12 +155,7 @@ export default function ServicesPage() {
       closeForm()
       refresh()
     } catch (err) {
-      if (isAxiosError(err)) {
-        const apiError = err.response?.data as ApiError | undefined
-        setFormError(apiError?.message ?? 'Erro ao salvar serviço.')
-      } else {
-        setFormError('Erro inesperado. Tente novamente.')
-      }
+      setFormError(getSafeErrorMessage(err, 'Erro ao salvar serviço.'))
     } finally {
       setIsSubmitting(false)
     }
