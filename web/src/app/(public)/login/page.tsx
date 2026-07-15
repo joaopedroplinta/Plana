@@ -7,8 +7,8 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { authService } from '@/services/auth'
-import type { ApiError } from '@/types/index'
-import { isAxiosError } from 'axios'
+import { resolveHomePath } from '@/lib/auth-routes'
+import { getSafeErrorMessage } from '@/lib/api-error'
 
 function LoginForm() {
   const router = useRouter()
@@ -26,7 +26,7 @@ function LoginForm() {
 
     try {
       const response = await authService.login(email, password)
-      const { token, tenant, user } = response.data.data
+      const { token, user } = response.data.data
       localStorage.setItem('token', token)
       document.cookie = `token=${token}; path=/; SameSite=Lax`
 
@@ -36,24 +36,9 @@ function LoginForm() {
         return
       }
 
-      const roleNames = user.roles ?? []
-
-      if (roleNames.includes('super_admin')) {
-        router.push('/super-admin')
-      } else if (tenant && roleNames.some((r) => ['salon_owner', 'salon_staff'].includes(r))) {
-        router.push(`/${tenant.slug}/dashboard`)
-      } else if (tenant) {
-        router.push(`/${tenant.slug}/minha-conta`)
-      } else {
-        router.push('/')
-      }
+      router.push(resolveHomePath(user))
     } catch (err) {
-      if (isAxiosError(err)) {
-        const apiError = err.response?.data as ApiError | undefined
-        setError(apiError?.message ?? 'Erro ao fazer login. Tente novamente.')
-      } else {
-        setError('Erro inesperado. Tente novamente.')
-      }
+      setError(getSafeErrorMessage(err, 'Erro ao fazer login. Tente novamente.', [401, 403, 422]))
     } finally {
       setIsLoading(false)
     }

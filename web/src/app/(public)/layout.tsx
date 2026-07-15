@@ -2,7 +2,7 @@ import Link from 'next/link'
 import type { Metadata } from 'next'
 import { ThemeToggle } from '@/components/theme-toggle'
 import { Footer } from '@/components/shared/Footer'
-import { Logo } from '@/components/shared/Logo'
+import { HomeLink } from '@/components/shared/HomeLink'
 
 export const metadata: Metadata = {
   title: 'Plana',
@@ -14,8 +14,14 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
     <div className="flex min-h-screen flex-col">
       <header className="border-b border-border bg-background px-6 py-4">
         <div className="mx-auto flex max-w-7xl items-center justify-between">
-          <Logo className="text-lg text-foreground" markSize={24} />
+          <HomeLink className="text-lg text-foreground" markSize={24} />
           <nav className="flex items-center gap-6">
+            <Link
+              href="/#planos"
+              className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+            >
+              Preços
+            </Link>
             <Link
               href="/register"
               className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"

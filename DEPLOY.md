@@ -203,6 +203,20 @@ No dashboard de cada serviço → **Environment**, preencha o que ficou marcado
 
 Depois de preencher tudo, dispare **Manual Deploy** nos dois serviços.
 
+> **Atenção — checklist pós-deploy (já causou 2 incidentes em produção):**
+> `DB_URL` e `CORS_ALLOWED_ORIGINS` são `sync: false` — se ficarem em branco,
+> o `plana-api` sobe normalmente mas quebra silenciosamente (cai pro host
+> `127.0.0.1:5432` do Postgres local, que não existe no container, ou
+> bloqueia toda chamada do frontend por CORS). Depois do Manual Deploy:
+> 1. Abra os **Logs** do `plana-api` e confirme a linha do
+>    `php artisan migrate --force` rodando sem erro (só roda se
+>    `RUN_MIGRATIONS=1` estiver setado — sem Shell disponível no plano free,
+>    esse é o único jeito de rodar migration: garantir a env var e forçar um
+>    redeploy em **Manual Deploy → Deploy latest commit**).
+> 2. Teste `/register` e `/login` de verdade no `plana-web` publicado, não só
+>    o healthcheck (`/up`) — ele não toca o banco nem depende de CORS, então
+>    fica verde mesmo com essas duas variáveis erradas.
+
 ### 4. Criar o super admin
 
 Mesma lógica da Opção A — **não rode `php artisan db:seed`** em produção.
