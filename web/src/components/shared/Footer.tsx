@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { Logo } from '@/components/shared/Logo'
+import { HomeLink } from '@/components/shared/HomeLink'
 
 interface FooterProps {
   /**
@@ -25,7 +25,7 @@ export function Footer({ variant = 'public' }: FooterProps) {
   return (
     <footer className="border-t border-border bg-background px-6 py-8">
       <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-3 sm:flex-row">
-        <Logo className="text-sm text-foreground" markSize={18} />
+        <HomeLink className="text-sm text-foreground" markSize={18} />
         <p className="text-sm text-muted-foreground">
           &copy; {year} Plana. Todos os direitos reservados.
         </p>
