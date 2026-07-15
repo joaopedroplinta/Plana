@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
-import { isAxiosError } from 'axios'
 import { Plus, Pencil, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -27,7 +26,8 @@ import {
 } from '@/components/ui/dialog'
 import { professionalsService } from '@/services/professionals'
 import type { CreateProfessionalData } from '@/services/professionals'
-import type { Professional, ApiError } from '@/types/index'
+import type { Professional } from '@/types/index'
+import { getSafeErrorMessage } from '@/lib/api-error'
 
 interface ProfessionalFormState {
   name: string
@@ -133,12 +133,7 @@ export default function ProfessionalsPage() {
       closeForm()
       refresh()
     } catch (err) {
-      if (isAxiosError(err)) {
-        const apiError = err.response?.data as ApiError | undefined
-        setFormError(apiError?.message ?? 'Erro ao salvar profissional.')
-      } else {
-        setFormError('Erro inesperado. Tente novamente.')
-      }
+      setFormError(getSafeErrorMessage(err, 'Erro ao salvar profissional.'))
     } finally {
       setIsSubmitting(false)
     }

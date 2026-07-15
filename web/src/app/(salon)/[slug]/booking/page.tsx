@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { isAxiosError } from 'axios'
 import { ArrowLeft, CheckCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -17,8 +16,9 @@ import { professionalsService } from '@/services/professionals'
 import { appointmentsService } from '@/services/appointments'
 import { packagePurchasesService } from '@/services/packagePurchases'
 import { paymentsService } from '@/services/payments'
-import type { Service, Professional, TimeSlot, ApiError, Payment, PackagePurchase, CardPaymentData } from '@/types/index'
+import type { Service, Professional, TimeSlot, Payment, PackagePurchase, CardPaymentData } from '@/types/index'
 import { formatPrice, formatDate, formatDuration } from '@/lib/format'
+import { getSafeErrorMessage } from '@/lib/api-error'
 
 const TOTAL_STEPS = 5
 
@@ -221,12 +221,7 @@ export default function BookingPage() {
       setSuccess(false)
       setStep(6)
     } catch (err) {
-      if (isAxiosError(err)) {
-        const apiError = err.response?.data as ApiError | undefined
-        setError(apiError?.message ?? 'Erro ao confirmar agendamento.')
-      } else {
-        setError('Erro inesperado. Tente novamente.')
-      }
+      setError(getSafeErrorMessage(err, 'Erro ao confirmar agendamento.'))
     } finally {
       setIsLoading(false)
     }
@@ -271,12 +266,7 @@ export default function BookingPage() {
         setSuccess(true)
       }
     } catch (err) {
-      if (isAxiosError(err)) {
-        const apiError = err.response?.data as ApiError | undefined
-        setPaymentError(apiError?.message ?? 'Erro ao processar pagamento.')
-      } else {
-        setPaymentError('Erro inesperado. Tente novamente.')
-      }
+      setPaymentError(getSafeErrorMessage(err, 'Erro ao processar pagamento.'))
     } finally {
       setPaymentLoading(false)
     }

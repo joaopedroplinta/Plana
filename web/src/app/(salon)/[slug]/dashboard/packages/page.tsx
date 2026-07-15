@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
-import { isAxiosError } from 'axios'
 import { Plus, Pencil, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
@@ -27,8 +26,9 @@ import {
 } from '@/components/ui/dialog'
 import { packagesService } from '@/services/packages'
 import type { CreatePackageData } from '@/services/packages'
-import type { ServicePackage, ApiError } from '@/types/index'
+import type { ServicePackage } from '@/types/index'
 import { formatPrice } from '@/lib/format'
+import { getSafeErrorMessage } from '@/lib/api-error'
 
 interface PackageFormState {
   name: string
@@ -165,12 +165,7 @@ export default function PackagesPage() {
       closeForm()
       refresh()
     } catch (err) {
-      if (isAxiosError(err)) {
-        const apiError = err.response?.data as ApiError | undefined
-        toast.error(apiError?.message ?? 'Erro ao salvar pacote.')
-      } else {
-        toast.error('Erro inesperado. Tente novamente.')
-      }
+      toast.error(getSafeErrorMessage(err, 'Erro ao salvar pacote.'))
     } finally {
       setIsSubmitting(false)
     }

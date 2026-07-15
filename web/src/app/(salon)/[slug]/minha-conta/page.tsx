@@ -32,6 +32,7 @@ import { useAuth } from '@/hooks/useAuth'
 import { appointmentsService } from '@/services/appointments'
 import type { ApiError, Appointment, TimeSlot } from '@/types/index'
 import { formatDate, formatPrice, formatTime } from '@/lib/format'
+import { getSafeErrorMessage } from '@/lib/api-error'
 
 const STATUS_BADGE: Record<string, { label: string; className: string }> = {
   pending: { label: 'Aguardando confirmação', className: 'bg-amber-100 dark:bg-amber-500/15 text-amber-800 dark:text-amber-300' },
@@ -90,12 +91,7 @@ export default function MinhaContaPage() {
       await appointmentsService.cancel(slug, appointment.id)
       loadAppointments()
     } catch (err) {
-      if (isAxiosError(err)) {
-        const apiError = err.response?.data as ApiError | undefined
-        toast.error(apiError?.message ?? 'Erro ao cancelar agendamento.')
-      } else {
-        toast.error('Erro inesperado. Tente novamente.')
-      }
+      toast.error(getSafeErrorMessage(err, 'Erro ao cancelar agendamento.'))
     } finally {
       setCancellingId(null)
     }
@@ -136,14 +132,11 @@ export default function MinhaContaPage() {
       setRescheduling(null)
       loadAppointments()
     } catch (err) {
-      if (isAxiosError(err)) {
-        const apiError = err.response?.data as ApiError | undefined
-        toast.error(
-          apiError?.errors?.starts_at?.[0] ?? apiError?.message ?? 'Erro ao remarcar.',
-        )
-      } else {
-        toast.error('Erro inesperado. Tente novamente.')
-      }
+      const fieldError =
+        isAxiosError(err) && err.response?.status === 422
+          ? ((err.response?.data as ApiError | undefined)?.errors?.starts_at?.[0] ?? null)
+          : null
+      toast.error(fieldError ?? getSafeErrorMessage(err, 'Erro ao remarcar.'))
     } finally {
       setDialogLoading(false)
     }
