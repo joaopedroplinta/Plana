@@ -36,6 +36,24 @@ class Tenant extends Model
         'settings',
         'active',
         'trial_ends_at',
+        'mp_access_token',
+        'mp_refresh_token',
+        'mp_user_id',
+        'mp_public_key',
+        'mp_token_expires_at',
+        'mp_connected_at',
+    ];
+
+    /**
+     * Attributes that must never leave the application (API Resources, logs,
+     * serialization). The OAuth tokens of the tenant's own MercadoPago
+     * account are sensitive credentials.
+     *
+     * @var list<string>
+     */
+    protected $hidden = [
+        'mp_access_token',
+        'mp_refresh_token',
     ];
 
     /**
@@ -50,7 +68,32 @@ class Tenant extends Model
             'active' => 'boolean',
             'trial_ends_at' => 'datetime',
             'plan' => 'string',
+            'mp_access_token' => 'encrypted',
+            'mp_refresh_token' => 'encrypted',
+            'mp_token_expires_at' => 'datetime',
+            'mp_connected_at' => 'datetime',
         ];
+    }
+
+    /**
+     * Whether this tenant has connected its own MercadoPago account (OAuth).
+     */
+    public function hasMercadoPagoConnected(): bool
+    {
+        return ! empty($this->mp_access_token) && ! empty($this->mp_connected_at);
+    }
+
+    /**
+     * Whether the stored access token is expired (or about to expire within
+     * a 60s safety margin) and therefore needs a refresh before use.
+     */
+    public function mercadoPagoTokenExpired(): bool
+    {
+        if (! $this->mp_token_expires_at) {
+            return false;
+        }
+
+        return $this->mp_token_expires_at->isBefore(now()->addSeconds(60));
     }
 
     /**

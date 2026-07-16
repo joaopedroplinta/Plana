@@ -105,6 +105,18 @@ class SubscriptionService
 
     public function __construct()
     {
+        $this->useGlobalToken();
+    }
+
+    /**
+     * As assinaturas (salão pagando o SaaS) SEMPRE são cobradas na conta
+     * GLOBAL da plataforma — nunca na conta MercadoPago do salão. Como o SDK
+     * guarda o token em estado estático (compartilhado com o PaymentService,
+     * que pode tê-lo trocado pelo token de um tenant no mesmo request),
+     * reforçamos o token global imediatamente antes de cada operação.
+     */
+    private function useGlobalToken(): void
+    {
         $token = config('services.mercadopago.access_token');
 
         if ($token) {
@@ -122,6 +134,8 @@ class SubscriptionService
 
     public function createPixSubscription(Tenant $tenant, User $payer, string $plan): Subscription
     {
+        $this->useGlobalToken();
+
         $planData = self::PLANS[$plan];
         $reference = "subscription_{$tenant->id}_{$plan}";
 
@@ -155,6 +169,8 @@ class SubscriptionService
      */
     public function createCheckoutProSubscription(Tenant $tenant, User $payer, string $plan, array $card): Subscription
     {
+        $this->useGlobalToken();
+
         $planData = self::PLANS[$plan];
         $reference = "subscription_{$tenant->id}_{$plan}";
 
@@ -182,6 +198,8 @@ class SubscriptionService
         if (! $subscription->mp_payment_id) {
             return $subscription;
         }
+
+        $this->useGlobalToken();
 
         $client = new OrderClient;
         $order = $client->get($subscription->mp_payment_id);

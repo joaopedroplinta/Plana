@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\AvailabilityController;
 use App\Http\Controllers\Api\V1\BlockedDateController;
 use App\Http\Controllers\Api\V1\DashboardController;
+use App\Http\Controllers\Api\V1\MercadoPagoController;
 use App\Http\Controllers\Api\V1\PackagePurchaseController;
 use App\Http\Controllers\Api\V1\PaymentController;
 use App\Http\Controllers\Api\V1\ProfessionalController;
@@ -23,6 +24,10 @@ use Illuminate\Support\Facades\Route;
 
 // Webhook — public, outside tenant prefix, no auth required
 Route::post('v1/payments/webhook', [PaymentController::class, 'webhook']);
+
+// MercadoPago OAuth callback — public (é o MercadoPago que chama), fora do
+// prefixo de tenant e sem auth. Resolve o tenant pelo `state` anti-CSRF.
+Route::get('v1/mercadopago/callback', [MercadoPagoController::class, 'callback']);
 
 // Disparo do scheduler via HTTP — protegido por SCHEDULER_TOKEN, usado em
 // deploys sem worker/cron persistente (ver config/app.php).
@@ -89,6 +94,11 @@ Route::prefix('v1')->middleware('throttle:api')->group(function () {
 
             Route::get('subscription', [SubscriptionController::class, 'index']);
             Route::post('subscription', [SubscriptionController::class, 'store']);
+
+            // Marketplace MercadoPago (Fase 1) — conexão da conta do salão
+            Route::get('mercadopago/connect', [MercadoPagoController::class, 'connect']);
+            Route::get('mercadopago/status', [MercadoPagoController::class, 'status']);
+            Route::delete('mercadopago/disconnect', [MercadoPagoController::class, 'disconnect']);
 
             Route::get('appointments/{appointment}/payments', [PaymentController::class, 'index']);
             Route::post('appointments/{appointment}/payments', [PaymentController::class, 'store']);

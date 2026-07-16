@@ -39,6 +39,11 @@ return [
         'access_token' => env('MERCADOPAGO_ACCESS_TOKEN'),
         'public_key' => env('MERCADOPAGO_PUBLIC_KEY'),
         'webhook_secret' => env('MERCADOPAGO_WEBHOOK_SECRET'),
+
+        // Marketplace OAuth (Fase 1): cada salão conecta a própria conta MP.
+        'app_id' => env('MERCADOPAGO_APP_ID'),
+        'client_secret' => env('MERCADOPAGO_CLIENT_SECRET'),
+        'redirect_uri' => env('MERCADOPAGO_REDIRECT_URI'),
     ],
 
 ];
