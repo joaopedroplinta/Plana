@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { tenantsService } from '@/services/tenants'
 import { getSafeErrorMessage } from '@/lib/api-error'
+import { BookingLinkCard } from '@/components/shared/BookingLinkCard'
 
 interface FormState {
   name: string
@@ -90,6 +91,16 @@ export default function SalonSettingsPage() {
         <p className="mt-1 text-sm text-muted-foreground">
           Essas informações aparecem na página pública do seu negócio
         </p>
+      </div>
+
+      <div className="space-y-3">
+        <div>
+          <h2 className="text-lg font-semibold text-foreground">Link de agendamento</h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Compartilhe este link com seus clientes para que eles agendem online.
+          </p>
+        </div>
+        <BookingLinkCard slug={slug} />
       </div>
 
       {isLoading ? (
