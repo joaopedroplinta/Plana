@@ -82,16 +82,28 @@ export function LandingCustomizer({ slug }: { slug: string }) {
   }
 
   async function handleAddImage(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0]
-    if (!file) return
+    const files = Array.from(e.target.files ?? [])
+    if (files.length === 0) return
     setError('')
     setSuccess('')
     setIsUploadingImage(true)
+    let failures = 0
     try {
-      const res = await galleryService.add(slug, file)
-      setGallery((prev) => [...prev, res.data.data])
-    } catch (err) {
-      setError(getSafeErrorMessage(err, 'Erro ao enviar a imagem. Use uma imagem de até 4MB.'))
+      for (const file of files) {
+        try {
+          const res = await galleryService.add(slug, file)
+          setGallery((prev) => [...prev, res.data.data])
+        } catch {
+          failures += 1
+        }
+      }
+      if (failures > 0) {
+        setError(
+          failures === files.length
+            ? 'Erro ao enviar as imagens. Use imagens de até 4MB.'
+            : `${failures} de ${files.length} imagens não foram enviadas. Use imagens de até 4MB.`,
+        )
+      }
     } finally {
       setIsUploadingImage(false)
       if (imageInput.current) imageInput.current.value = ''
@@ -185,6 +197,7 @@ export function LandingCustomizer({ slug }: { slug: string }) {
               ref={imageInput}
               type="file"
               accept="image/*"
+              multiple
               onChange={handleAddImage}
               className="hidden"
             />

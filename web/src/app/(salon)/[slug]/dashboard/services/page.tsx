@@ -1,8 +1,8 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
-import { Plus, Pencil, Trash2, ImagePlus, Upload } from 'lucide-react'
+import { Plus, Pencil, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -36,7 +36,6 @@ import type { CreateServiceData } from '@/services/services'
 import type { Service } from '@/types/index'
 import { formatPrice, formatDuration } from '@/lib/format'
 import { getSafeErrorMessage } from '@/lib/api-error'
-import { assetUrl } from '@/lib/assets'
 
 /** 'inherit' = herda o padrão do salão; demais = override explícito do serviço. */
 type DepositMode = 'inherit' | 'none' | 'fixed' | 'percentage'
@@ -104,12 +103,6 @@ export default function ServicesPage() {
   const [deleteTarget, setDeleteTarget] = useState<Service | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
 
-  // Imagem do serviço. `imageFile` = novo arquivo escolhido (upload após salvar);
-  // `imagePreview` = o que mostrar (URL do serviço existente ou preview local).
-  const [imageFile, setImageFile] = useState<File | null>(null)
-  const [imagePreview, setImagePreview] = useState<string | null>(null)
-  const imageInput = useRef<HTMLInputElement>(null)
-
   useEffect(() => {
     if (!slug) return
     let cancelled = false
@@ -142,8 +135,6 @@ export default function ServicesPage() {
   function openCreate() {
     setEditingService(null)
     setForm(emptyForm)
-    setImageFile(null)
-    setImagePreview(null)
     setFormError(null)
     setIsFormOpen(true)
   }
@@ -158,8 +149,6 @@ export default function ServicesPage() {
       active: service.active,
       ...depositFormFromService(service),
     })
-    setImageFile(null)
-    setImagePreview(assetUrl(service.image_url))
     setFormError(null)
     setIsFormOpen(true)
   }
@@ -168,16 +157,7 @@ export default function ServicesPage() {
     setIsFormOpen(false)
     setEditingService(null)
     setForm(emptyForm)
-    setImageFile(null)
-    setImagePreview(null)
     setFormError(null)
-  }
-
-  function handlePickImage(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0]
-    if (!file) return
-    setImageFile(file)
-    setImagePreview(URL.createObjectURL(file))
   }
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -232,15 +212,11 @@ export default function ServicesPage() {
 
     setIsSubmitting(true)
     try {
-      // A imagem é enviada após salvar, pois o endpoint precisa do id do serviço.
-      const saved = editingService
-        ? await servicesService.update(slug, editingService.id, payload)
-        : await servicesService.create(slug, payload)
-
-      if (imageFile) {
-        await servicesService.uploadImage(slug, saved.data.data.id, imageFile)
+      if (editingService) {
+        await servicesService.update(slug, editingService.id, payload)
+      } else {
+        await servicesService.create(slug, payload)
       }
-
       closeForm()
       refresh()
     } catch (err) {
@@ -311,23 +287,13 @@ export default function ServicesPage() {
               {services.map((service) => (
                 <TableRow key={service.id}>
                   <TableCell>
-                    <div className="flex items-center gap-3">
-                      <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-md border bg-muted">
-                        {assetUrl(service.image_url) ? (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img src={assetUrl(service.image_url)!} alt={service.name} className="h-full w-full object-cover" />
-                        ) : (
-                          <ImagePlus className="h-4 w-4 text-muted-foreground" />
-                        )}
-                      </div>
-                      <div className="min-w-0">
-                        <p className="font-medium text-foreground">{service.name}</p>
-                        {service.description && (
-                          <p className="mt-0.5 text-xs text-muted-foreground line-clamp-1">
-                            {service.description}
-                          </p>
-                        )}
-                      </div>
+                    <div>
+                      <p className="font-medium text-foreground">{service.name}</p>
+                      {service.description && (
+                        <p className="mt-0.5 text-xs text-muted-foreground line-clamp-1">
+                          {service.description}
+                        </p>
+                      )}
                     </div>
                   </TableCell>
                   <TableCell className="font-medium">
@@ -396,35 +362,6 @@ export default function ServicesPage() {
                 onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
                 disabled={isSubmitting}
               />
-            </div>
-            <div className="space-y-1.5">
-              <Label>Foto do serviço</Label>
-              <div className="flex items-center gap-4">
-                <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-lg border bg-muted">
-                  {imagePreview ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={imagePreview} alt="Prévia do serviço" className="h-full w-full object-cover" />
-                  ) : (
-                    <ImagePlus className="h-5 w-5 text-muted-foreground" />
-                  )}
-                </div>
-                <input
-                  ref={imageInput}
-                  type="file"
-                  accept="image/*"
-                  onChange={handlePickImage}
-                  className="hidden"
-                />
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => imageInput.current?.click()}
-                  disabled={isSubmitting}
-                >
-                  <Upload className="mr-2 h-4 w-4" />
-                  {imagePreview ? 'Trocar foto' : 'Adicionar foto'}
-                </Button>
-              </div>
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="service-desc">Descrição</Label>
