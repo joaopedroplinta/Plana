@@ -236,3 +236,13 @@ export interface DashboardMetrics {
   appointments_by_professional: Array<{ name: string; count: number; revenue: number }>
   period: number
 }
+
+export interface MercadoPagoStatus {
+  connected: boolean
+  connected_at: string | null
+  mp_user_id: string | null
+}
+
+export interface MercadoPagoConnectUrl {
+  authorization_url: string
+}

@@ -35,7 +35,7 @@ trait InteractsWithMercadoPagoOrders
      * @param  array<string, mixed>  $paymentMethod
      * @param  array<string, mixed>  $payer
      */
-    private function createMercadoPagoOrder(int $amountInCents, string $reference, array $paymentMethod, array $payer): Order
+    protected function createMercadoPagoOrder(int $amountInCents, string $reference, array $paymentMethod, array $payer): Order
     {
         $client = new OrderClient;
         $amount = (string) round($amountInCents / 100, 2);

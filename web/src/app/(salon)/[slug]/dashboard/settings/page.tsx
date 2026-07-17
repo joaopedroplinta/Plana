@@ -1,7 +1,8 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { useParams } from 'next/navigation'
+import { Suspense, useEffect, useRef, useState } from 'react'
+import { useParams, useSearchParams } from 'next/navigation'
+import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -10,6 +11,33 @@ import { Textarea } from '@/components/ui/textarea'
 import { tenantsService } from '@/services/tenants'
 import { getSafeErrorMessage } from '@/lib/api-error'
 import { BookingLinkCard } from '@/components/shared/BookingLinkCard'
+import { MercadoPagoConnectCard } from '@/components/shared/MercadoPagoConnectCard'
+
+function MercadoPagoOAuthToast() {
+  const searchParams = useSearchParams()
+  const handled = useRef(false)
+
+  useEffect(() => {
+    if (handled.current) return
+    const mp = searchParams.get('mp')
+    if (mp !== 'connected' && mp !== 'error') return
+    handled.current = true
+
+    if (mp === 'connected') {
+      toast.success('Conta MercadoPago conectada com sucesso!')
+    } else {
+      toast.error('Não foi possível conectar sua conta MercadoPago. Tente novamente.')
+    }
+
+    // Limpa o query param sem recarregar a página nem adicionar histórico.
+    const params = new URLSearchParams(searchParams.toString())
+    params.delete('mp')
+    const query = params.toString()
+    window.history.replaceState(null, '', query ? `?${query}` : window.location.pathname)
+  }, [searchParams])
+
+  return null
+}
 
 interface FormState {
   name: string
@@ -86,6 +114,10 @@ export default function SalonSettingsPage() {
 
   return (
     <div className="space-y-6">
+      <Suspense fallback={null}>
+        <MercadoPagoOAuthToast />
+      </Suspense>
+
       <div>
         <h1 className="text-2xl font-bold text-foreground">Meu negócio</h1>
         <p className="mt-1 text-sm text-muted-foreground">
@@ -101,6 +133,16 @@ export default function SalonSettingsPage() {
           </p>
         </div>
         <BookingLinkCard slug={slug} />
+      </div>
+
+      <div className="space-y-3">
+        <div>
+          <h2 className="text-lg font-semibold text-foreground">Pagamentos</h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Conecte sua conta MercadoPago para receber os pagamentos dos agendamentos.
+          </p>
+        </div>
+        <MercadoPagoConnectCard slug={slug} />
       </div>
 
       {isLoading ? (

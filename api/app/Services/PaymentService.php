@@ -8,6 +8,7 @@ use App\Models\Appointment;
 use App\Models\PackagePurchase;
 use App\Models\Payment;
 use App\Models\Subscription;
+use App\Models\Tenant;
 use App\Models\User;
 use App\Notifications\PaymentApproved;
 use App\Notifications\SubscriptionActivated;
@@ -22,6 +23,35 @@ class PaymentService
 
     public function __construct()
     {
+        $this->useGlobalToken();
+    }
+
+    /**
+     * Marketplace (Fase 1): os pagamentos de agendamento/pacote devem cair na
+     * conta do salão dono do recurso. Como o SDK guarda o access token em
+     * estado ESTÁTICO (MercadoPagoConfig), definimos o token correto
+     * imediatamente antes de cada operação — o tenant conectado usa o próprio
+     * token (com refresh se expirado); sem conta conectada, cai no token
+     * GLOBAL da plataforma (comportamento legado). Fee = 0 nesta fase.
+     */
+    private function useTenantToken(?Tenant $tenant): void
+    {
+        // Resolvido pelo container (e não injetado no construtor) porque o SDK
+        // guarda o token estaticamente e os testes usam partialMock, que não
+        // dispara a injeção de dependências do construtor.
+        $token = $tenant ? app(MercadoPagoOAuthService::class)->accessTokenFor($tenant) : null;
+
+        if ($token) {
+            MercadoPagoConfig::setAccessToken($token);
+
+            return;
+        }
+
+        $this->useGlobalToken();
+    }
+
+    private function useGlobalToken(): void
+    {
         $token = config('services.mercadopago.access_token');
 
         if ($token) {
@@ -29,8 +59,22 @@ class PaymentService
         }
     }
 
+    private function tenantForAppointment(Appointment $appointment): ?Tenant
+    {
+        return $appointment->tenant_id ? Tenant::find($appointment->tenant_id) : null;
+    }
+
+    private function tenantForPayment(Payment $payment): ?Tenant
+    {
+        $tenantId = $payment->tenant_id ?? $payment->appointment?->tenant_id;
+
+        return $tenantId ? Tenant::find($tenantId) : null;
+    }
+
     public function createPix(Appointment $appointment, User $payer): Payment
     {
+        $this->useTenantToken($this->tenantForAppointment($appointment));
+
         $order = $this->createMercadoPagoOrder(
             amountInCents: $appointment->price,
             reference: $appointment->id,
@@ -65,6 +109,8 @@ class PaymentService
      */
     public function createCheckoutPro(Appointment $appointment, User $payer, array $card): Payment
     {
+        $this->useTenantToken($this->tenantForAppointment($appointment));
+
         $order = $this->createMercadoPagoOrder(
             amountInCents: $appointment->price,
             reference: $appointment->id,
@@ -87,6 +133,8 @@ class PaymentService
 
     public function createPixForPackagePurchase(PackagePurchase $purchase, User $payer): Payment
     {
+        $this->useTenantToken($purchase->tenant_id ? Tenant::find($purchase->tenant_id) : null);
+
         $order = $this->createMercadoPagoOrder(
             amountInCents: $purchase->price_paid,
             reference: "package_purchase_{$purchase->id}",
@@ -116,6 +164,8 @@ class PaymentService
      */
     public function createCheckoutProForPackagePurchase(PackagePurchase $purchase, User $payer, array $card): Payment
     {
+        $this->useTenantToken($purchase->tenant_id ? Tenant::find($purchase->tenant_id) : null);
+
         $order = $this->createMercadoPagoOrder(
             amountInCents: $purchase->price_paid,
             reference: "package_purchase_{$purchase->id}",
@@ -143,6 +193,10 @@ class PaymentService
         if (! $payment->external_id) {
             return $payment;
         }
+
+        // A order foi criada na conta do salão (se conectado), então a
+        // consulta precisa usar o mesmo token — senão o MP devolveria 404.
+        $this->useTenantToken($this->tenantForPayment($payment));
 
         $result = $this->fetchPayment($payment->external_id);
 
@@ -180,6 +234,14 @@ class PaymentService
         if (! $externalId) {
             return;
         }
+
+        // Best-effort: se o pagamento já foi persistido com este external_id
+        // (caso do PIX, que grava o id da order na criação), usa o token do
+        // salão dono do recurso para o fetch. Fluxos onde ainda não temos o
+        // external_id (Checkout Pro legado) e assinaturas caem no token
+        // global — assinaturas SEMPRE vivem na conta global da plataforma.
+        $known = Payment::withoutTenantScope()->where('external_id', $externalId)->first();
+        $this->useTenantToken($known ? $this->tenantForPayment($known) : null);
 
         $result = $this->fetchPayment($externalId);
         $status = $this->mapMercadoPagoStatus($result);
