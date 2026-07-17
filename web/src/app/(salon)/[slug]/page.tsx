@@ -5,8 +5,12 @@ import { Badge } from '@/components/ui/badge'
 import { packagesService } from '@/services/packages'
 import { servicesService } from '@/services/services'
 import { tenantsService } from '@/services/tenants'
-import type { Service, ServicePackage, Tenant } from '@/types/index'
+import { businessHoursService } from '@/services/businessHours'
+import type { BusinessHour, Service, ServicePackage, Tenant } from '@/types/index'
 import { formatDuration, formatPrice } from '@/lib/format'
+
+const DAY_LABELS = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado']
+const DAY_ORDER = [1, 2, 3, 4, 5, 6, 0]
 
 interface SalonHomeProps {
   params: Promise<{ slug: string }>
@@ -30,6 +34,14 @@ export default async function SalonHomePage({ params }: SalonHomeProps) {
     packages = packagesRes.data.data
   } catch {
     notFound()
+  }
+
+  // Horário de funcionamento é opcional — nunca deve derrubar a página.
+  let businessHours: BusinessHour[] = []
+  try {
+    businessHours = (await businessHoursService.list(slug)).data.data
+  } catch {
+    businessHours = []
   }
 
   const whatsappDigits = tenant.whatsapp?.replace(/\D/g, '')
@@ -132,6 +144,34 @@ export default async function SalonHomePage({ params }: SalonHomeProps) {
       </section>
 
       <PackagesSection slug={slug} packages={packages} />
+
+      {/* Horário de funcionamento */}
+      {businessHours.length > 0 && (
+        <section className="mx-auto max-w-4xl px-6 pb-12">
+          <h2 className="flex items-center gap-2 text-xl font-bold text-foreground">
+            <Clock className="h-5 w-5 text-primary/70" />
+            Horário de funcionamento
+          </h2>
+          <div className="mt-6 max-w-md divide-y rounded-xl border bg-card">
+            {DAY_ORDER.map((dow) => {
+              const day = businessHours.find((h) => h.day_of_week === dow)
+              const open = day?.is_open && day.open_time && day.close_time
+              return (
+                <div key={dow} className="flex items-center justify-between px-5 py-2.5 text-sm">
+                  <span className="text-foreground">{DAY_LABELS[dow]}</span>
+                  {open ? (
+                    <span className="font-medium text-foreground">
+                      {day!.open_time} às {day!.close_time}
+                    </span>
+                  ) : (
+                    <span className="text-muted-foreground">Fechado</span>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+        </section>
+      )}
     </div>
   )
 }

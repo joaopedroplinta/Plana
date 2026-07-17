@@ -77,6 +77,26 @@ export interface Professional {
   active: boolean
 }
 
+/** 0 = domingo … 6 = sábado (Carbon::dayOfWeek). */
+export type DayOfWeek = 0 | 1 | 2 | 3 | 4 | 5 | 6
+
+/** Horário de trabalho de um profissional num dia da semana. */
+export interface Schedule {
+  id: string
+  professional_id: string
+  day_of_week: DayOfWeek
+  start_time: string
+  end_time: string
+}
+
+/** Horário de funcionamento do salão num dia da semana. */
+export interface BusinessHour {
+  day_of_week: DayOfWeek
+  is_open: boolean
+  open_time: string | null
+  close_time: string | null
+}
+
 export interface Appointment {
   id: string
   starts_at: string
