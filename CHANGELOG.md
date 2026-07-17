@@ -4,6 +4,39 @@ Todas as mudanças relevantes deste projeto são documentadas aqui.
 
 ---
 
+## [v1.1.0] — Marketplace, agenda e personalização da landing (2026-07-17)
+
+Conexão de pagamento por salão (marketplace), horário de funcionamento e
+escala semanal dos profissionais, e personalização visual da página pública
+(cor, logo, galeria com carrossel automático).
+
+### Marketplace
+- Conexão OAuth do MercadoPago por salão — cada salão recebe os pagamentos
+  na própria conta MercadoPago, não na da plataforma (marketplace Fase 1) (#85)
+- Comissão da plataforma sobre cada agendamento pago e sinal de reserva
+  configurável por salão (marketplace Fase 2) (#86)
+
+### Produto
+- Card de link de agendamento com QR code — o salão compartilha a página
+  pública mais fácil (#84)
+- Horário de funcionamento do salão e escala semanal por profissional (#87)
+- Personalização da landing page pública: cor da marca, logo e galeria de
+  fotos dos atendimentos (#90)
+- Galeria de atendimentos ganhou carrossel automático (1 foto por vez, loop,
+  setas de navegação), substituindo o grid estático — inspirado em apps reais
+  de agendamento (#92)
+- Upload de múltiplas fotos de uma vez na galeria de atendimentos (#92)
+
+### Fixes
+- Botão de excluir foto da galeria estava invisível no mobile — dependia de
+  `group-hover`, que não existe em touch. Agora usa a media query
+  `pointer: fine` pra decidir entre hover (mouse/trackpad) e sempre-visível
+  (touch), corrigindo também o caso de tablets com tela grande (#93)
+- `php artisan storage:link` documentado no `CLAUDE.md` — sem rodar esse
+  comando num ambiente novo, logo, galeria e fotos de serviço davam 404
+
+---
+
 ## [v1.0.1] — Polimento pós-lançamento (2026-07-15)
 
 Ajustes de UX, segurança e documentação levantados nos primeiros dias em
