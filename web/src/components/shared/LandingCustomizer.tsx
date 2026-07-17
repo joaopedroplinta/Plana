@@ -229,7 +229,7 @@ export function LandingCustomizer({ slug }: { slug: string }) {
                       type="button"
                       onClick={() => handleRemove(image.id)}
                       aria-label="Remover foto"
-                      className="absolute right-1.5 top-1.5 rounded-md bg-black/60 p-1.5 text-white opacity-0 transition-opacity hover:bg-red-600 group-hover:opacity-100"
+                      className="absolute right-1.5 top-1.5 rounded-md bg-black/60 p-1.5 text-white opacity-100 transition-opacity hover:bg-red-600 sm:opacity-0 sm:group-hover:opacity-100"
                     >
                       <Trash2 className="h-3.5 w-3.5" />
                     </button>
