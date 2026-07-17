@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation'
 import { AtSign, Clock, MapPin, Phone } from 'lucide-react'
 import { PackagesSection } from '@/components/shared/PackagesSection'
+import { GalleryCarousel } from '@/components/shared/GalleryCarousel'
 import { Badge } from '@/components/ui/badge'
 import { packagesService } from '@/services/packages'
 import { servicesService } from '@/services/services'
@@ -139,25 +140,12 @@ export default async function SalonHomePage({ params }: SalonHomeProps) {
           </p>
         ) : (
           <div className="mt-6 grid gap-4 sm:grid-cols-2">
-            {services.map((service) => {
-              const imageUrl = assetUrl(service.image_url)
-              return (
+            {services.map((service) => (
               <a
                 key={service.id}
                 href={`/${slug}/booking`}
-                className="group overflow-hidden rounded-xl border bg-card transition-all hover:border-primary/60 hover:shadow-sm"
+                className="group rounded-xl border bg-card p-5 transition-all hover:border-primary/60 hover:shadow-sm"
               >
-                {imageUrl && (
-                  <>
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={imageUrl}
-                      alt={service.name}
-                      className="aspect-video w-full object-cover transition-transform group-hover:scale-105"
-                    />
-                  </>
-                )}
-                <div className="p-5">
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
                     <p className="font-semibold text-foreground group-hover:text-primary transition-colors">
@@ -177,10 +165,8 @@ export default async function SalonHomePage({ params }: SalonHomeProps) {
                   <Clock className="h-3 w-3" />
                   {formatDuration(service.duration_minutes)}
                 </Badge>
-                </div>
               </a>
-              )
-            })}
+            ))}
           </div>
         )}
       </section>
@@ -188,32 +174,7 @@ export default async function SalonHomePage({ params }: SalonHomeProps) {
       <PackagesSection slug={slug} packages={packages} />
 
       {/* Galeria de atendimentos */}
-      {gallery.length > 0 && (
-        <section className="mx-auto max-w-4xl px-6 pb-12">
-          <h2 className="text-xl font-bold text-foreground">Nossos trabalhos</h2>
-          <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3">
-            {gallery.map((image) => {
-              const url = assetUrl(image.image_url)
-              if (!url) return null
-              return (
-                <figure key={image.id} className="overflow-hidden rounded-xl border bg-card">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={url}
-                    alt={image.caption ?? 'Trabalho do salão'}
-                    className="aspect-square w-full object-cover transition-transform hover:scale-105"
-                  />
-                  {image.caption && (
-                    <figcaption className="px-3 py-2 text-xs text-muted-foreground">
-                      {image.caption}
-                    </figcaption>
-                  )}
-                </figure>
-              )
-            })}
-          </div>
-        </section>
-      )}
+      <GalleryCarousel gallery={gallery} />
 
       {/* Horário de funcionamento */}
       {businessHours.length > 0 && (

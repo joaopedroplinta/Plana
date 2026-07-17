@@ -163,9 +163,11 @@ export function PackagesSection({ slug, packages }: PackagesSectionProps) {
                 Inclui: {pkg.services.map((s) => s.name).join(', ')}
               </p>
             )}
-            <Button className="mt-4 w-full" onClick={() => handlePackageClick(pkg)}>
-              Comprar pacote
-            </Button>
+            <div className="mt-auto pt-4">
+              <Button className="w-full" onClick={() => handlePackageClick(pkg)}>
+                Comprar pacote
+              </Button>
+            </div>
           </Card>
         ))}
       </div>

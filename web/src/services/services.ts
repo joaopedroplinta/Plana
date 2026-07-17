@@ -26,12 +26,4 @@ export const servicesService = {
 
   remove: (slug: string, id: string) =>
     api.delete(`/negocio/${slug}/services/${id}`),
-
-  uploadImage: (slug: string, id: string, file: File) => {
-    const form = new FormData()
-    form.append('image', file)
-    return api.post<{ data: Service }>(`/negocio/${slug}/services/${id}/image`, form, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-    })
-  },
 }

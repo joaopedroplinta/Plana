@@ -108,7 +108,9 @@ sistema-agendamentos/
 docker compose up -d postgres redis
 
 # API
-cd api && php artisan serve
+cd api
+php artisan storage:link  # só na 1ª vez — sem isso, logo/galeria dão 404
+php artisan serve
 
 # Web
 cd web && npm run dev
