@@ -1,20 +1,22 @@
 # Deploy
 
-Duas formas de colocar o Plana no ar de graça. Escolha uma:
+Três formas de colocar o Plana no ar. Escolha uma:
 
-| | Opção A — Oracle Cloud (VM) | Opção B — Render + Neon (PaaS) |
-|---|---|---|
-| Cadastro | Mais burocrático (identidade, cartão, escolha de região) | Rápido (login com GitHub) |
-| Custo | Grátis pra sempre | Grátis pra sempre |
-| Cold start | Não tem | Serviços dormem após 15min sem tráfego (~1min pra acordar) |
-| Fila/scheduler | Worker e cron rodando de verdade | Sem worker persistente — fila roda inline, scheduler via cron externo (ver Opção B) |
-| Domínio | Precisa de domínio próprio (HTTPS via Caddy) | Não precisa — ganha subdomínio `.onrender.com` com HTTPS automático (dá pra trocar por domínio próprio depois) |
-| Esforço | ~30-40min, mais manual | ~15min, mais automatizado (Blueprint) |
+| | Opção A — Oracle Cloud (VM) | Opção B — Render + Neon (PaaS) | Opção C — VPS pago (Hostinger/HostGator) |
+|---|---|---|---|
+| Cadastro | Mais burocrático (identidade, cartão, escolha de região) | Rápido (login com GitHub) | Rápido, mas é cartão de verdade — cobrança real desde o início |
+| Custo | Grátis pra sempre | Grátis pra sempre | A partir de ~R$30/mês (ver ressalvas na Opção C) |
+| Cold start | Não tem | Serviços dormem após 15min sem tráfego (~1min pra acordar) | Não tem |
+| Fila/scheduler | Worker e cron rodando de verdade | Sem worker persistente — fila roda inline, scheduler via cron externo (ver Opção B) | Worker e cron rodando de verdade (mesma stack da Opção A) |
+| Domínio | Precisa de domínio próprio (HTTPS via Caddy) | Não precisa — ganha subdomínio `.onrender.com` com HTTPS automático (dá pra trocar por domínio próprio depois) | Costuma vir junto no mesmo provedor (registro + e-mail no mesmo painel) |
+| Esforço | ~30-40min, mais manual | ~15min, mais automatizado (Blueprint) | ~30-40min (mesmos passos da Opção A, trocando só o provedor da VM) |
 
-Se você já tem paciência pra Oracle e quer a experiência completa (fila e
-scheduler rodando de verdade, sem cold start), vá de **Opção A**. Se quer
-algo no ar rápido e não se importa com os trade-offs do free tier, vá de
-**Opção B**.
+Se você já tem paciência pra Oracle e quer a experiência completa de graça
+(fila e scheduler rodando de verdade, sem cold start), vá de **Opção A**. Se
+quer algo no ar rápido e não se importa com os trade-offs do free tier, vá de
+**Opção B**. Se já tem pelo menos 1 cliente pagante cobrindo o custo e prefere
+suporte 24/7 em português + domínio e e-mail no mesmo painel a se virar
+sozinho com provedores separados, vá de **Opção C**.
 
 ## Opção A — Oracle Cloud Free Tier
 
@@ -275,3 +277,37 @@ php artisan tinker
 Nada impede misturar: **Vercel** (frontend, sempre grátis, zero cold start)
 + **Render** só pra API + **Neon** (Postgres). Mesma configuração de
 variáveis acima, só troca onde o `plana-web` roda.
+
+## Opção C — VPS pago (Hostinger ou HostGator)
+
+Mesma stack e mesmos passos da **Opção A** (VM Ubuntu + Docker Compose) — só
+muda o provedor da VM, que aqui é pago. Faz sentido quando já tem receita
+cobrindo o custo (ex: 1 cliente do plano Pro já cobre com folga) e você
+prefere suporte 24/7 em português + domínio e e-mail no mesmo painel, em vez
+de se virar sozinho com provedores separados (Oracle + registrador de
+domínio + serviço de e-mail à parte).
+
+> **Atenção aos preços anunciados:** os valores promocionais desses
+> provedores (Hostinger, HostGator) normalmente valem só pra planos de longo
+> prazo pagos à vista (ex: 24 meses) — pagando mês a mês sai mais caro, e o
+> valor de **renovação** depois do primeiro ciclo costuma ser maior que o
+> preço de entrada anunciado. Confira os dois valores (mensal avulso e
+> renovação) direto no site antes de contratar, os números abaixo são só uma
+> referência de ordem de grandeza:
+
+| | Hostinger | HostGator |
+|---|---|---|
+| VPS de entrada | KVM 1: ~R$30/mês no plano longo (1 vCPU, 4GB RAM, 50GB NVMe) | a partir de ~R$22-90/mês dependendo da promoção/plano |
+| Docker | Template pronto no painel (Ubuntu 24.04 + docker-ce + docker-compose, ~10min) | Disponível como opção na criação da VPS, ou instalação manual |
+| Domínio `.com.br` | ~R$40/ano (mesmo preço do registro.br) | costuma vir grátis contratando hospedagem anual |
+| E-mail profissional | Incluso grátis no 1º ano com plano de hospedagem | Titan — camada grátis básica, planos pagos a partir de ~R$8/mês |
+
+### Passo a passo
+
+1. Contrate a VPS (com o template/opção Docker, se disponível) e o domínio no
+   painel do provedor escolhido
+2. Siga os passos **2 a 7 da Opção A** acima (abrir portas 80/443, apontar
+   DNS, clonar o repo, configurar `.env`, subir a stack, criar o super admin)
+   — são idênticos, só muda de onde veio a VM
+3. Configure o e-mail profissional do provedor como `MAIL_MAILER`/`MAIL_HOST`
+   no `.env` (credenciais SMTP reais — sem isso, nenhum e-mail sai)
