@@ -8,7 +8,15 @@ import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { tenantsService } from '@/services/tenants'
+import type { DepositType } from '@/types/index'
 import { getSafeErrorMessage } from '@/lib/api-error'
 import { BookingLinkCard } from '@/components/shared/BookingLinkCard'
 import { MercadoPagoConnectCard } from '@/components/shared/MercadoPagoConnectCard'
@@ -39,6 +47,13 @@ function MercadoPagoOAuthToast() {
   return null
 }
 
+/** Rótulos do Select de sinal (Base UI exibe o texto selecionado a partir daqui). */
+const SALON_DEPOSIT_LABELS: Record<DepositType, string> = {
+  none: 'Sem sinal (valor cheio)',
+  fixed: 'Valor fixo (R$)',
+  percentage: 'Percentual (%)',
+}
+
 interface FormState {
   name: string
   description: string
@@ -67,6 +82,13 @@ export default function SalonSettingsPage() {
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
 
+  // Sinal padrão do salão (aplicado a serviços sem override próprio).
+  const [depositType, setDepositType] = useState<DepositType>('none')
+  const [depositValue, setDepositValue] = useState('')
+  const [isSavingDeposit, setIsSavingDeposit] = useState(false)
+  const [depositError, setDepositError] = useState('')
+  const [depositSuccess, setDepositSuccess] = useState('')
+
   useEffect(() => {
     if (!slug) return
     tenantsService
@@ -81,6 +103,14 @@ export default function SalonSettingsPage() {
           address: t.address ?? '',
           instagram: t.instagram ?? '',
         })
+        setDepositType(t.deposit_type ?? 'none')
+        if (t.deposit_value != null) {
+          setDepositValue(
+            t.deposit_type === 'fixed'
+              ? (t.deposit_value / 100).toFixed(2).replace('.', ',')
+              : String(t.deposit_value),
+          )
+        }
       })
       .catch(() => setError('Erro ao carregar os dados do negócio.'))
       .finally(() => setIsLoading(false))
@@ -88,6 +118,42 @@ export default function SalonSettingsPage() {
 
   function setField(field: keyof FormState, value: string) {
     setForm((f) => ({ ...f, [field]: value }))
+  }
+
+  async function handleSaveDeposit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault()
+    setDepositError('')
+    setDepositSuccess('')
+
+    let value: number | null = null
+    if (depositType !== 'none') {
+      value =
+        depositType === 'fixed'
+          ? Math.round(parseFloat(depositValue.replace(',', '.')) * 100)
+          : parseInt(depositValue, 10)
+
+      if (value === null || isNaN(value) || value <= 0) {
+        setDepositError('Informe um valor de sinal válido.')
+        return
+      }
+      if (depositType === 'percentage' && value > 100) {
+        setDepositError('O percentual do sinal não pode passar de 100%.')
+        return
+      }
+    }
+
+    setIsSavingDeposit(true)
+    try {
+      await tenantsService.updateSettings(slug, {
+        deposit_type: depositType,
+        deposit_value: value,
+      })
+      setDepositSuccess('Sinal padrão atualizado! Vale para os serviços sem configuração própria.')
+    } catch (err) {
+      setDepositError(getSafeErrorMessage(err, 'Erro ao salvar. Tente novamente.'))
+    } finally {
+      setIsSavingDeposit(false)
+    }
   }
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -144,6 +210,71 @@ export default function SalonSettingsPage() {
         </div>
         <MercadoPagoConnectCard slug={slug} />
       </div>
+
+      {!isLoading && (
+        <div className="space-y-3">
+          <div>
+            <h2 className="text-lg font-semibold text-foreground">Sinal na reserva</h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Cobre um sinal para confirmar o agendamento; o restante o cliente paga presencialmente.
+              Vale para todos os serviços, exceto os que tiverem valor próprio.
+            </p>
+          </div>
+          <Card className="max-w-2xl p-6">
+            <form onSubmit={handleSaveDeposit} className="space-y-5">
+              <div className="grid gap-5 sm:grid-cols-2">
+                <div className="space-y-1.5">
+                  <Label htmlFor="deposit-type">Tipo de sinal</Label>
+                  <Select
+                    items={SALON_DEPOSIT_LABELS}
+                    value={depositType}
+                    onValueChange={(v) => {
+                      setDepositType(v as DepositType)
+                      setDepositValue('')
+                    }}
+                    disabled={isSavingDeposit}
+                  >
+                    <SelectTrigger id="deposit-type" className="w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">{SALON_DEPOSIT_LABELS.none}</SelectItem>
+                      <SelectItem value="fixed">{SALON_DEPOSIT_LABELS.fixed}</SelectItem>
+                      <SelectItem value="percentage">{SALON_DEPOSIT_LABELS.percentage}</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                {depositType !== 'none' && (
+                  <div className="space-y-1.5">
+                    <Label htmlFor="deposit-value">
+                      {depositType === 'fixed' ? 'Valor do sinal (R$)' : 'Percentual do sinal (%)'}
+                    </Label>
+                    <Input
+                      id="deposit-value"
+                      required
+                      placeholder={depositType === 'fixed' ? '30,00' : '20'}
+                      value={depositValue}
+                      onChange={(e) => setDepositValue(e.target.value)}
+                      disabled={isSavingDeposit}
+                    />
+                  </div>
+                )}
+              </div>
+
+              {depositError && (
+                <p className="rounded-lg bg-red-50 dark:bg-red-950/40 px-3 py-2 text-sm text-red-600 dark:text-red-400">{depositError}</p>
+              )}
+              {depositSuccess && (
+                <p className="rounded-lg bg-green-50 dark:bg-green-950/40 px-3 py-2 text-sm text-green-700 dark:text-green-400">{depositSuccess}</p>
+              )}
+
+              <Button type="submit" disabled={isSavingDeposit}>
+                {isSavingDeposit ? 'Salvando...' : 'Salvar sinal padrão'}
+              </Button>
+            </form>
+          </Card>
+        </div>
+      )}
 
       {isLoading ? (
         <div className="flex items-center justify-center rounded-xl border bg-card py-24">

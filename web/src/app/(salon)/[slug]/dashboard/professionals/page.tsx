@@ -285,6 +285,8 @@ export default function ProfessionalsPage() {
                 rows={3}
               />
             </div>
+            <div className="space-y-1.5">
+            <Label>Status</Label>
             <div className="flex items-center gap-3">
               <button
                 type="button"
@@ -307,6 +309,7 @@ export default function ProfessionalsPage() {
               <Label className="cursor-pointer select-none">
                 {form.active ? 'Ativo' : 'Inativo'}
               </Label>
+            </div>
             </div>
             {formError && (
               <p className="rounded-lg bg-red-50 dark:bg-red-950/40 px-3 py-2 text-sm text-red-600 dark:text-red-400">

@@ -1,11 +1,15 @@
 import { api } from '@/lib/api'
-import type { Service, PaginatedResponse } from '@/types/index'
+import type { DepositType, Service, PaginatedResponse } from '@/types/index'
 
 export interface CreateServiceData {
   name: string
   description: string
   price: number
   duration_minutes: number
+  active?: boolean
+  /** null = herda o sinal padrão do salão; 'none' desativa neste serviço. */
+  deposit_type?: DepositType | null
+  deposit_value?: number | null
 }
 
 export type UpdateServiceData = Partial<CreateServiceData>
