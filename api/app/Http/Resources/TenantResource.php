@@ -29,6 +29,8 @@ class TenantResource extends JsonResource
             'instagram' => $settings['instagram'] ?? null,
             'deposit_type' => $settings['deposit_type'] ?? 'none',
             'deposit_value' => $settings['deposit_value'] ?? null,
+            'brand_color' => $settings['brand_color'] ?? null,
+            'logo_url' => $settings['logo_url'] ?? null,
             'current_tenant_role' => $user?->roleInTenant($this->resource),
         ];
     }

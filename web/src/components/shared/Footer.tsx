@@ -7,9 +7,14 @@ interface FooterProps {
    * `admin` — rodapé discreto para áreas administrativas (dashboard, super-admin).
    */
   variant?: 'public' | 'admin'
+  /**
+   * Quando `true`, oculta os links "Entrar / Criar conta" — o usuário já está
+   * logado e essas ações não fazem sentido (o header cuida de sair/conta).
+   */
+  isAuthenticated?: boolean
 }
 
-export function Footer({ variant = 'public' }: FooterProps) {
+export function Footer({ variant = 'public', isAuthenticated = false }: FooterProps) {
   const year = new Date().getFullYear()
 
   if (variant === 'admin') {
@@ -29,20 +34,22 @@ export function Footer({ variant = 'public' }: FooterProps) {
         <p className="text-sm text-muted-foreground">
           &copy; {year} Plana. Todos os direitos reservados.
         </p>
-        <nav className="flex items-center gap-4">
-          <Link
-            href="/login"
-            className="text-sm text-muted-foreground transition-colors hover:text-foreground"
-          >
-            Entrar
-          </Link>
-          <Link
-            href="/register"
-            className="text-sm text-muted-foreground transition-colors hover:text-foreground"
-          >
-            Criar conta
-          </Link>
-        </nav>
+        {!isAuthenticated && (
+          <nav className="flex items-center gap-4">
+            <Link
+              href="/login"
+              className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+            >
+              Entrar
+            </Link>
+            <Link
+              href="/register"
+              className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+            >
+              Criar conta
+            </Link>
+          </nav>
+        )}
       </div>
     </footer>
   )

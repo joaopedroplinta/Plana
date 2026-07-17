@@ -34,8 +34,14 @@ export default function SalonLayout({ children, params }: SalonLayoutProps) {
     return <>{children}</>
   }
 
+  // Cor da marca do salão sobrescreve --primary (Tailwind v4) em toda a área
+  // pública (header, conteúdo e footer). Sem cor definida, mantém o tema padrão.
+  const brandStyle = tenant?.brand_color
+    ? ({ '--primary': tenant.brand_color } as React.CSSProperties)
+    : undefined
+
   return (
-    <div className="flex min-h-screen flex-col">
+    <div className="flex min-h-screen flex-col" style={brandStyle}>
       <header className="border-b border-border bg-background px-6 py-4">
         <div className="mx-auto flex max-w-7xl items-center justify-between">
           <a href={`/${slug}`} className="text-lg font-bold text-foreground">
@@ -85,7 +91,7 @@ export default function SalonLayout({ children, params }: SalonLayoutProps) {
         </div>
       </header>
       <main className="flex flex-1 flex-col">{children}</main>
-      <Footer variant="public" />
+      <Footer variant="public" isAuthenticated={isAuthenticated} />
     </div>
   )
 }

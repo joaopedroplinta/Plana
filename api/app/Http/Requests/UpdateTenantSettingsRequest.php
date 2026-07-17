@@ -22,6 +22,8 @@ class UpdateTenantSettingsRequest extends FormRequest
             'whatsapp' => ['sometimes', 'nullable', 'string', 'max:30'],
             'address' => ['sometimes', 'nullable', 'string', 'max:255'],
             'instagram' => ['sometimes', 'nullable', 'string', 'max:100'],
+            // Cor da marca da landing (hex #RGB ou #RRGGBB). null = padrão do tema.
+            'brand_color' => ['sometimes', 'nullable', 'string', 'regex:/^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/'],
             // Sinal padrão do salão: 'none' (nenhum), 'fixed' (centavos) ou
             // 'percentage' (1..100% do preço). Aplicado a todo serviço que não
             // tenha override próprio.
