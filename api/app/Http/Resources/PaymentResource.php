@@ -18,6 +18,7 @@ class PaymentResource extends JsonResource
             'id' => $this->id,
             'appointment_id' => $this->appointment_id,
             'amount' => $this->amount,
+            'platform_fee' => $this->platform_fee,
             'method' => $this->method,
             'status' => $this->status,
             'pix_qr_code' => $this->pix_qr_code,

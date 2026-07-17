@@ -102,8 +102,10 @@ sistema-agendamentos/
 ## Como Rodar
 
 ```bash
-# PostgreSQL via Docker
-docker compose up -d postgres
+# PostgreSQL + Redis via Docker (suba os DOIS — a API usa Redis como
+# CACHE_STORE/QUEUE_CONNECTION; sem ele o login falha com
+# "Connection refused [tcp://127.0.0.1:6379]")
+docker compose up -d postgres redis
 
 # API
 cd api && php artisan serve

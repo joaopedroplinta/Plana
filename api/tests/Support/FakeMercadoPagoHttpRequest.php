@@ -14,11 +14,27 @@ use MercadoPago\Net\HttpRequest;
 class FakeMercadoPagoHttpRequest implements HttpRequest
 {
     /**
+     * Corpo (JSON decodificado) da última requisição enviada — capturado de
+     * CURLOPT_POSTFIELDS para os testes poderem asserir o que foi mandado ao
+     * MercadoPago (ex.: presença/valor de `marketplace_fee`).
+     *
+     * @var array<string, mixed>|null
+     */
+    public ?array $lastRequestBody = null;
+
+    /**
      * @param  array<string, mixed>  $payload
      */
     public function __construct(private readonly array $payload, private readonly int $statusCode = 200) {}
 
-    public function setOptionArray(array $value): void {}
+    public function setOptionArray(array $value): void
+    {
+        $body = $value[CURLOPT_POSTFIELDS] ?? null;
+
+        if (is_string($body)) {
+            $this->lastRequestBody = json_decode($body, true);
+        }
+    }
 
     public function execute(): bool|string
     {

@@ -27,6 +27,8 @@ class TenantResource extends JsonResource
             'whatsapp' => $settings['whatsapp'] ?? null,
             'address' => $settings['address'] ?? null,
             'instagram' => $settings['instagram'] ?? null,
+            'deposit_type' => $settings['deposit_type'] ?? 'none',
+            'deposit_value' => $settings['deposit_value'] ?? null,
             'current_tenant_role' => $user?->roleInTenant($this->resource),
         ];
     }

@@ -24,6 +24,7 @@ class Payment extends Model
         'tenant_id',
         'appointment_id',
         'amount',
+        'platform_fee',
         'method',
         'external_id',
         'preference_id',
@@ -40,6 +41,7 @@ class Payment extends Model
     {
         return [
             'amount' => 'integer',
+            'platform_fee' => 'integer',
             'paid_at' => 'datetime',
         ];
     }

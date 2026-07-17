@@ -90,6 +90,54 @@ it('salon_owner cria servico com 201', function () {
     ]);
 });
 
+it('cria servico com sinal percentual e persiste a config', function () {
+    $tenant = Tenant::factory()->create();
+    $owner = makeOwner($tenant);
+
+    $response = $this->actingAs($owner)->postJson("/api/v1/negocio/{$tenant->slug}/services", [
+        'name' => 'Coloração',
+        'price' => 20000,
+        'duration_minutes' => 120,
+        'deposit_type' => 'percentage',
+        'deposit_value' => 30,
+    ]);
+
+    $response->assertCreated()
+        ->assertJsonPath('data.deposit_type', 'percentage')
+        ->assertJsonPath('data.deposit_value', 30);
+
+    $this->assertDatabaseHas('services', [
+        'tenant_id' => $tenant->id,
+        'name' => 'Coloração',
+        'deposit_type' => 'percentage',
+        'deposit_value' => 30,
+    ]);
+});
+
+it('rejeita sinal percentual acima de 100 com 422', function () {
+    $tenant = Tenant::factory()->create();
+    $owner = makeOwner($tenant);
+
+    $response = $this->actingAs($owner)->postJson("/api/v1/negocio/{$tenant->slug}/services", [
+        'name' => 'X', 'price' => 1000, 'duration_minutes' => 30,
+        'deposit_type' => 'percentage', 'deposit_value' => 150,
+    ]);
+
+    $response->assertStatus(422)->assertJsonValidationErrors(['deposit_value']);
+});
+
+it('rejeita sinal fixo/percentual sem valor com 422', function () {
+    $tenant = Tenant::factory()->create();
+    $owner = makeOwner($tenant);
+
+    $response = $this->actingAs($owner)->postJson("/api/v1/negocio/{$tenant->slug}/services", [
+        'name' => 'X', 'price' => 1000, 'duration_minutes' => 30,
+        'deposit_type' => 'fixed',
+    ]);
+
+    $response->assertStatus(422)->assertJsonValidationErrors(['deposit_value']);
+});
+
 it('salon_staff cria servico com 201', function () {
     $tenant = Tenant::factory()->create();
     $staff = makeStaff($tenant);
