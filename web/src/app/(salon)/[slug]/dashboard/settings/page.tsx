@@ -9,9 +9,11 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { tenantsService } from '@/services/tenants'
+import { businessHoursService } from '@/services/businessHours'
 import { getSafeErrorMessage } from '@/lib/api-error'
 import { BookingLinkCard } from '@/components/shared/BookingLinkCard'
 import { MercadoPagoConnectCard } from '@/components/shared/MercadoPagoConnectCard'
+import { WeeklyHoursEditor, emptyWeek, type DayHours } from '@/components/shared/WeeklyHoursEditor'
 
 function MercadoPagoOAuthToast() {
   const searchParams = useSearchParams()
@@ -67,6 +69,12 @@ export default function SalonSettingsPage() {
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
 
+  // Horário de funcionamento do salão.
+  const [week, setWeek] = useState<DayHours[]>(emptyWeek)
+  const [isSavingHours, setIsSavingHours] = useState(false)
+  const [hoursError, setHoursError] = useState('')
+  const [hoursSuccess, setHoursSuccess] = useState('')
+
   useEffect(() => {
     if (!slug) return
     tenantsService
@@ -85,6 +93,50 @@ export default function SalonSettingsPage() {
       .catch(() => setError('Erro ao carregar os dados do negócio.'))
       .finally(() => setIsLoading(false))
   }, [slug])
+
+  useEffect(() => {
+    if (!slug) return
+    businessHoursService
+      .list(slug)
+      .then((res) => {
+        const configured = res.data.data
+        if (configured.length === 0) return
+        setWeek(
+          emptyWeek().map((day) => {
+            const match = configured.find((h) => h.day_of_week === day.day_of_week)
+            if (!match || !match.is_open || !match.open_time || !match.close_time) {
+              return { ...day, enabled: false }
+            }
+            return { ...day, enabled: true, start: match.open_time, end: match.close_time }
+          }),
+        )
+      })
+      .catch(() => {
+        // Silencioso: o editor apenas fica com a semana em branco.
+      })
+  }, [slug])
+
+  async function handleSaveHours() {
+    setHoursError('')
+    setHoursSuccess('')
+    setIsSavingHours(true)
+    try {
+      await businessHoursService.sync(
+        slug,
+        week.map((d) => ({
+          day_of_week: d.day_of_week,
+          is_open: d.enabled,
+          open_time: d.enabled ? d.start : null,
+          close_time: d.enabled ? d.end : null,
+        })),
+      )
+      setHoursSuccess('Horário de funcionamento salvo! A agenda dos profissionais respeita esses horários.')
+    } catch (err) {
+      setHoursError(getSafeErrorMessage(err, 'Erro ao salvar o horário. Tente novamente.'))
+    } finally {
+      setIsSavingHours(false)
+    }
+  }
 
   function setField(field: keyof FormState, value: string) {
     setForm((f) => ({ ...f, [field]: value }))
@@ -143,6 +195,30 @@ export default function SalonSettingsPage() {
           </p>
         </div>
         <MercadoPagoConnectCard slug={slug} />
+      </div>
+
+      <div className="space-y-3">
+        <div>
+          <h2 className="text-lg font-semibold text-foreground">Horário de funcionamento</h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Defina os dias e horários que o estabelecimento abre. Nenhum profissional
+            pode ser agendado fora do funcionamento do salão.
+          </p>
+        </div>
+        <Card className="max-w-2xl p-6">
+          <WeeklyHoursEditor value={week} onChange={setWeek} disabled={isSavingHours} offLabel="Fechado" />
+
+          {hoursError && (
+            <p className="mt-4 rounded-lg bg-red-50 dark:bg-red-950/40 px-3 py-2 text-sm text-red-600 dark:text-red-400">{hoursError}</p>
+          )}
+          {hoursSuccess && (
+            <p className="mt-4 rounded-lg bg-green-50 dark:bg-green-950/40 px-3 py-2 text-sm text-green-700 dark:text-green-400">{hoursSuccess}</p>
+          )}
+
+          <Button className="mt-5" onClick={handleSaveHours} disabled={isSavingHours}>
+            {isSavingHours ? 'Salvando...' : 'Salvar horário'}
+          </Button>
+        </Card>
       </div>
 
       {isLoading ? (

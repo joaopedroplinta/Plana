@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Appointment;
 use App\Models\BlockedDate;
+use App\Models\BusinessHour;
 use App\Models\Professional;
 use App\Models\Schedule;
 use App\Models\Service;
@@ -45,9 +46,20 @@ class SchedulingService
         $dayStart = $startsAt->copy()->setTimeFromTimeString($schedule->start_time);
         $dayEnd = $startsAt->copy()->setTimeFromTimeString($schedule->end_time);
 
+        // O horário de funcionamento do salão limita o expediente do profissional.
+        $window = $this->salonWindow($startsAt->dayOfWeek, $dayStart, $dayEnd);
+
+        if ($window === null) {
+            throw ValidationException::withMessages([
+                'starts_at' => ['O estabelecimento está fechado neste horário.'],
+            ]);
+        }
+
+        [$dayStart, $dayEnd] = $window;
+
         if ($startsAt->lt($dayStart) || $endsAt->gt($dayEnd)) {
             throw ValidationException::withMessages([
-                'starts_at' => ['Horário fora do expediente do profissional.'],
+                'starts_at' => ['Horário fora do expediente disponível.'],
             ]);
         }
 
@@ -108,9 +120,19 @@ class SchedulingService
             return [];
         }
 
-        $slots = [];
         $start = $date->copy()->setTimeFromTimeString($schedule->start_time);
         $end = $date->copy()->setTimeFromTimeString($schedule->end_time);
+
+        // Limita a janela ao horário de funcionamento do salão (se configurado).
+        $window = $this->salonWindow($date->dayOfWeek, $start, $end);
+
+        if ($window === null) {
+            return [];
+        }
+
+        [$start, $end] = $window;
+
+        $slots = [];
         $now = now();
 
         while ($start->copy()->addMinutes($duration)->lte($end)) {
@@ -128,6 +150,44 @@ class SchedulingService
         }
 
         return $slots;
+    }
+
+    /**
+     * Interseção entre a janela do profissional [$windowStart, $windowEnd] e o
+     * horário de funcionamento do salão no dia. Devolve a janela efetiva, ou
+     * `null` quando o salão está fechado nesse dia / não há interseção.
+     *
+     * Sem NENHUMA linha de business_hours (nunca configurado) => sem restrição:
+     * devolve a própria janela do profissional (retrocompatível).
+     *
+     * @return array{0: Carbon, 1: Carbon}|null
+     */
+    private function salonWindow(int $dayOfWeek, Carbon $windowStart, Carbon $windowEnd): ?array
+    {
+        $hours = BusinessHour::query()->get();
+
+        if ($hours->isEmpty()) {
+            return [$windowStart, $windowEnd];
+        }
+
+        /** @var BusinessHour|null $day */
+        $day = $hours->firstWhere('day_of_week', $dayOfWeek);
+
+        if (! $day || ! $day->is_open || ! $day->open_time || ! $day->close_time) {
+            return null;
+        }
+
+        $salonStart = $windowStart->copy()->setTimeFromTimeString($day->open_time);
+        $salonEnd = $windowStart->copy()->setTimeFromTimeString($day->close_time);
+
+        $effectiveStart = $windowStart->gt($salonStart) ? $windowStart : $salonStart;
+        $effectiveEnd = $windowEnd->lt($salonEnd) ? $windowEnd : $salonEnd;
+
+        if ($effectiveStart->gte($effectiveEnd)) {
+            return null;
+        }
+
+        return [$effectiveStart, $effectiveEnd];
     }
 
     private function isAlignedToGrid(Carbon $dayStart, Carbon $startsAt, int $duration): bool

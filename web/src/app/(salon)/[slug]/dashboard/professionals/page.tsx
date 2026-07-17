@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
-import { Plus, Pencil, Trash2 } from 'lucide-react'
+import { Plus, Pencil, Trash2, Clock } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -26,8 +26,10 @@ import {
 } from '@/components/ui/dialog'
 import { professionalsService } from '@/services/professionals'
 import type { CreateProfessionalData } from '@/services/professionals'
+import { schedulesService } from '@/services/schedules'
 import type { Professional } from '@/types/index'
 import { getSafeErrorMessage } from '@/lib/api-error'
+import { WeeklyHoursEditor, emptyWeek, type DayHours } from '@/components/shared/WeeklyHoursEditor'
 
 interface ProfessionalFormState {
   name: string
@@ -58,6 +60,55 @@ export default function ProfessionalsPage() {
 
   const [deleteTarget, setDeleteTarget] = useState<Professional | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
+
+  // Editor de horários de trabalho do profissional.
+  const [hoursTarget, setHoursTarget] = useState<Professional | null>(null)
+  const [hoursWeek, setHoursWeek] = useState<DayHours[]>(emptyWeek)
+  const [isLoadingHours, setIsLoadingHours] = useState(false)
+  const [isSavingHours, setIsSavingHours] = useState(false)
+  const [hoursError, setHoursError] = useState<string | null>(null)
+
+  function openHours(professional: Professional) {
+    setHoursTarget(professional)
+    setHoursWeek(emptyWeek())
+    setHoursError(null)
+    setIsLoadingHours(true)
+    schedulesService
+      .list(slug, professional.id)
+      .then((res) => {
+        const rows = res.data.data
+        setHoursWeek(
+          emptyWeek().map((day) => {
+            const match = rows.find((s) => s.day_of_week === day.day_of_week)
+            return match
+              ? { ...day, enabled: true, start: match.start_time.slice(0, 5), end: match.end_time.slice(0, 5) }
+              : day
+          }),
+        )
+      })
+      .catch(() => setHoursError('Erro ao carregar os horários.'))
+      .finally(() => setIsLoadingHours(false))
+  }
+
+  async function handleSaveHours() {
+    if (!hoursTarget) return
+    setHoursError(null)
+    setIsSavingHours(true)
+    try {
+      await schedulesService.sync(
+        slug,
+        hoursTarget.id,
+        hoursWeek
+          .filter((d) => d.enabled)
+          .map((d) => ({ day_of_week: d.day_of_week, start_time: d.start, end_time: d.end })),
+      )
+      setHoursTarget(null)
+    } catch (err) {
+      setHoursError(getSafeErrorMessage(err, 'Erro ao salvar os horários.'))
+    } finally {
+      setIsSavingHours(false)
+    }
+  }
 
   useEffect(() => {
     if (!slug) return
@@ -226,6 +277,16 @@ export default function ProfessionalsPage() {
                         variant="ghost"
                         size="sm"
                         className="h-8 w-8 p-0"
+                        onClick={() => openHours(professional)}
+                        title="Horários de trabalho"
+                      >
+                        <Clock className="h-4 w-4" />
+                        <span className="sr-only">Horários</span>
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 w-8 p-0"
                         onClick={() => openEdit(professional)}
                       >
                         <Pencil className="h-4 w-4" />
@@ -320,6 +381,37 @@ export default function ProfessionalsPage() {
             </Button>
             <Button type="submit" form="professional-form" disabled={isSubmitting}>
               {isSubmitting ? 'Salvando...' : 'Salvar'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Working Hours Dialog */}
+      <Dialog open={!!hoursTarget} onOpenChange={(open) => { if (!open) setHoursTarget(null) }}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Horários de {hoursTarget?.name}</DialogTitle>
+            <DialogDescription>
+              Marque os dias de trabalho e a faixa de horário. Os agendamentos só ocorrem
+              dentro desses horários (e do funcionamento do salão).
+            </DialogDescription>
+          </DialogHeader>
+          {isLoadingHours ? (
+            <p className="py-8 text-center text-sm text-muted-foreground animate-pulse">Carregando...</p>
+          ) : (
+            <WeeklyHoursEditor value={hoursWeek} onChange={setHoursWeek} disabled={isSavingHours} offLabel="Folga" />
+          )}
+          {hoursError && (
+            <p className="rounded-lg bg-red-50 dark:bg-red-950/40 px-3 py-2 text-sm text-red-600 dark:text-red-400">
+              {hoursError}
+            </p>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setHoursTarget(null)} disabled={isSavingHours}>
+              Cancelar
+            </Button>
+            <Button onClick={handleSaveHours} disabled={isSavingHours || isLoadingHours}>
+              {isSavingHours ? 'Salvando...' : 'Salvar horários'}
             </Button>
           </DialogFooter>
         </DialogContent>

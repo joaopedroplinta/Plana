@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreScheduleRequest;
+use App\Http\Requests\SyncSchedulesRequest;
 use App\Http\Requests\UpdateScheduleRequest;
 use App\Http\Resources\ScheduleResource;
 use App\Models\Professional;
@@ -11,6 +12,7 @@ use App\Models\Schedule;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 
 class ScheduleController extends Controller
@@ -20,6 +22,35 @@ class ScheduleController extends Controller
         $schedules = Schedule::where('professional_id', $professional->id)
             ->orderBy('day_of_week')
             ->get();
+
+        return ScheduleResource::collection($schedules);
+    }
+
+    /**
+     * Substitui de uma vez toda a semana de trabalho do profissional (o editor
+     * semanal do dashboard envia todos os dias trabalhados). Dias ausentes =
+     * folga. Mais simples e atômico que orquestrar POST/PUT/DELETE por dia.
+     */
+    public function sync(SyncSchedulesRequest $request, string $tenant, Professional $professional): AnonymousResourceCollection
+    {
+        Gate::authorize('create', Schedule::class);
+
+        $schedules = DB::transaction(function () use ($request, $professional) {
+            Schedule::where('professional_id', $professional->id)->delete();
+
+            foreach ($request->validated('schedules') as $day) {
+                Schedule::create([
+                    'professional_id' => $professional->id,
+                    'day_of_week' => $day['day_of_week'],
+                    'start_time' => $day['start_time'],
+                    'end_time' => $day['end_time'],
+                ]);
+            }
+
+            return Schedule::where('professional_id', $professional->id)
+                ->orderBy('day_of_week')
+                ->get();
+        });
 
         return ScheduleResource::collection($schedules);
     }

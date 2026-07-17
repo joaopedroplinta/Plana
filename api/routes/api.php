@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\V1\AppointmentController;
 use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\AvailabilityController;
 use App\Http\Controllers\Api\V1\BlockedDateController;
+use App\Http\Controllers\Api\V1\BusinessHourController;
 use App\Http\Controllers\Api\V1\DashboardController;
 use App\Http\Controllers\Api\V1\MercadoPagoController;
 use App\Http\Controllers\Api\V1\PackagePurchaseController;
@@ -53,6 +54,7 @@ Route::prefix('v1')->middleware('throttle:api')->group(function () {
         Route::get('ping', fn () => response()->json(['ok' => true]))->name('tenant.ping');
 
         Route::get('availability', AvailabilityController::class);
+        Route::get('business-hours', [BusinessHourController::class, 'index']);
 
         Route::apiResource('services', ServiceController::class)->only(['index', 'show']);
         Route::apiResource('packages', ServicePackageController::class)->only(['index', 'show']);
@@ -71,7 +73,10 @@ Route::prefix('v1')->middleware('throttle:api')->group(function () {
             Route::apiResource('packages', ServicePackageController::class)->except(['index', 'show']);
 
             Route::apiResource('professionals', ProfessionalController::class)->except(['index', 'show']);
+            Route::put('professionals/{professional}/schedules', [ScheduleController::class, 'sync']);
             Route::apiResource('professionals/{professional}/schedules', ScheduleController::class)->except(['index', 'show'])->scoped();
+
+            Route::put('business-hours', [BusinessHourController::class, 'sync']);
             Route::apiResource('professionals/{professional}/blocked-dates', BlockedDateController::class)
                 ->except(['index', 'show', 'update'])->scoped();
 
