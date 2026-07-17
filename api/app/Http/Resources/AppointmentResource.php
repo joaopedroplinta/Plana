@@ -20,6 +20,8 @@ class AppointmentResource extends JsonResource
             'ends_at' => $this->ends_at->toIso8601String(),
             'status' => $this->status->value,
             'price' => $this->price,
+            'deposit_amount' => $this->deposit_amount,
+            'balance_due' => $this->balanceDue(),
             'notes' => $this->notes,
             'package_purchase_id' => $this->package_purchase_id,
             'client' => $this->whenLoaded('client', fn () => [

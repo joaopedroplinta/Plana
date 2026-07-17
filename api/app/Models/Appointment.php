@@ -31,6 +31,7 @@ class Appointment extends Model
         'ends_at',
         'status',
         'price',
+        'deposit_amount',
         'notes',
         'reminder_sent_at',
     ];
@@ -44,9 +45,29 @@ class Appointment extends Model
             'starts_at' => 'datetime',
             'ends_at' => 'datetime',
             'price' => 'integer',
+            'deposit_amount' => 'integer',
             'reminder_sent_at' => 'datetime',
             'status' => AppointmentStatus::class,
         ];
+    }
+
+    /**
+     * Valor cobrado online na reserva: o sinal, se houver; senão o preço
+     * cheio. É este o valor que vai para o MercadoPago e sobre o qual incide
+     * a comissão da plataforma.
+     */
+    public function chargeableAmount(): int
+    {
+        return $this->deposit_amount ?? $this->price;
+    }
+
+    /**
+     * Saldo a pagar presencialmente no salão (total menos o que já foi cobrado
+     * online). Zero quando não há sinal.
+     */
+    public function balanceDue(): int
+    {
+        return $this->price - $this->chargeableAmount();
     }
 
     protected static function boot(): void

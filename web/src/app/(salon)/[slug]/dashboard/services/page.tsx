@@ -9,6 +9,13 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import {
   Table,
   TableBody,
   TableCell,
@@ -30,11 +37,25 @@ import type { Service } from '@/types/index'
 import { formatPrice, formatDuration } from '@/lib/format'
 import { getSafeErrorMessage } from '@/lib/api-error'
 
+/** 'inherit' = herda o padrão do salão; demais = override explícito do serviço. */
+type DepositMode = 'inherit' | 'none' | 'fixed' | 'percentage'
+
+/** Rótulos exibidos no Select (Base UI usa isso para mostrar o texto selecionado). */
+const DEPOSIT_MODE_LABELS: Record<DepositMode, string> = {
+  inherit: 'Padrão do salão',
+  none: 'Sem sinal (valor cheio)',
+  fixed: 'Valor fixo (R$)',
+  percentage: 'Percentual (%)',
+}
+
 interface ServiceFormState {
   name: string
   description: string
   price: string
   duration_minutes: string
+  active: boolean
+  deposit_mode: DepositMode
+  deposit_value: string
 }
 
 const emptyForm: ServiceFormState = {
@@ -42,11 +63,26 @@ const emptyForm: ServiceFormState = {
   description: '',
   price: '',
   duration_minutes: '',
+  active: true,
+  deposit_mode: 'inherit',
+  deposit_value: '',
 }
 
 function priceInputToCents(value: string): number {
   const cleaned = value.replace(',', '.')
   return Math.round(parseFloat(cleaned) * 100)
+}
+
+/** Deriva o modo/valor do formulário a partir do serviço salvo. */
+function depositFormFromService(service: Service): Pick<ServiceFormState, 'deposit_mode' | 'deposit_value'> {
+  const mode: DepositMode = service.deposit_type ?? 'inherit'
+  if (mode === 'fixed' && service.deposit_value != null) {
+    return { deposit_mode: mode, deposit_value: (service.deposit_value / 100).toFixed(2).replace('.', ',') }
+  }
+  if (mode === 'percentage' && service.deposit_value != null) {
+    return { deposit_mode: mode, deposit_value: String(service.deposit_value) }
+  }
+  return { deposit_mode: mode, deposit_value: '' }
 }
 
 export default function ServicesPage() {
@@ -110,6 +146,8 @@ export default function ServicesPage() {
       description: service.description ?? '',
       price: (service.price / 100).toFixed(2).replace('.', ','),
       duration_minutes: String(service.duration_minutes),
+      active: service.active,
+      ...depositFormFromService(service),
     })
     setFormError(null)
     setIsFormOpen(true)
@@ -143,6 +181,33 @@ export default function ServicesPage() {
       description: form.description,
       price: priceValue,
       duration_minutes: durationValue,
+      active: form.active,
+    }
+
+    // Sinal do serviço. 'inherit' => herda o salão (envia null p/ limpar override).
+    if (form.deposit_mode === 'inherit') {
+      payload.deposit_type = null
+      payload.deposit_value = null
+    } else if (form.deposit_mode === 'none') {
+      payload.deposit_type = 'none'
+      payload.deposit_value = null
+    } else {
+      const isPercent = form.deposit_mode === 'percentage'
+      const depositValue = isPercent
+        ? parseInt(form.deposit_value, 10)
+        : priceInputToCents(form.deposit_value)
+
+      if (isNaN(depositValue) || depositValue <= 0) {
+        setFormError('Informe um valor de sinal válido.')
+        return
+      }
+      if (isPercent && depositValue > 100) {
+        setFormError('O percentual do sinal não pode passar de 100%.')
+        return
+      }
+
+      payload.deposit_type = form.deposit_mode
+      payload.deposit_value = depositValue
     }
 
     setIsSubmitting(true)
@@ -336,6 +401,79 @@ export default function ServicesPage() {
                   disabled={isSubmitting}
                 />
               </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div
+                className={
+                  form.deposit_mode === 'fixed' || form.deposit_mode === 'percentage'
+                    ? 'space-y-1.5'
+                    : 'col-span-2 space-y-1.5'
+                }
+              >
+                <Label htmlFor="service-deposit-mode">Sinal na reserva</Label>
+                <Select
+                  items={DEPOSIT_MODE_LABELS}
+                  value={form.deposit_mode}
+                  onValueChange={(v) =>
+                    setForm((f) => ({ ...f, deposit_mode: v as DepositMode, deposit_value: '' }))
+                  }
+                  disabled={isSubmitting}
+                >
+                  <SelectTrigger id="service-deposit-mode" className="w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="inherit">{DEPOSIT_MODE_LABELS.inherit}</SelectItem>
+                    <SelectItem value="none">{DEPOSIT_MODE_LABELS.none}</SelectItem>
+                    <SelectItem value="fixed">{DEPOSIT_MODE_LABELS.fixed}</SelectItem>
+                    <SelectItem value="percentage">{DEPOSIT_MODE_LABELS.percentage}</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              {(form.deposit_mode === 'fixed' || form.deposit_mode === 'percentage') && (
+                <div className="space-y-1.5">
+                  <Label htmlFor="service-deposit-value">
+                    {form.deposit_mode === 'fixed' ? 'Sinal (R$)' : 'Sinal (%)'}
+                  </Label>
+                  <Input
+                    id="service-deposit-value"
+                    required
+                    placeholder={form.deposit_mode === 'fixed' ? '0,00' : '20'}
+                    value={form.deposit_value}
+                    onChange={(e) => setForm((f) => ({ ...f, deposit_value: e.target.value }))}
+                    disabled={isSubmitting}
+                  />
+                </div>
+              )}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              O cliente paga o sinal para confirmar; o restante é pago presencialmente.
+            </p>
+            <div className="space-y-1.5">
+            <Label>Status</Label>
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                role="switch"
+                aria-checked={form.active}
+                onClick={() => setForm((f) => ({ ...f, active: !f.active }))}
+                disabled={isSubmitting}
+                className={[
+                  'relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:opacity-50',
+                  form.active ? 'bg-primary' : 'bg-muted',
+                ].join(' ')}
+              >
+                <span
+                  className={[
+                    'inline-block h-4 w-4 rounded-full bg-white shadow transition-transform',
+                    form.active ? 'translate-x-6' : 'translate-x-1',
+                  ].join(' ')}
+                />
+              </button>
+              <Label className="cursor-pointer select-none">
+                {form.active ? 'Ativo' : 'Inativo'}
+              </Label>
+            </div>
             </div>
             {formError && (
               <p className="rounded-lg bg-red-50 dark:bg-red-950/40 px-3 py-2 text-sm text-red-600 dark:text-red-400">

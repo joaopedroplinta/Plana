@@ -42,6 +42,31 @@ it('owner atualiza perfil do salao e os campos aparecem no endpoint publico', fu
         ->assertJsonPath('data.address', 'Rua das Flores, 123 — Centro');
 });
 
+it('owner define o sinal padrao do salao e ele aparece no endpoint do tenant', function () {
+    $tenant = Tenant::factory()->create();
+    $owner = settingsOwner($tenant);
+
+    $this->actingAs($owner)->patchJson("/api/v1/negocio/{$tenant->slug}/settings", [
+        'deposit_type' => 'percentage',
+        'deposit_value' => 25,
+    ])->assertOk()
+        ->assertJsonPath('data.deposit_type', 'percentage')
+        ->assertJsonPath('data.deposit_value', 25);
+
+    expect($tenant->fresh()->settings)->toMatchArray(['deposit_type' => 'percentage', 'deposit_value' => 25]);
+});
+
+it("sinal 'none' zera o valor guardado no settings", function () {
+    $tenant = Tenant::factory()->create(['settings' => ['deposit_type' => 'fixed', 'deposit_value' => 3000]]);
+    $owner = settingsOwner($tenant);
+
+    $this->actingAs($owner)->patchJson("/api/v1/negocio/{$tenant->slug}/settings", [
+        'deposit_type' => 'none',
+    ])->assertOk()->assertJsonPath('data.deposit_value', null);
+
+    expect($tenant->fresh()->settings['deposit_value'])->toBeNull();
+});
+
 it('atualizacao parcial nao apaga os demais campos do settings', function () {
     $tenant = Tenant::factory()->create(['settings' => ['phone' => '(42) 1111-1111', 'description' => 'Original']]);
     $owner = settingsOwner($tenant);

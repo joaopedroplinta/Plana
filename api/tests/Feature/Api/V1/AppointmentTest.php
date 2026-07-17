@@ -93,6 +93,69 @@ it('cria agendamento com slot valido e retorna 201', function () {
     ]);
 });
 
+it('congela o sinal no agendamento herdando o padrão percentual do salão', function () {
+    $tenant = Tenant::factory()->create(['settings' => ['deposit_type' => 'percentage', 'deposit_value' => 20]]);
+    $client = apptClient($tenant);
+    $professional = Professional::factory()->create(['tenant_id' => $tenant->id]);
+    $service = Service::factory()->create(['tenant_id' => $tenant->id, 'duration_minutes' => 60, 'price' => 5000]);
+    apptFullWeekSchedule($tenant, $professional);
+
+    $startsAt = now()->addDay()->setHour(10)->setMinute(0)->setSecond(0)->toIso8601String();
+
+    $response = $this->actingAs($client)->postJson("/api/v1/negocio/{$tenant->slug}/appointments", [
+        'professional_id' => $professional->id,
+        'service_id' => $service->id,
+        'starts_at' => $startsAt,
+    ]);
+
+    // 20% de R$50 = R$10 de sinal; total continua R$50; resta R$40.
+    $response->assertCreated()
+        ->assertJsonPath('data.price', 5000)
+        ->assertJsonPath('data.deposit_amount', 1000)
+        ->assertJsonPath('data.balance_due', 4000);
+});
+
+it('override de sinal do serviço vence o padrão do salão na reserva', function () {
+    $tenant = Tenant::factory()->create(['settings' => ['deposit_type' => 'percentage', 'deposit_value' => 20]]);
+    $client = apptClient($tenant);
+    $professional = Professional::factory()->create(['tenant_id' => $tenant->id]);
+    $service = Service::factory()->create([
+        'tenant_id' => $tenant->id, 'duration_minutes' => 60, 'price' => 5000,
+        'deposit_type' => 'fixed', 'deposit_value' => 3000,
+    ]);
+    apptFullWeekSchedule($tenant, $professional);
+
+    $startsAt = now()->addDay()->setHour(10)->setMinute(0)->setSecond(0)->toIso8601String();
+
+    $response = $this->actingAs($client)->postJson("/api/v1/negocio/{$tenant->slug}/appointments", [
+        'professional_id' => $professional->id,
+        'service_id' => $service->id,
+        'starts_at' => $startsAt,
+    ]);
+
+    $response->assertCreated()->assertJsonPath('data.deposit_amount', 3000);
+});
+
+it('sem sinal configurado, o agendamento cobra o valor cheio (deposit null)', function () {
+    $tenant = Tenant::factory()->create();
+    $client = apptClient($tenant);
+    $professional = Professional::factory()->create(['tenant_id' => $tenant->id]);
+    $service = Service::factory()->create(['tenant_id' => $tenant->id, 'duration_minutes' => 60, 'price' => 5000]);
+    apptFullWeekSchedule($tenant, $professional);
+
+    $startsAt = now()->addDay()->setHour(10)->setMinute(0)->setSecond(0)->toIso8601String();
+
+    $response = $this->actingAs($client)->postJson("/api/v1/negocio/{$tenant->slug}/appointments", [
+        'professional_id' => $professional->id,
+        'service_id' => $service->id,
+        'starts_at' => $startsAt,
+    ]);
+
+    $response->assertCreated()
+        ->assertJsonPath('data.deposit_amount', null)
+        ->assertJsonPath('data.balance_due', 0);
+});
+
 it('rejeita agendamento em slot ocupado com 422', function () {
     $tenant = Tenant::factory()->create();
     $client = apptClient($tenant);

@@ -32,10 +32,17 @@ trait InteractsWithMercadoPagoOrders
     /**
      * Cria uma Order (/v1/orders) com um único pagamento (pix ou cartão).
      *
+     * Marketplace (Fase 2): quando `$marketplaceFeeInCents` é informado (só nos
+     * pagamentos de agendamento feitos numa conta de salão CONECTADA), a
+     * plataforma retém esse valor via `marketplace_fee` — campo de nível da
+     * order, string em reais (ex.: "2.50"), conforme a API Orders
+     * (@see vendor/mercadopago/dx-php/examples/Order/CreateOrderWithIndustryFields.php).
+     * Sem fee (null), a order segue idêntica à Fase 1.
+     *
      * @param  array<string, mixed>  $paymentMethod
      * @param  array<string, mixed>  $payer
      */
-    protected function createMercadoPagoOrder(int $amountInCents, string $reference, array $paymentMethod, array $payer): Order
+    protected function createMercadoPagoOrder(int $amountInCents, string $reference, array $paymentMethod, array $payer, ?int $marketplaceFeeInCents = null): Order
     {
         $client = new OrderClient;
         $amount = (string) round($amountInCents / 100, 2);
@@ -43,7 +50,7 @@ trait InteractsWithMercadoPagoOrders
         $requestOptions = new RequestOptions;
         $requestOptions->setCustomHeaders(['X-Idempotency-Key: '.(string) Str::uuid()]);
 
-        return $client->create([
+        $body = [
             'type' => 'online',
             'total_amount' => $amount,
             'external_reference' => $reference,
@@ -55,7 +62,13 @@ trait InteractsWithMercadoPagoOrders
                 ]],
             ],
             'payer' => $payer,
-        ], $requestOptions);
+        ];
+
+        if ($marketplaceFeeInCents !== null && $marketplaceFeeInCents > 0) {
+            $body['marketplace_fee'] = (string) round($marketplaceFeeInCents / 100, 2);
+        }
+
+        return $client->create($body, $requestOptions);
     }
 
     /**
