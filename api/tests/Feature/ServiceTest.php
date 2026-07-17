@@ -4,6 +4,8 @@ use App\Models\Service;
 use App\Models\Tenant;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Spatie\Permission\Models\Role;
 
 uses(RefreshDatabase::class);
@@ -257,4 +259,68 @@ it('cannot create service in another tenant via route', function () {
         'name' => 'Serviço Novo',
         'tenant_id' => $tenantB->id,
     ]);
+});
+
+// --- Upload de imagem do serviço ---
+
+it('owner faz upload da imagem do serviço', function () {
+    Storage::fake('public');
+    $tenant = Tenant::factory()->create();
+    $owner = makeOwner($tenant);
+    $service = Service::factory()->create(['tenant_id' => $tenant->id]);
+
+    $response = $this->actingAs($owner)->postJson("/api/v1/negocio/{$tenant->slug}/services/{$service->id}/image", [
+        'image' => UploadedFile::fake()->create('foto.jpg', 100, 'image/jpeg'),
+    ]);
+
+    $response->assertOk();
+    $imageUrl = $response->json('data.image_url');
+    expect($imageUrl)->toStartWith('/storage/services/');
+    Storage::disk('public')->assertExists(str_replace('/storage/', '', $imageUrl));
+});
+
+it('staff também pode enviar imagem do serviço', function () {
+    Storage::fake('public');
+    $tenant = Tenant::factory()->create();
+    $staff = makeStaff($tenant);
+    $service = Service::factory()->create(['tenant_id' => $tenant->id]);
+
+    $this->actingAs($staff)->postJson("/api/v1/negocio/{$tenant->slug}/services/{$service->id}/image", [
+        'image' => UploadedFile::fake()->create('foto.jpg', 100, 'image/jpeg'),
+    ])->assertOk();
+});
+
+it('client não pode enviar imagem do serviço', function () {
+    Storage::fake('public');
+    $tenant = Tenant::factory()->create();
+    $client = makeClient($tenant);
+    $service = Service::factory()->create(['tenant_id' => $tenant->id]);
+
+    $this->actingAs($client)->postJson("/api/v1/negocio/{$tenant->slug}/services/{$service->id}/image", [
+        'image' => UploadedFile::fake()->create('foto.jpg', 100, 'image/jpeg'),
+    ])->assertStatus(403);
+});
+
+it('rejeita arquivo que não é imagem', function () {
+    Storage::fake('public');
+    $tenant = Tenant::factory()->create();
+    $owner = makeOwner($tenant);
+    $service = Service::factory()->create(['tenant_id' => $tenant->id]);
+
+    $this->actingAs($owner)->postJson("/api/v1/negocio/{$tenant->slug}/services/{$service->id}/image", [
+        'image' => UploadedFile::fake()->create('documento.pdf', 100, 'application/pdf'),
+    ])->assertStatus(422)->assertJsonValidationErrors(['image']);
+});
+
+it('owner não envia imagem para serviço de outro tenant', function () {
+    Storage::fake('public');
+    $tenantA = Tenant::factory()->create();
+    $tenantB = Tenant::factory()->create();
+    $ownerA = makeOwner($tenantA);
+    $serviceB = Service::factory()->create(['tenant_id' => $tenantB->id]);
+
+    // O serviço de B não existe no escopo de A → 404.
+    $this->actingAs($ownerA)->postJson("/api/v1/negocio/{$tenantA->slug}/services/{$serviceB->id}/image", [
+        'image' => UploadedFile::fake()->create('foto.jpg', 100, 'image/jpeg'),
+    ])->assertStatus(404);
 });

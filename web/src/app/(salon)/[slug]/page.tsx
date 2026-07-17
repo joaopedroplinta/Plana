@@ -139,12 +139,25 @@ export default async function SalonHomePage({ params }: SalonHomeProps) {
           </p>
         ) : (
           <div className="mt-6 grid gap-4 sm:grid-cols-2">
-            {services.map((service) => (
+            {services.map((service) => {
+              const imageUrl = assetUrl(service.image_url)
+              return (
               <a
                 key={service.id}
                 href={`/${slug}/booking`}
-                className="group rounded-xl border bg-card p-5 transition-all hover:border-primary/60 hover:shadow-sm"
+                className="group overflow-hidden rounded-xl border bg-card transition-all hover:border-primary/60 hover:shadow-sm"
               >
+                {imageUrl && (
+                  <>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={imageUrl}
+                      alt={service.name}
+                      className="aspect-video w-full object-cover transition-transform group-hover:scale-105"
+                    />
+                  </>
+                )}
+                <div className="p-5">
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
                     <p className="font-semibold text-foreground group-hover:text-primary transition-colors">
@@ -164,8 +177,10 @@ export default async function SalonHomePage({ params }: SalonHomeProps) {
                   <Clock className="h-3 w-3" />
                   {formatDuration(service.duration_minutes)}
                 </Badge>
+                </div>
               </a>
-            ))}
+              )
+            })}
           </div>
         )}
       </section>
