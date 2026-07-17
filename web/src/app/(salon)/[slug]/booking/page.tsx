@@ -108,6 +108,10 @@ export default function BookingPage() {
 
   // Payment state
   const [appointmentId, setAppointmentId] = useState<string | null>(null)
+  // Valor a cobrar online (sinal, se houver) e saldo a pagar no salão — vêm do
+  // agendamento criado, pois o backend cobra deposit_amount ?? price.
+  const [chargeAmount, setChargeAmount] = useState(0)
+  const [balanceDue, setBalanceDue] = useState(0)
   const [payment, setPayment] = useState<Payment | null>(null)
   const [paymentLoading, setPaymentLoading] = useState(false)
   const [paymentError, setPaymentError] = useState('')
@@ -210,10 +214,13 @@ export default function BookingPage() {
         notes: notes.trim() || undefined,
         package_purchase_id: selectedPackagePurchaseId ?? undefined,
       })
-      setAppointmentId(result.data.data.id)
+      const appt = result.data.data
+      setAppointmentId(appt.id)
+      setChargeAmount(appt.deposit_amount ?? appt.price)
+      setBalanceDue(appt.balance_due)
 
       // Pago com pacote: sessão já foi consumida, nada a cobrar.
-      if (result.data.data.package_purchase_id) {
+      if (appt.package_purchase_id) {
         setSuccess(true)
         return
       }
@@ -675,12 +682,19 @@ export default function BookingPage() {
               Horário reservado! Escolha como deseja pagar.
             </p>
           </div>
-          <p className="text-muted-foreground">
-            {selectedService?.name} —{' '}
-            <span className="font-semibold text-primary">
-              {formatPrice(selectedService?.price ?? 0)}
-            </span>
-          </p>
+          <div className="space-y-1">
+            <p className="text-muted-foreground">
+              {selectedService?.name} —{' '}
+              <span className="font-semibold text-primary">{formatPrice(chargeAmount)}</span>
+              {balanceDue > 0 && <span className="text-sm text-muted-foreground"> de sinal</span>}
+            </p>
+            {balanceDue > 0 && (
+              <p className="text-sm text-muted-foreground">
+                Total do serviço {formatPrice(selectedService?.price ?? 0)} — restam{' '}
+                <span className="font-medium">{formatPrice(balanceDue)}</span> para pagar no salão.
+              </p>
+            )}
+          </div>
           {paymentError && (
             <p className="rounded-lg bg-red-50 dark:bg-red-950/40 px-4 py-3 text-sm text-red-600 dark:text-red-400">{paymentError}</p>
           )}
@@ -724,17 +738,23 @@ export default function BookingPage() {
               Seus dados são enviados com segurança diretamente ao MercadoPago.
             </p>
           </div>
-          <p className="text-muted-foreground">
-            {selectedService?.name} —{' '}
-            <span className="font-semibold text-primary">
-              {formatPrice(selectedService?.price ?? 0)}
-            </span>
-          </p>
+          <div className="space-y-1">
+            <p className="text-muted-foreground">
+              {selectedService?.name} —{' '}
+              <span className="font-semibold text-primary">{formatPrice(chargeAmount)}</span>
+              {balanceDue > 0 && <span className="text-sm text-muted-foreground"> de sinal</span>}
+            </p>
+            {balanceDue > 0 && (
+              <p className="text-sm text-muted-foreground">
+                Restam <span className="font-medium">{formatPrice(balanceDue)}</span> para pagar no salão.
+              </p>
+            )}
+          </div>
           {paymentError && (
             <p className="rounded-lg bg-red-50 dark:bg-red-950/40 px-4 py-3 text-sm text-red-600 dark:text-red-400">{paymentError}</p>
           )}
           <CardPaymentBrick
-            amount={(selectedService?.price ?? 0) / 100}
+            amount={chargeAmount / 100}
             payerEmail={user?.email}
             onApprove={handleCardSubmit}
           />

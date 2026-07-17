@@ -31,15 +31,33 @@ uses(RefreshDatabase::class);
 |--------------------------------------------------------------------------
 */
 
-function useFakeMercadoPagoHttpClient(array $payload, int $statusCode = 200): void
+function useFakeMercadoPagoHttpClient(array $payload, int $statusCode = 200): FakeMercadoPagoHttpRequest
 {
-    MercadoPagoConfig::setHttpClient(new MPDefaultHttpClient(new FakeMercadoPagoHttpRequest($payload, $statusCode)));
+    $fake = new FakeMercadoPagoHttpRequest($payload, $statusCode);
+    MercadoPagoConfig::setHttpClient(new MPDefaultHttpClient($fake));
     MercadoPagoConfig::setAccessToken('TEST-fake-access-token-for-tests');
+
+    return $fake;
 }
 
-function ordersTenantWithClient(): array
+/**
+ * Tenant com conta MercadoPago "conectada" (Fase 1): token não-expirado e
+ * mp_connected_at preenchidos, para que accessTokenFor() devolva o token do
+ * salão e a comissão de marketplace (Fase 2) seja aplicada.
+ */
+function ordersConnectedTenant(string $plan = 'starter'): Tenant
 {
-    $tenant = Tenant::factory()->create();
+    return Tenant::factory()->create([
+        'plan' => $plan,
+        'mp_access_token' => 'APP_USR-tenant-connected-token',
+        'mp_connected_at' => now(),
+        'mp_token_expires_at' => now()->addHour(),
+    ]);
+}
+
+function ordersTenantWithClient(?Tenant $tenant = null): array
+{
+    $tenant ??= Tenant::factory()->create();
     $client = User::factory()->create();
     $client->tenants()->attach($tenant->id, ['role' => 'client']);
     Role::firstOrCreate(['name' => 'client', 'guard_name' => 'web']);
@@ -296,6 +314,125 @@ it('webhook aceita o topico order alem de payment', function () {
     ]);
 
     expect($payment->fresh()->status)->toBe('approved');
+});
+
+// --- Marketplace: comissão da plataforma (Fase 2) ---
+
+function ordersPixResponse(string $orderId, string $reference, string $email): array
+{
+    return [
+        'id' => $orderId,
+        'type' => 'online',
+        'total_amount' => '50.00',
+        'external_reference' => $reference,
+        'status' => 'action_required',
+        'status_detail' => 'waiting_transfer',
+        'transactions' => [
+            'payments' => [[
+                'id' => 'pay_fee_test',
+                'status' => 'action_required',
+                'status_detail' => 'waiting_transfer',
+                'amount' => '50.00',
+                'payment_method' => ['id' => 'pix', 'type' => 'bank_transfer', 'qr_code' => 'qr', 'qr_code_base64' => 'YQ=='],
+            ]],
+        ],
+        'payer' => ['email' => $email],
+    ];
+}
+
+it('createPix cobra marketplace_fee conforme o plano quando o salão está conectado', function (string $plan, string $expectedFee, int $expectedCents) {
+    [$tenant, $client] = ordersTenantWithClient(ordersConnectedTenant($plan));
+    $appointment = ordersAppointmentForClient($tenant, $client); // price 5000
+
+    $fake = useFakeMercadoPagoHttpClient(ordersPixResponse('ORD_FEE', $appointment->id, $client->email));
+
+    $payment = app(PaymentService::class)->createPix($appointment, $client);
+
+    expect($fake->lastRequestBody['marketplace_fee'])->toBe($expectedFee)
+        ->and($payment->platform_fee)->toBe($expectedCents);
+})->with([
+    'starter (5%)' => ['starter', '2.5', 250],
+    'pro (3%)' => ['pro', '1.5', 150],
+    'enterprise (1%)' => ['enterprise', '0.5', 50],
+]);
+
+it('createCheckoutPro também cobra marketplace_fee quando conectado', function () {
+    [$tenant, $client] = ordersTenantWithClient(ordersConnectedTenant('starter'));
+    $appointment = ordersAppointmentForClient($tenant, $client); // price 5000
+
+    $fake = useFakeMercadoPagoHttpClient([
+        'id' => 'ORD_CARD_FEE',
+        'external_reference' => $appointment->id,
+        'status' => 'processed',
+        'status_detail' => 'accredited',
+        'transactions' => ['payments' => [['id' => 'p1', 'status' => 'processed', 'status_detail' => 'accredited', 'amount' => '50.00', 'payment_method' => ['id' => 'master', 'type' => 'credit_card', 'token' => 't', 'installments' => 1]]]],
+        'payer' => ['email' => $client->email],
+    ]);
+
+    $payment = app(PaymentService::class)->createCheckoutPro($appointment, $client, [
+        'token' => 't', 'payment_method_id' => 'master', 'installments' => 1,
+    ]);
+
+    expect($fake->lastRequestBody['marketplace_fee'])->toBe('2.5')
+        ->and($payment->platform_fee)->toBe(250);
+});
+
+it('NÃO cobra marketplace_fee quando o salão não conectou conta MercadoPago', function () {
+    [$tenant, $client] = ordersTenantWithClient(); // tenant sem conexão MP
+    $appointment = ordersAppointmentForClient($tenant, $client);
+
+    $fake = useFakeMercadoPagoHttpClient(ordersPixResponse('ORD_NO_FEE', $appointment->id, $client->email));
+
+    $payment = app(PaymentService::class)->createPix($appointment, $client);
+
+    expect($fake->lastRequestBody)->not->toHaveKey('marketplace_fee')
+        ->and($payment->platform_fee)->toBeNull();
+});
+
+it('cobra apenas o sinal (deposit_amount) e calcula a comissão sobre ele', function () {
+    [$tenant, $client] = ordersTenantWithClient(ordersConnectedTenant('starter')); // 5%
+    $appointment = ordersAppointmentForClient($tenant, $client); // price 5000
+    $appointment->update(['deposit_amount' => 2000]); // sinal de R$20
+
+    $fake = useFakeMercadoPagoHttpClient(ordersPixResponse('ORD_DEPOSIT', $appointment->id, $client->email));
+
+    $payment = app(PaymentService::class)->createPix($appointment, $client);
+
+    // Cobra R$20 (o sinal), não os R$50; marketplace_fee = 5% de R$20 = R$1.
+    expect($fake->lastRequestBody['total_amount'])->toBe('20')
+        ->and($fake->lastRequestBody['marketplace_fee'])->toBe('1')
+        ->and($payment->amount)->toBe(2000)
+        ->and($payment->platform_fee)->toBe(100)
+        ->and($appointment->fresh()->balanceDue())->toBe(3000); // resta R$30 presencial
+});
+
+it('NÃO cobra marketplace_fee em compra de pacote, mesmo com salão conectado', function () {
+    [$tenant, $client] = ordersTenantWithClient(ordersConnectedTenant('starter'));
+    $package = ServicePackage::factory()->create(['tenant_id' => $tenant->id, 'sessions' => 3, 'price' => 15000, 'valid_days' => 60]);
+
+    $purchase = PackagePurchase::create([
+        'tenant_id' => $tenant->id,
+        'client_id' => $client->id,
+        'service_package_id' => $package->id,
+        'sessions_total' => 3,
+        'sessions_used' => 0,
+        'price_paid' => 15000,
+        'status' => 'pending',
+    ]);
+
+    $fake = useFakeMercadoPagoHttpClient([
+        'id' => 'ORD_PKG_NO_FEE',
+        'external_reference' => "package_purchase_{$purchase->id}",
+        'status' => 'action_required',
+        'status_detail' => 'waiting_transfer',
+        'transactions' => ['payments' => [['id' => 'p1', 'status' => 'action_required', 'status_detail' => 'waiting_transfer', 'amount' => '150.00', 'payment_method' => ['id' => 'pix', 'type' => 'bank_transfer']]]],
+        'payer' => ['email' => $client->email],
+    ]);
+
+    $payment = app(PaymentService::class)->createPixForPackagePurchase($purchase, $client);
+
+    expect($fake->lastRequestBody)->not->toHaveKey('marketplace_fee')
+        ->and($payment->platform_fee)->toBeNull();
 });
 
 it('mapeia status action_required/cancelled/expired da Order corretamente', function () {

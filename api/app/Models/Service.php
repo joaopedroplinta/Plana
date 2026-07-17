@@ -23,6 +23,8 @@ class Service extends Model
         'name',
         'description',
         'price',
+        'deposit_type',
+        'deposit_value',
         'duration_minutes',
         'image_url',
         'active',
@@ -35,6 +37,7 @@ class Service extends Model
     {
         return [
             'price' => 'integer',
+            'deposit_value' => 'integer',
             'duration_minutes' => 'integer',
             'active' => 'boolean',
         ];

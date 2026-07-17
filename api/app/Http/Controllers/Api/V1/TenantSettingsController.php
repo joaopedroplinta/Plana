@@ -9,8 +9,11 @@ use App\Models\Tenant;
 
 class TenantSettingsController extends Controller
 {
-    /** Campos de perfil que vivem no jsonb `settings`. */
-    private const PROFILE_FIELDS = ['description', 'phone', 'whatsapp', 'address', 'instagram'];
+    /**
+     * Campos que vivem no jsonb `settings`: perfil do salão + padrão de sinal
+     * (deposit_type/deposit_value) aplicado aos serviços sem override próprio.
+     */
+    private const SETTINGS_FIELDS = ['description', 'phone', 'whatsapp', 'address', 'instagram', 'deposit_type', 'deposit_value'];
 
     public function update(UpdateTenantSettingsRequest $request): TenantResource
     {
@@ -23,10 +26,15 @@ class TenantSettingsController extends Controller
 
         $settings = $tenant->settings ?? [];
 
-        foreach (self::PROFILE_FIELDS as $field) {
+        foreach (self::SETTINGS_FIELDS as $field) {
             if ($request->has($field)) {
                 $settings[$field] = $request->input($field);
             }
+        }
+
+        // Sinal 'none' não tem valor associado — evita lixo herdado no jsonb.
+        if (($settings['deposit_type'] ?? null) === 'none') {
+            $settings['deposit_value'] = null;
         }
 
         $tenant->settings = $settings;

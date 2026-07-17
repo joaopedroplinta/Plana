@@ -1,3 +1,6 @@
+/** Sinal (valor de reserva) cobrado online no agendamento. */
+export type DepositType = 'none' | 'fixed' | 'percentage'
+
 export interface Tenant {
   id: string
   name: string
@@ -9,6 +12,10 @@ export interface Tenant {
   whatsapp: string | null
   address: string | null
   instagram: string | null
+  /** Sinal padrão do salão, aplicado aos serviços sem override próprio. */
+  deposit_type: DepositType
+  /** Centavos (fixed) ou percentual 1..100 (percentage); null quando 'none'. */
+  deposit_value: number | null
   current_tenant_role: 'owner' | 'staff' | 'client' | null
 }
 
@@ -19,6 +26,8 @@ export interface UpdateTenantSettingsData {
   whatsapp?: string | null
   address?: string | null
   instagram?: string | null
+  deposit_type?: DepositType
+  deposit_value?: number | null
 }
 
 export interface User {
@@ -42,6 +51,9 @@ export interface Service {
   name: string
   description: string | null
   price: number
+  /** null = herda o padrão do salão; 'none' desativa o sinal neste serviço. */
+  deposit_type: DepositType | null
+  deposit_value: number | null
   duration_minutes: number
   image_url: string | null
   active: boolean
@@ -71,6 +83,10 @@ export interface Appointment {
   ends_at: string
   status: 'pending' | 'confirmed' | 'completed' | 'cancelled' | 'no_show'
   price: number
+  /** Sinal cobrado online na reserva (centavos); null = cobrou o valor cheio. */
+  deposit_amount: number | null
+  /** Saldo a pagar presencialmente = price − valor cobrado online. */
+  balance_due: number
   notes: string | null
   package_purchase_id: string | null
   service: Service
@@ -83,6 +99,8 @@ export interface Payment {
   id: string
   appointment_id: string | null
   amount: number
+  /** Comissão da plataforma retida neste pagamento, em centavos (null quando não houve). */
+  platform_fee: number | null
   method: 'pix' | 'credit_card'
   status: 'pending' | 'approved' | 'rejected' | 'refunded' | 'cancelled'
   pix_qr_code: string | null

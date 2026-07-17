@@ -25,6 +25,7 @@ class SubscriptionService
             'key' => 'starter',
             'name' => 'Starter',
             'price' => 0,
+            'commission_rate' => 5.0,
             'max_professionals' => 1,
             'max_appointments_per_month' => 50,
             'professionals' => '1 profissional',
@@ -35,6 +36,7 @@ class SubscriptionService
             'key' => 'pro',
             'name' => 'Pro',
             'price' => 9700,
+            'commission_rate' => 3.0,
             'max_professionals' => 5,
             'max_appointments_per_month' => null,
             'professionals' => '5 profissionais',
@@ -45,6 +47,7 @@ class SubscriptionService
             'key' => 'enterprise',
             'name' => 'Enterprise',
             'price' => 19700,
+            'commission_rate' => 1.0,
             'max_professionals' => null,
             'max_appointments_per_month' => null,
             'professionals' => 'Profissionais ilimitados',
@@ -61,6 +64,17 @@ class SubscriptionService
     public static function maxAppointmentsPerMonth(string $plan): ?int
     {
         return (self::PLANS[$plan] ?? self::PLANS['starter'])['max_appointments_per_month'];
+    }
+
+    /**
+     * Percentual de comissão da plataforma (marketplace_fee) cobrado sobre
+     * cada agendamento pago na conta MercadoPago conectada do salão. Planos
+     * mais caros pagam menos comissão (incentivo de upgrade); planos
+     * desconhecidos caem no starter. Ver PaymentService::commissionInCents().
+     */
+    public static function commissionRate(string $plan): float
+    {
+        return (self::PLANS[$plan] ?? self::PLANS['starter'])['commission_rate'];
     }
 
     public static function assertCanAddProfessional(Tenant $tenant): void

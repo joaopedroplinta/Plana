@@ -26,7 +26,8 @@ import {
 } from '@/components/ui/dialog'
 import { packagesService } from '@/services/packages'
 import type { CreatePackageData } from '@/services/packages'
-import type { ServicePackage } from '@/types/index'
+import { servicesService } from '@/services/services'
+import type { Service, ServicePackage } from '@/types/index'
 import { formatPrice } from '@/lib/format'
 import { getSafeErrorMessage } from '@/lib/api-error'
 
@@ -36,6 +37,7 @@ interface PackageFormState {
   price: string
   sessions: string
   valid_days: string
+  service_ids: string[]
 }
 
 const emptyForm: PackageFormState = {
@@ -44,6 +46,7 @@ const emptyForm: PackageFormState = {
   price: '',
   sessions: '',
   valid_days: '',
+  service_ids: [],
 }
 
 function priceInputToCents(value: string): number {
@@ -56,6 +59,7 @@ export default function PackagesPage() {
   const slug = typeof params.slug === 'string' ? params.slug : ''
 
   const [packages, setPackages] = useState<ServicePackage[]>([])
+  const [availableServices, setAvailableServices] = useState<Service[]>([])
   const [isLoadingList, setIsLoadingList] = useState(true)
   const [listError, setListError] = useState<string | null>(null)
   const [refreshKey, setRefreshKey] = useState(0)
@@ -94,6 +98,34 @@ export default function PackagesPage() {
     }
   }, [slug, refreshKey])
 
+  // Serviços disponíveis para compor os pacotes.
+  useEffect(() => {
+    if (!slug) return
+    let cancelled = false
+
+    servicesService
+      .list(slug)
+      .then((response) => {
+        if (!cancelled) setAvailableServices(response.data.data)
+      })
+      .catch(() => {
+        // Falha silenciosa: o formulário só ficará sem opções de serviço.
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [slug])
+
+  function toggleService(id: string) {
+    setForm((f) => ({
+      ...f,
+      service_ids: f.service_ids.includes(id)
+        ? f.service_ids.filter((s) => s !== id)
+        : [...f.service_ids, id],
+    }))
+  }
+
   function refresh() {
     setRefreshKey((k) => k + 1)
   }
@@ -113,6 +145,7 @@ export default function PackagesPage() {
       price: (pkg.price / 100).toFixed(2).replace('.', ','),
       sessions: String(pkg.sessions),
       valid_days: String(pkg.valid_days),
+      service_ids: pkg.services.map((s) => s.id),
     })
     setFormError(null)
     setIsFormOpen(true)
@@ -145,6 +178,10 @@ export default function PackagesPage() {
       setFormError('Informe uma validade em dias válida.')
       return
     }
+    if (form.service_ids.length === 0) {
+      setFormError('Selecione ao menos um serviço para o pacote.')
+      return
+    }
 
     const payload: CreatePackageData = {
       name: form.name,
@@ -152,7 +189,7 @@ export default function PackagesPage() {
       price: priceValue,
       sessions: sessionsValue,
       valid_days: validDaysValue,
-      service_ids: [],
+      service_ids: form.service_ids,
     }
 
     setIsSubmitting(true)
@@ -347,6 +384,35 @@ export default function PackagesPage() {
                   disabled={isSubmitting}
                 />
               </div>
+            </div>
+            <div className="space-y-1.5">
+              <Label>Serviços incluídos</Label>
+              {availableServices.length === 0 ? (
+                <p className="rounded-lg border border-dashed px-3 py-4 text-center text-xs text-muted-foreground">
+                  Nenhum serviço cadastrado. Crie serviços antes de montar um pacote.
+                </p>
+              ) : (
+                <div className="max-h-44 space-y-1 overflow-y-auto rounded-lg border p-2">
+                  {availableServices.map((service) => (
+                    <label
+                      key={service.id}
+                      className="flex cursor-pointer items-center gap-2.5 rounded-md px-2 py-1.5 hover:bg-muted"
+                    >
+                      <input
+                        type="checkbox"
+                        className="h-4 w-4 rounded border-input accent-primary"
+                        checked={form.service_ids.includes(service.id)}
+                        onChange={() => toggleService(service.id)}
+                        disabled={isSubmitting}
+                      />
+                      <span className="flex-1 text-sm text-foreground">{service.name}</span>
+                      <span className="text-xs text-muted-foreground">
+                        {formatPrice(service.price)}
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              )}
             </div>
             {formError && (
               <p className="rounded-lg bg-red-50 dark:bg-red-950/40 px-3 py-2 text-sm text-red-600 dark:text-red-400">

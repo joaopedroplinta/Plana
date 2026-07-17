@@ -32,9 +32,14 @@ class PaymentService
      * estado ESTÁTICO (MercadoPagoConfig), definimos o token correto
      * imediatamente antes de cada operação — o tenant conectado usa o próprio
      * token (com refresh se expirado); sem conta conectada, cai no token
-     * GLOBAL da plataforma (comportamento legado). Fee = 0 nesta fase.
+     * GLOBAL da plataforma (comportamento legado).
+     *
+     * Devolve `true` quando o token do PRÓPRIO salão foi aplicado (conta
+     * conectada) — sinal de que há split de marketplace e a comissão da
+     * plataforma (Fase 2) pode ser cobrada; `false` quando caiu no token
+     * global (sem split possível, logo sem comissão).
      */
-    private function useTenantToken(?Tenant $tenant): void
+    private function useTenantToken(?Tenant $tenant): bool
     {
         // Resolvido pelo container (e não injetado no construtor) porque o SDK
         // guarda o token estaticamente e os testes usam partialMock, que não
@@ -44,10 +49,24 @@ class PaymentService
         if ($token) {
             MercadoPagoConfig::setAccessToken($token);
 
-            return;
+            return true;
         }
 
         $this->useGlobalToken();
+
+        return false;
+    }
+
+    /**
+     * Comissão da plataforma (Fase 2) em centavos para um valor pago na conta
+     * conectada de um salão, segundo o percentual do plano do tenant. Arredonda
+     * para o centavo mais próximo.
+     */
+    private function commissionInCents(Tenant $tenant, int $amountInCents): int
+    {
+        $rate = SubscriptionService::commissionRate($tenant->plan);
+
+        return (int) round($amountInCents * $rate / 100);
     }
 
     private function useGlobalToken(): void
@@ -73,18 +92,24 @@ class PaymentService
 
     public function createPix(Appointment $appointment, User $payer): Payment
     {
-        $this->useTenantToken($this->tenantForAppointment($appointment));
+        $tenant = $this->tenantForAppointment($appointment);
+        $connected = $this->useTenantToken($tenant);
+        // Cobra o sinal (deposit_amount) se houver; senão o valor cheio.
+        $charge = $appointment->chargeableAmount();
+        $fee = $connected && $tenant ? $this->commissionInCents($tenant, $charge) : null;
 
         $order = $this->createMercadoPagoOrder(
-            amountInCents: $appointment->price,
+            amountInCents: $charge,
             reference: $appointment->id,
             paymentMethod: ['id' => 'pix', 'type' => 'bank_transfer'],
             payer: ['email' => $payer->email],
+            marketplaceFeeInCents: $fee,
         );
 
         $payment = Payment::create([
             'appointment_id' => $appointment->id,
-            'amount' => $appointment->price,
+            'amount' => $charge,
+            'platform_fee' => $fee,
             'method' => 'pix',
             'external_id' => $order->id,
             'status' => 'pending',
@@ -109,18 +134,24 @@ class PaymentService
      */
     public function createCheckoutPro(Appointment $appointment, User $payer, array $card): Payment
     {
-        $this->useTenantToken($this->tenantForAppointment($appointment));
+        $tenant = $this->tenantForAppointment($appointment);
+        $connected = $this->useTenantToken($tenant);
+        // Cobra o sinal (deposit_amount) se houver; senão o valor cheio.
+        $charge = $appointment->chargeableAmount();
+        $fee = $connected && $tenant ? $this->commissionInCents($tenant, $charge) : null;
 
         $order = $this->createMercadoPagoOrder(
-            amountInCents: $appointment->price,
+            amountInCents: $charge,
             reference: $appointment->id,
             paymentMethod: $this->cardPaymentMethod($card),
             payer: $card['payer'] ?? ['email' => $payer->email],
+            marketplaceFeeInCents: $fee,
         );
 
         $payment = Payment::create([
             'appointment_id' => $appointment->id,
-            'amount' => $appointment->price,
+            'amount' => $charge,
+            'platform_fee' => $fee,
             'method' => 'credit_card',
             'external_id' => $order->id,
             'status' => 'pending',

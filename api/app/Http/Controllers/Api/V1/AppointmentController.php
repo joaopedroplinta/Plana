@@ -18,6 +18,7 @@ use App\Notifications\AppointmentCancelled;
 use App\Notifications\AppointmentConfirmed;
 use App\Notifications\AppointmentRescheduled;
 use App\Notifications\NewAppointmentReceived;
+use App\Services\DepositCalculator;
 use App\Services\SchedulingService;
 use App\Services\SubscriptionService;
 use Carbon\Carbon;
@@ -32,7 +33,10 @@ use Spatie\Permission\Models\Role;
 
 class AppointmentController extends Controller
 {
-    public function __construct(private readonly SchedulingService $schedulingService) {}
+    public function __construct(
+        private readonly SchedulingService $schedulingService,
+        private readonly DepositCalculator $depositCalculator,
+    ) {}
 
     public function index(Request $request): AnonymousResourceCollection
     {
@@ -65,7 +69,7 @@ class AppointmentController extends Controller
 
         SubscriptionService::assertCanCreateAppointment($tenant, $startsAt);
 
-        $appointment = DB::transaction(function () use ($request, $professional, $service, $startsAt, $endsAt) {
+        $appointment = DB::transaction(function () use ($request, $tenant, $professional, $service, $startsAt, $endsAt) {
             $this->schedulingService->assertSlotAvailable($professional, $service, $startsAt);
 
             $packagePurchase = null;
@@ -79,6 +83,10 @@ class AppointmentController extends Controller
                 $this->assertPackagePurchaseUsable($packagePurchase, $service);
             }
 
+            // Sinal só se aplica a agendamento pago avulso; pago por pacote já
+            // foi quitado na compra do pacote (price = 0, sem sinal).
+            $depositAmount = $packagePurchase ? null : $this->depositCalculator->amountFor($service, $tenant);
+
             $appointment = Appointment::create([
                 'client_id' => $request->user()->id,
                 'professional_id' => $request->professional_id,
@@ -88,6 +96,7 @@ class AppointmentController extends Controller
                 'ends_at' => $endsAt,
                 'status' => 'pending',
                 'price' => $packagePurchase ? 0 : $service->price,
+                'deposit_amount' => $depositAmount,
                 'notes' => $request->notes,
             ]);
 
