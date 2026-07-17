@@ -16,7 +16,19 @@ export interface Tenant {
   deposit_type: DepositType
   /** Centavos (fixed) ou percentual 1..100 (percentage); null quando 'none'. */
   deposit_value: number | null
+  /** Cor da marca da landing (#RGB ou #RRGGBB); null usa o padrão do tema. */
+  brand_color: string | null
+  /** URL pública da logo do salão; null quando não enviada. */
+  logo_url: string | null
   current_tenant_role: 'owner' | 'staff' | 'client' | null
+}
+
+/** Imagem da galeria de atendimentos do salão, exibida na landing. */
+export interface GalleryImage {
+  id: string
+  image_url: string
+  caption: string | null
+  sort_order: number
 }
 
 export interface UpdateTenantSettingsData {
@@ -28,6 +40,7 @@ export interface UpdateTenantSettingsData {
   instagram?: string | null
   deposit_type?: DepositType
   deposit_value?: number | null
+  brand_color?: string | null
 }
 
 export interface User {

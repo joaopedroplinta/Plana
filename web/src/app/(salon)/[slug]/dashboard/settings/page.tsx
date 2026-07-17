@@ -22,6 +22,7 @@ import { getSafeErrorMessage } from '@/lib/api-error'
 import { BookingLinkCard } from '@/components/shared/BookingLinkCard'
 import { MercadoPagoConnectCard } from '@/components/shared/MercadoPagoConnectCard'
 import { WeeklyHoursEditor, emptyWeek, type DayHours } from '@/components/shared/WeeklyHoursEditor'
+import { LandingCustomizer } from '@/components/shared/LandingCustomizer'
 
 function MercadoPagoOAuthToast() {
   const searchParams = useSearchParams()
@@ -286,6 +287,8 @@ export default function SalonSettingsPage() {
           </Button>
         </Card>
       </div>
+
+      <LandingCustomizer slug={slug} />
 
       {!isLoading && (
         <div className="space-y-3">

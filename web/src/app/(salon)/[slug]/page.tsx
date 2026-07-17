@@ -6,8 +6,10 @@ import { packagesService } from '@/services/packages'
 import { servicesService } from '@/services/services'
 import { tenantsService } from '@/services/tenants'
 import { businessHoursService } from '@/services/businessHours'
-import type { BusinessHour, Service, ServicePackage, Tenant } from '@/types/index'
+import { galleryService } from '@/services/gallery'
+import type { BusinessHour, GalleryImage, Service, ServicePackage, Tenant } from '@/types/index'
 import { formatDuration, formatPrice } from '@/lib/format'
+import { assetUrl } from '@/lib/assets'
 
 const DAY_LABELS = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado']
 const DAY_ORDER = [1, 2, 3, 4, 5, 6, 0]
@@ -44,13 +46,38 @@ export default async function SalonHomePage({ params }: SalonHomeProps) {
     businessHours = []
   }
 
+  // Galeria de atendimentos é opcional — nunca deve derrubar a página.
+  let gallery: GalleryImage[] = []
+  try {
+    gallery = (await galleryService.list(slug)).data.data
+  } catch {
+    gallery = []
+  }
+
   const whatsappDigits = tenant.whatsapp?.replace(/\D/g, '')
+  const logoUrl = assetUrl(tenant.logo_url)
+
+  // Cor da marca sobrescreve --primary (Tailwind v4), fazendo botões e acentos
+  // herdarem a identidade do salão. Sem cor definida, mantém o tema padrão.
+  const brandStyle = tenant.brand_color
+    ? ({ '--primary': tenant.brand_color } as React.CSSProperties)
+    : undefined
 
   return (
-    <div className="flex-1">
+    <div className="flex-1" style={brandStyle}>
       {/* Hero */}
       <section className="border-b bg-gradient-to-b from-secondary to-background dark:from-primary/10 px-6 py-16 text-center">
         <div className="mx-auto max-w-2xl">
+          {logoUrl && (
+            <>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={logoUrl}
+                alt={`Logo ${tenant.name}`}
+                className="mx-auto mb-6 h-24 w-auto object-contain"
+              />
+            </>
+          )}
           <h1 className="text-4xl font-bold text-foreground">{tenant.name}</h1>
           {tenant.description && (
             <p className="mt-4 text-base text-muted-foreground">{tenant.description}</p>
@@ -144,6 +171,34 @@ export default async function SalonHomePage({ params }: SalonHomeProps) {
       </section>
 
       <PackagesSection slug={slug} packages={packages} />
+
+      {/* Galeria de atendimentos */}
+      {gallery.length > 0 && (
+        <section className="mx-auto max-w-4xl px-6 pb-12">
+          <h2 className="text-xl font-bold text-foreground">Nossos trabalhos</h2>
+          <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3">
+            {gallery.map((image) => {
+              const url = assetUrl(image.image_url)
+              if (!url) return null
+              return (
+                <figure key={image.id} className="overflow-hidden rounded-xl border bg-card">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={url}
+                    alt={image.caption ?? 'Trabalho do salão'}
+                    className="aspect-square w-full object-cover transition-transform hover:scale-105"
+                  />
+                  {image.caption && (
+                    <figcaption className="px-3 py-2 text-xs text-muted-foreground">
+                      {image.caption}
+                    </figcaption>
+                  )}
+                </figure>
+              )
+            })}
+          </div>
+        </section>
+      )}
 
       {/* Horário de funcionamento */}
       {businessHours.length > 0 && (

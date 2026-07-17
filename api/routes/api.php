@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\V1\AvailabilityController;
 use App\Http\Controllers\Api\V1\BlockedDateController;
 use App\Http\Controllers\Api\V1\BusinessHourController;
 use App\Http\Controllers\Api\V1\DashboardController;
+use App\Http\Controllers\Api\V1\GalleryImageController;
 use App\Http\Controllers\Api\V1\MercadoPagoController;
 use App\Http\Controllers\Api\V1\PackagePurchaseController;
 use App\Http\Controllers\Api\V1\PaymentController;
@@ -55,6 +56,7 @@ Route::prefix('v1')->middleware('throttle:api')->group(function () {
 
         Route::get('availability', AvailabilityController::class);
         Route::get('business-hours', [BusinessHourController::class, 'index']);
+        Route::get('gallery', [GalleryImageController::class, 'index']);
 
         Route::apiResource('services', ServiceController::class)->only(['index', 'show']);
         Route::apiResource('packages', ServicePackageController::class)->only(['index', 'show']);
@@ -92,6 +94,10 @@ Route::prefix('v1')->middleware('throttle:api')->group(function () {
             Route::get('dashboard', DashboardController::class);
 
             Route::patch('settings', [TenantSettingsController::class, 'update']);
+            Route::post('logo', [TenantSettingsController::class, 'uploadLogo']);
+
+            Route::post('gallery', [GalleryImageController::class, 'store']);
+            Route::delete('gallery/{galleryImage}', [GalleryImageController::class, 'destroy']);
 
             Route::get('team', [TeamController::class, 'index']);
             Route::post('team', [TeamController::class, 'store']);
