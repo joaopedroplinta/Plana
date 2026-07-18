@@ -47,10 +47,28 @@ export interface User {
   id: string
   name: string
   email: string
+  phone: string | null
+  birth_date: string | null
+  notes: string | null
+  avatar_url: string | null
   email_verified_at: string | null
   // API retorna `getRoleNames()` do Spatie Permission — lista de strings, não de objetos.
   roles: string[]
   tenant?: Tenant
+}
+
+export interface UpdateProfileData {
+  name?: string
+  email?: string
+  phone?: string | null
+  birth_date?: string | null
+  notes?: string | null
+}
+
+export interface UpdatePasswordData {
+  current_password: string
+  password: string
+  password_confirmation: string
 }
 
 export interface AuthResponse {

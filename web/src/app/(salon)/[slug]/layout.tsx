@@ -56,6 +56,12 @@ export default function SalonLayout({ children, params }: SalonLayoutProps) {
                 >
                   Meus agendamentos
                 </a>
+                <a
+                  href={`/${slug}/minha-conta/perfil`}
+                  className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  Perfil
+                </a>
                 <button
                   type="button"
                   onClick={handleLogout}
