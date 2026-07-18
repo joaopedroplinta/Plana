@@ -19,12 +19,20 @@ class SubscriptionService
 {
     use InteractsWithMercadoPagoOrders;
 
+    /**
+     * Ciclos de cobrança aceitos. O anual é "pague 10, leve 12" (~17% de
+     * desconto vs. 12x o valor mensal) — ver `yearly_price` de cada plano.
+     * Starter é sempre grátis e não tem opção anual (`yearly_price` null).
+     */
+    public const BILLING_CYCLES = ['monthly', 'yearly'];
+
     /** @var array<string, array<string, mixed>> */
     private const PLANS = [
         'starter' => [
             'key' => 'starter',
             'name' => 'Starter',
             'price' => 0,
+            'yearly_price' => null,
             'commission_rate' => 5.0,
             'max_professionals' => 1,
             'max_appointments_per_month' => 50,
@@ -36,6 +44,7 @@ class SubscriptionService
             'key' => 'pro',
             'name' => 'Pro',
             'price' => 9700,
+            'yearly_price' => 97000,
             'commission_rate' => 3.0,
             'max_professionals' => 5,
             'max_appointments_per_month' => null,
@@ -47,6 +56,7 @@ class SubscriptionService
             'key' => 'enterprise',
             'name' => 'Enterprise',
             'price' => 19700,
+            'yearly_price' => 197000,
             'commission_rate' => 1.0,
             'max_professionals' => null,
             'max_appointments_per_month' => null,
@@ -75,6 +85,27 @@ class SubscriptionService
     public static function commissionRate(string $plan): float
     {
         return (self::PLANS[$plan] ?? self::PLANS['starter'])['commission_rate'];
+    }
+
+    /**
+     * Valor cobrado (em centavos) pro plano no ciclo de cobrança informado.
+     * `yearly` só existe pra planos pagos — Starter não tem cobrança anual.
+     */
+    public static function amountFor(string $plan, string $billingCycle): int
+    {
+        $planData = self::PLANS[$plan] ?? self::PLANS['starter'];
+
+        if ($billingCycle === 'yearly') {
+            if ($planData['yearly_price'] === null) {
+                throw ValidationException::withMessages([
+                    'billing_cycle' => ['Este plano não possui cobrança anual.'],
+                ]);
+            }
+
+            return $planData['yearly_price'];
+        }
+
+        return $planData['price'];
     }
 
     public static function assertCanAddProfessional(Tenant $tenant): void
@@ -146,15 +177,15 @@ class SubscriptionService
         return array_values(self::PLANS);
     }
 
-    public function createPixSubscription(Tenant $tenant, User $payer, string $plan): Subscription
+    public function createPixSubscription(Tenant $tenant, User $payer, string $plan, string $billingCycle = 'monthly'): Subscription
     {
         $this->useGlobalToken();
 
-        $planData = self::PLANS[$plan];
-        $reference = "subscription_{$tenant->id}_{$plan}";
+        $amount = self::amountFor($plan, $billingCycle);
+        $reference = "subscription_{$tenant->id}_{$plan}_{$billingCycle}";
 
         $order = $this->createMercadoPagoOrder(
-            amountInCents: $planData['price'],
+            amountInCents: $amount,
             reference: $reference,
             paymentMethod: ['id' => 'pix', 'type' => 'bank_transfer'],
             payer: ['email' => $payer->email],
@@ -163,7 +194,8 @@ class SubscriptionService
         $subscription = Subscription::create([
             'tenant_id' => $tenant->id,
             'plan' => $plan,
-            'amount' => $planData['price'],
+            'billing_cycle' => $billingCycle,
+            'amount' => $amount,
             'method' => 'pix',
             'status' => 'pending',
             'mp_payment_id' => $order->id,
@@ -181,15 +213,15 @@ class SubscriptionService
      *
      * @param  array{token: string, payment_method_id: string, installments: int, issuer_id?: ?string, payer?: array<string, mixed>}  $card
      */
-    public function createCheckoutProSubscription(Tenant $tenant, User $payer, string $plan, array $card): Subscription
+    public function createCheckoutProSubscription(Tenant $tenant, User $payer, string $plan, array $card, string $billingCycle = 'monthly'): Subscription
     {
         $this->useGlobalToken();
 
-        $planData = self::PLANS[$plan];
-        $reference = "subscription_{$tenant->id}_{$plan}";
+        $amount = self::amountFor($plan, $billingCycle);
+        $reference = "subscription_{$tenant->id}_{$plan}_{$billingCycle}";
 
         $order = $this->createMercadoPagoOrder(
-            amountInCents: $planData['price'],
+            amountInCents: $amount,
             reference: $reference,
             paymentMethod: $this->cardPaymentMethod($card),
             payer: $card['payer'] ?? ['email' => $payer->email],
@@ -198,7 +230,8 @@ class SubscriptionService
         $subscription = Subscription::create([
             'tenant_id' => $tenant->id,
             'plan' => $plan,
-            'amount' => $planData['price'],
+            'billing_cycle' => $billingCycle,
+            'amount' => $amount,
             'method' => 'credit_card',
             'status' => 'pending',
             'mp_payment_id' => $order->id,
@@ -229,7 +262,14 @@ class SubscriptionService
 
         if ($becameApproved) {
             $updates['paid_at'] = now();
-            $updates['expires_at'] = now()->addMonth();
+            // `expires_at` funciona como "paid_until": pro ciclo anual o
+            // acesso vale os 12 meses inteiros já pagos, sem reembolso
+            // proporcional em caso de cancelamento no meio do período — ver
+            // subscriptions:downgrade-expired, que só rebaixa depois que
+            // esta data passar.
+            $updates['expires_at'] = $subscription->billing_cycle === 'yearly'
+                ? now()->addYear()
+                : now()->addMonth();
         }
 
         $subscription->update($updates);

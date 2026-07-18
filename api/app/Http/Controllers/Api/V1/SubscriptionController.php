@@ -46,9 +46,19 @@ class SubscriptionController extends Controller
         }
 
         $validated = $request->validate(array_merge(
-            ['plan' => ['required', 'string', 'in:starter,pro,enterprise']],
+            [
+                'plan' => ['required', 'string', 'in:starter,pro,enterprise'],
+                'billing_cycle' => ['sometimes', 'string', 'in:monthly,yearly'],
+            ],
             $this->paymentValidationRules(),
         ));
+
+        $billingCycle = $validated['billing_cycle'] ?? 'monthly';
+
+        // Valida a combinação plano/ciclo antes de tudo (ex.: Starter não
+        // tem cobrança anual) — lança ValidationException (422) igual a um
+        // Form Request.
+        SubscriptionService::amountFor($validated['plan'], $billingCycle);
 
         // Starter is free — update the plan directly without payment
         if ($validated['plan'] === 'starter') {
@@ -57,6 +67,7 @@ class SubscriptionController extends Controller
             return response()->json([
                 'data' => [
                     'plan' => 'starter',
+                    'billing_cycle' => 'monthly',
                     'status' => 'approved',
                     'amount' => 0,
                 ],
@@ -67,14 +78,16 @@ class SubscriptionController extends Controller
             $subscription = $this->subscriptionService->createPixSubscription(
                 $tenant,
                 $request->user(),
-                $validated['plan']
+                $validated['plan'],
+                $billingCycle
             );
         } else {
             $subscription = $this->subscriptionService->createCheckoutProSubscription(
                 $tenant,
                 $request->user(),
                 $validated['plan'],
-                $this->cardData($validated)
+                $this->cardData($validated),
+                $billingCycle
             );
         }
 

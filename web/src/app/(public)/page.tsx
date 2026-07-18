@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { BarChart3, Calendar, Check, Scissors } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { formatPrice } from '@/lib/format'
+import { PricingSection } from '@/components/shared/PricingSection'
 
 const features = [
   {
@@ -23,45 +23,6 @@ const features = [
     icon: BarChart3,
   },
 ]
-
-// Espelha api/app/Services/SubscriptionService.php::PLANS — mantenha os dois em sincronia.
-const plans = [
-  {
-    key: 'starter',
-    name: 'Starter',
-    price: 0,
-    description: 'Pra começar sem compromisso.',
-    features: ['1 profissional', '50 agendamentos/mês', 'Suporte básico'],
-    highlighted: false,
-  },
-  {
-    key: 'pro',
-    name: 'Pro',
-    price: 9700,
-    description: 'Pra quem já tem uma agenda cheia.',
-    features: [
-      '5 profissionais',
-      'Agendamentos ilimitados',
-      'Suporte prioritário',
-      'Relatórios avançados',
-    ],
-    highlighted: true,
-  },
-  {
-    key: 'enterprise',
-    name: 'Enterprise',
-    price: 19700,
-    description: 'Pra redes e negócios com múltiplas unidades.',
-    features: [
-      'Profissionais ilimitados',
-      'Agendamentos ilimitados',
-      'Suporte dedicado',
-      'Relatórios avançados',
-      'API access',
-    ],
-    highlighted: false,
-  },
-] as const
 
 type SlotState = 'booked' | 'available' | 'selected'
 
@@ -174,62 +135,7 @@ export default function LandingPage() {
       </section>
 
       {/* Planos */}
-      <section id="planos" className="bg-muted px-6 py-20">
-        <div className="mx-auto max-w-5xl">
-          <h2 className="text-center font-heading text-2xl font-bold text-foreground">
-            Planos para todo tamanho de negócio
-          </h2>
-          <p className="mx-auto mt-3 max-w-xl text-center text-sm text-muted-foreground">
-            Comece grátis e mude de plano quando seu negócio crescer.
-          </p>
-          <div className="mt-12 grid gap-8 sm:grid-cols-3">
-            {plans.map((plan) => (
-              <div
-                key={plan.key}
-                className={cn(
-                  'flex flex-col rounded-2xl border bg-card p-8 shadow-sm',
-                  plan.highlighted ? 'border-primary ring-1 ring-primary' : 'border-border',
-                )}
-              >
-                {plan.highlighted && (
-                  <span className="mb-4 inline-flex w-fit items-center rounded-full bg-primary px-3 py-1 text-xs font-semibold text-white">
-                    Mais popular
-                  </span>
-                )}
-                <h3 className="text-lg font-semibold text-foreground">{plan.name}</h3>
-                <p className="mt-1 text-sm text-muted-foreground">{plan.description}</p>
-                <p className="mt-6">
-                  <span className="font-heading text-3xl font-extrabold text-foreground">
-                    {plan.price === 0 ? 'Grátis' : formatPrice(plan.price)}
-                  </span>
-                  {plan.price > 0 && (
-                    <span className="text-sm text-muted-foreground">/mês</span>
-                  )}
-                </p>
-                <ul className="mt-6 space-y-3">
-                  {plan.features.map((feature) => (
-                    <li key={feature} className="flex items-start gap-2 text-sm text-foreground">
-                      <Check className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-                      {feature}
-                    </li>
-                  ))}
-                </ul>
-                <Link
-                  href="/register"
-                  className={cn(
-                    'mt-8 rounded-full px-4 py-2.5 text-center text-sm font-semibold transition-colors',
-                    plan.highlighted
-                      ? 'bg-primary text-white hover:bg-primary/90'
-                      : 'border border-border text-foreground hover:bg-muted',
-                  )}
-                >
-                  Começar grátis
-                </Link>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+      <PricingSection />
 
       {/* Footer CTA */}
       <section className="bg-[var(--teal-900)] px-6 py-16 text-center">

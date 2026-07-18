@@ -250,10 +250,13 @@ export interface AdminTenant {
   owner: AdminTenantOwner | null
 }
 
+export type BillingCycle = 'monthly' | 'yearly'
+
 export interface SubscriptionPlan {
   key: 'starter' | 'pro' | 'enterprise'
   name: string
-  price: number // centavos
+  price: number // centavos, cobrança mensal
+  yearly_price: number | null // centavos, cobrança anual (null quando o plano não tem opção anual, ex.: starter)
   professionals: string
   appointments: string
   features: string[]
@@ -262,6 +265,7 @@ export interface SubscriptionPlan {
 export interface Subscription {
   id: string
   plan: 'starter' | 'pro' | 'enterprise'
+  billing_cycle: BillingCycle
   amount: number
   method: 'pix' | 'credit_card'
   status: 'pending' | 'approved' | 'rejected' | 'cancelled'
