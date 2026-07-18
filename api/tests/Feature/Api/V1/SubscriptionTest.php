@@ -6,6 +6,7 @@ use App\Models\User;
 use App\Services\SubscriptionService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 use Spatie\Permission\Models\Role;
 
 uses(RefreshDatabase::class);
@@ -224,6 +225,174 @@ it('owner can change the subscription of their own tenant', function () {
 
     $tenant->refresh();
     expect($tenant->plan)->toBe('starter');
+});
+
+// --- POST /subscription — yearly billing cycle ---
+
+it('creates a pending pix subscription with yearly billing cycle and full annual amount for pro', function () {
+    $tenant = Tenant::factory()->create(['plan' => 'starter']);
+    $owner = subOwner($tenant);
+
+    $fakeSubscription = new Subscription([
+        'tenant_id' => $tenant->id,
+        'plan' => 'pro',
+        'billing_cycle' => 'yearly',
+        'amount' => 97000,
+        'method' => 'pix',
+        'status' => 'pending',
+        'mp_payment_id' => 'mp_yearly_1',
+        'pix_qr_code' => 'qr_code_text',
+        'pix_qr_code_base64' => 'qr_base64',
+    ]);
+    $fakeSubscription->id = (string) Str::uuid();
+    $fakeSubscription->created_at = now();
+    $fakeSubscription->updated_at = now();
+
+    $this->mock(SubscriptionService::class, fn ($mock) => $mock
+        ->shouldReceive('createPixSubscription')
+        ->once()
+        ->with(
+            Mockery::on(fn ($arg) => $arg instanceof Tenant && $arg->id === $tenant->id),
+            Mockery::on(fn ($arg) => $arg instanceof User),
+            'pro',
+            'yearly'
+        )
+        ->andReturn($fakeSubscription)
+    );
+
+    $response = $this->actingAs($owner)
+        ->postJson("/api/v1/negocio/{$tenant->slug}/subscription", [
+            'plan' => 'pro',
+            'method' => 'pix',
+            'billing_cycle' => 'yearly',
+        ]);
+
+    $response->assertCreated()
+        ->assertJsonPath('data.plan', 'pro')
+        ->assertJsonPath('data.billing_cycle', 'yearly')
+        ->assertJsonPath('data.amount', 97000)
+        ->assertJsonPath('data.status', 'pending');
+});
+
+it('creates a checkout pro subscription with yearly billing cycle and full annual amount for enterprise', function () {
+    $tenant = Tenant::factory()->create(['plan' => 'starter']);
+    $owner = subOwner($tenant);
+
+    $fakeSubscription = new Subscription([
+        'tenant_id' => $tenant->id,
+        'plan' => 'enterprise',
+        'billing_cycle' => 'yearly',
+        'amount' => 197000,
+        'method' => 'credit_card',
+        'status' => 'approved',
+        'mp_payment_id' => 'mp_yearly_2',
+    ]);
+    $fakeSubscription->id = (string) Str::uuid();
+    $fakeSubscription->created_at = now();
+    $fakeSubscription->updated_at = now();
+
+    $this->mock(SubscriptionService::class, fn ($mock) => $mock
+        ->shouldReceive('createCheckoutProSubscription')
+        ->once()
+        ->with(
+            Mockery::on(fn ($arg) => $arg instanceof Tenant && $arg->id === $tenant->id),
+            Mockery::on(fn ($arg) => $arg instanceof User),
+            'enterprise',
+            Mockery::type('array'),
+            'yearly'
+        )
+        ->andReturn($fakeSubscription)
+    );
+
+    $response = $this->actingAs($owner)
+        ->postJson("/api/v1/negocio/{$tenant->slug}/subscription", [
+            'plan' => 'enterprise',
+            'method' => 'credit_card',
+            'billing_cycle' => 'yearly',
+        ]);
+
+    $response->assertCreated()
+        ->assertJsonPath('data.plan', 'enterprise')
+        ->assertJsonPath('data.billing_cycle', 'yearly')
+        ->assertJsonPath('data.amount', 197000)
+        ->assertJsonPath('data.status', 'approved');
+});
+
+it('defaults to monthly billing cycle when not informed', function () {
+    $tenant = Tenant::factory()->create(['plan' => 'starter']);
+    $owner = subOwner($tenant);
+
+    $this->mock(SubscriptionService::class, fn ($mock) => $mock
+        ->shouldReceive('createPixSubscription')
+        ->once()
+        ->with(Mockery::any(), Mockery::any(), 'pro', 'monthly')
+        ->andReturn(tap(new Subscription([
+            'tenant_id' => $tenant->id,
+            'plan' => 'pro',
+            'billing_cycle' => 'monthly',
+            'amount' => 9700,
+            'method' => 'pix',
+            'status' => 'pending',
+        ]), function (Subscription $s) {
+            $s->id = (string) Str::uuid();
+            $s->created_at = now();
+            $s->updated_at = now();
+        }))
+    );
+
+    $response = $this->actingAs($owner)
+        ->postJson("/api/v1/negocio/{$tenant->slug}/subscription", [
+            'plan' => 'pro',
+            'method' => 'pix',
+        ]);
+
+    $response->assertCreated()
+        ->assertJsonPath('data.billing_cycle', 'monthly');
+});
+
+it('rejects yearly billing cycle for the starter plan', function () {
+    $tenant = Tenant::factory()->create(['plan' => 'starter']);
+    $owner = subOwner($tenant);
+
+    $response = $this->actingAs($owner)
+        ->postJson("/api/v1/negocio/{$tenant->slug}/subscription", [
+            'plan' => 'starter',
+            'method' => 'pix',
+            'billing_cycle' => 'yearly',
+        ]);
+
+    $response->assertStatus(422)
+        ->assertJsonValidationErrors('billing_cycle');
+});
+
+it('rejects an invalid billing_cycle value', function () {
+    $tenant = Tenant::factory()->create(['plan' => 'starter']);
+    $owner = subOwner($tenant);
+
+    $response = $this->actingAs($owner)
+        ->postJson("/api/v1/negocio/{$tenant->slug}/subscription", [
+            'plan' => 'pro',
+            'method' => 'pix',
+            'billing_cycle' => 'weekly',
+        ]);
+
+    $response->assertStatus(422)
+        ->assertJsonValidationErrors('billing_cycle');
+});
+
+// --- Real SubscriptionService::amountFor() ---
+
+it('amountFor returns the exact annual amount in cents for pro and enterprise', function () {
+    expect(SubscriptionService::amountFor('pro', 'monthly'))->toBe(9700)
+        ->and(SubscriptionService::amountFor('pro', 'yearly'))->toBe(97000)
+        ->and(SubscriptionService::amountFor('enterprise', 'monthly'))->toBe(19700)
+        ->and(SubscriptionService::amountFor('enterprise', 'yearly'))->toBe(197000)
+        ->and(SubscriptionService::amountFor('starter', 'monthly'))->toBe(0);
+});
+
+it('amountFor throws a validation exception for starter yearly', function () {
+    expect(fn () => SubscriptionService::amountFor('starter', 'yearly'))
+        ->toThrow(ValidationException::class);
 });
 
 it('subscription records do not leak across tenants', function () {

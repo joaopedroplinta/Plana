@@ -6,7 +6,13 @@ import { toast } from 'sonner'
 import { useAuth } from '@/hooks/useAuth'
 import { useTenant } from '@/hooks/useTenant'
 import { subscriptionService } from '@/services/subscription'
-import type { CardPaymentData, Subscription, SubscriptionPlan, SubscriptionResponse } from '@/types'
+import type {
+  BillingCycle,
+  CardPaymentData,
+  Subscription,
+  SubscriptionPlan,
+  SubscriptionResponse,
+} from '@/types'
 import { formatDate, formatPrice } from '@/lib/format'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -21,11 +27,21 @@ import {
 } from '@/components/ui/dialog'
 
 type ModalState =
-  | { step: 'choose_method'; plan: SubscriptionPlan }
-  | { step: 'card_form'; plan: SubscriptionPlan }
-  | { step: 'pix_waiting'; plan: SubscriptionPlan; subscription: Subscription }
-  | { step: 'approved'; plan: SubscriptionPlan }
+  | { step: 'choose_method'; plan: SubscriptionPlan; billingCycle: BillingCycle }
+  | { step: 'card_form'; plan: SubscriptionPlan; billingCycle: BillingCycle }
+  | { step: 'pix_waiting'; plan: SubscriptionPlan; billingCycle: BillingCycle; subscription: Subscription }
+  | { step: 'approved'; plan: SubscriptionPlan; billingCycle: BillingCycle }
   | null
+
+// Desconto do ciclo anual vs. 12x o valor mensal ("pague 10, leve 12").
+const YEARLY_DISCOUNT_LABEL = '2 meses grátis'
+
+function priceForCycle(plan: SubscriptionPlan, billingCycle: BillingCycle): number {
+  if (billingCycle === 'yearly' && plan.yearly_price !== null) {
+    return plan.yearly_price
+  }
+  return plan.price
+}
 
 export default function PlanosPage() {
   const params = useParams()
@@ -38,6 +54,7 @@ export default function PlanosPage() {
   const [error, setError] = useState<string | null>(null)
   const [modal, setModal] = useState<ModalState>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [billingCycle, setBillingCycle] = useState<BillingCycle>('monthly')
 
   const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
@@ -61,7 +78,7 @@ export default function PlanosPage() {
     }
   }, [])
 
-  function startPolling(plan: SubscriptionPlan) {
+  function startPolling(plan: SubscriptionPlan, cycle: BillingCycle) {
     if (pollingRef.current) clearInterval(pollingRef.current)
 
     pollingRef.current = setInterval(() => {
@@ -73,14 +90,14 @@ export default function PlanosPage() {
             clearInterval(pollingRef.current!)
             pollingRef.current = null
             setData(res.data.data)
-            setModal({ step: 'approved', plan })
+            setModal({ step: 'approved', plan, billingCycle: cycle })
           }
         })
         .catch(() => {})
     }, 5000)
   }
 
-  async function handleSelectPlan(plan: SubscriptionPlan) {
+  async function handleSelectPlan(plan: SubscriptionPlan, cycle: BillingCycle) {
     if (!isOwner) return
     setIsSubmitting(true)
 
@@ -88,18 +105,19 @@ export default function PlanosPage() {
       const res = await subscriptionService.create(slug, {
         plan: plan.key,
         method: 'pix',
+        billing_cycle: cycle,
       })
       const subscription = res.data.data
 
       if (plan.key === 'starter' || subscription.status === 'approved') {
         const refreshed = await subscriptionService.get(slug)
         setData(refreshed.data.data)
-        setModal({ step: 'approved', plan })
+        setModal({ step: 'approved', plan, billingCycle: cycle })
         return
       }
 
-      setModal({ step: 'pix_waiting', plan, subscription })
-      startPolling(plan)
+      setModal({ step: 'pix_waiting', plan, billingCycle: cycle, subscription })
+      startPolling(plan, cycle)
     } catch {
       toast.error('Erro ao processar pagamento. Tente novamente.')
     } finally {
@@ -107,18 +125,22 @@ export default function PlanosPage() {
     }
   }
 
-  async function handleCardSubmit(plan: SubscriptionPlan, cardData: CardPaymentData) {
+  async function handleCardSubmit(plan: SubscriptionPlan, cycle: BillingCycle, cardData: CardPaymentData) {
     if (!isOwner) return
     setIsSubmitting(true)
 
     try {
-      const res = await subscriptionService.create(slug, { plan: plan.key, method: 'credit_card' }, cardData)
+      const res = await subscriptionService.create(
+        slug,
+        { plan: plan.key, method: 'credit_card', billing_cycle: cycle },
+        cardData,
+      )
       const subscription = res.data.data
 
       if (subscription.status === 'approved') {
         const refreshed = await subscriptionService.get(slug)
         setData(refreshed.data.data)
-        setModal({ step: 'approved', plan })
+        setModal({ step: 'approved', plan, billingCycle: cycle })
         return
       }
 
@@ -128,8 +150,8 @@ export default function PlanosPage() {
       }
 
       // pending/in_process — incomum para cartão (normalmente síncrono).
-      setModal({ step: 'pix_waiting', plan, subscription })
-      startPolling(plan)
+      setModal({ step: 'pix_waiting', plan, billingCycle: cycle, subscription })
+      startPolling(plan, cycle)
     } catch {
       toast.error('Erro ao processar pagamento. Tente novamente.')
     } finally {
@@ -139,11 +161,13 @@ export default function PlanosPage() {
 
   function handlePlanClick(plan: SubscriptionPlan) {
     if (!isOwner) return
-    if (plan.price === 0) {
-      handleSelectPlan(plan)
+    // Starter é sempre grátis/mensal, independente do toggle selecionado.
+    const cycle = plan.key === 'starter' ? 'monthly' : billingCycle
+    if (priceForCycle(plan, cycle) === 0) {
+      handleSelectPlan(plan, cycle)
       return
     }
-    setModal({ step: 'choose_method', plan })
+    setModal({ step: 'choose_method', plan, billingCycle: cycle })
   }
 
   function closeModal() {
@@ -188,9 +212,45 @@ export default function PlanosPage() {
         </p>
       </div>
 
+      {/* Toggle mensal / anual */}
+      <div className="flex justify-center">
+        <div className="inline-flex items-center rounded-full border bg-muted p-1">
+          <button
+            type="button"
+            onClick={() => setBillingCycle('monthly')}
+            className={[
+              'rounded-full px-4 py-1.5 text-sm font-medium transition-colors',
+              billingCycle === 'monthly'
+                ? 'bg-card text-foreground shadow-sm'
+                : 'text-muted-foreground hover:text-foreground',
+            ].join(' ')}
+          >
+            Mensal
+          </button>
+          <button
+            type="button"
+            onClick={() => setBillingCycle('yearly')}
+            className={[
+              'flex items-center gap-2 rounded-full px-4 py-1.5 text-sm font-medium transition-colors',
+              billingCycle === 'yearly'
+                ? 'bg-card text-foreground shadow-sm'
+                : 'text-muted-foreground hover:text-foreground',
+            ].join(' ')}
+          >
+            Anual
+            <span className="rounded-full bg-primary px-2 py-0.5 text-xs font-semibold text-white">
+              -17%
+            </span>
+          </button>
+        </div>
+      </div>
+
       <div className="grid gap-6 md:grid-cols-3">
         {plans.map((plan) => {
           const isActive = plan.key === currentPlan
+          const cycle = plan.key === 'starter' ? 'monthly' : billingCycle
+          const price = priceForCycle(plan, cycle)
+          const isYearly = cycle === 'yearly' && plan.yearly_price !== null
           return (
             <div key={plan.key} className="relative">
               {isActive && (
@@ -214,13 +274,22 @@ export default function PlanosPage() {
                     </span>
                   </CardTitle>
                   <div className="mt-2">
-                    {plan.price === 0 ? (
+                    {price === 0 ? (
                       <span className="text-3xl font-bold text-foreground">Gratis</span>
                     ) : (
-                      <span className="text-3xl font-bold text-foreground">
-                        {formatPrice(plan.price)}
-                        <span className="text-sm font-normal text-muted-foreground">/mes</span>
-                      </span>
+                      <>
+                        <span className="text-3xl font-bold text-foreground">
+                          {formatPrice(price)}
+                          <span className="text-sm font-normal text-muted-foreground">
+                            {isYearly ? '/ano' : '/mes'}
+                          </span>
+                        </span>
+                        {isYearly && (
+                          <p className="mt-1 text-xs text-muted-foreground">
+                            equivalente a {formatPrice(Math.round(price / 12))}/mes · {YEARLY_DISCOUNT_LABEL}
+                          </p>
+                        )}
+                      </>
                     )}
                   </div>
                 </CardHeader>
@@ -298,7 +367,8 @@ export default function PlanosPage() {
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>
-              Assinar plano {modal?.step === 'choose_method' ? modal.plan.name : ''}
+              Assinar plano {modal?.step === 'choose_method' ? modal.plan.name : ''}{' '}
+              {modal?.step === 'choose_method' && modal.billingCycle === 'yearly' ? '(anual)' : ''}
             </DialogTitle>
             <DialogDescription>Escolha como deseja pagar</DialogDescription>
           </DialogHeader>
@@ -308,7 +378,7 @@ export default function PlanosPage() {
               className="h-14 justify-start gap-3"
               disabled={isSubmitting}
               onClick={() =>
-                modal?.step === 'choose_method' && handleSelectPlan(modal.plan)
+                modal?.step === 'choose_method' && handleSelectPlan(modal.plan, modal.billingCycle)
               }
             >
               <span className="text-2xl">PIX</span>
@@ -319,7 +389,8 @@ export default function PlanosPage() {
               className="h-14 justify-start gap-3"
               disabled={isSubmitting}
               onClick={() =>
-                modal?.step === 'choose_method' && setModal({ step: 'card_form', plan: modal.plan })
+                modal?.step === 'choose_method' &&
+                setModal({ step: 'card_form', plan: modal.plan, billingCycle: modal.billingCycle })
               }
             >
               <span className="text-2xl">Cartao</span>
@@ -336,14 +407,15 @@ export default function PlanosPage() {
             <DialogTitle>Pagamento com cartão</DialogTitle>
             <DialogDescription>
               {modal?.step === 'card_form' ? modal.plan.name : ''} — {' '}
-              {modal?.step === 'card_form' ? formatPrice(modal.plan.price) : ''}/mes
+              {modal?.step === 'card_form' ? formatPrice(priceForCycle(modal.plan, modal.billingCycle)) : ''}
+              {modal?.step === 'card_form' && modal.billingCycle === 'yearly' ? '/ano' : '/mes'}
             </DialogDescription>
           </DialogHeader>
           {modal?.step === 'card_form' && (
             <CardPaymentBrick
-              amount={modal.plan.price / 100}
+              amount={priceForCycle(modal.plan, modal.billingCycle) / 100}
               payerEmail={user?.email}
-              onApprove={(cardData) => handleCardSubmit(modal.plan, cardData)}
+              onApprove={(cardData) => handleCardSubmit(modal.plan, modal.billingCycle, cardData)}
             />
           )}
         </DialogContent>

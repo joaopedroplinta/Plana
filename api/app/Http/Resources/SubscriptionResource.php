@@ -17,6 +17,7 @@ class SubscriptionResource extends JsonResource
         return [
             'id' => $this->id,
             'plan' => $this->plan,
+            'billing_cycle' => $this->billing_cycle,
             'amount' => $this->amount,
             'method' => $this->method,
             'status' => $this->status,
