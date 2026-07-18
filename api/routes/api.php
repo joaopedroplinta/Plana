@@ -13,6 +13,7 @@ use App\Http\Controllers\Api\V1\MercadoPagoController;
 use App\Http\Controllers\Api\V1\PackagePurchaseController;
 use App\Http\Controllers\Api\V1\PaymentController;
 use App\Http\Controllers\Api\V1\ProfessionalController;
+use App\Http\Controllers\Api\V1\ProfileController;
 use App\Http\Controllers\Api\V1\ScheduleController;
 use App\Http\Controllers\Api\V1\SchedulerController;
 use App\Http\Controllers\Api\V1\ServiceController;
@@ -46,6 +47,11 @@ Route::prefix('v1')->middleware('throttle:api')->group(function () {
         Route::middleware('auth:sanctum')->group(function () {
             Route::post('logout', [AuthController::class, 'logout']);
             Route::get('me', [AuthController::class, 'me']);
+
+            Route::get('profile', [ProfileController::class, 'show']);
+            Route::patch('profile', [ProfileController::class, 'update']);
+            Route::put('profile/password', [ProfileController::class, 'updatePassword']);
+            Route::post('profile/avatar', [ProfileController::class, 'uploadAvatar']);
         });
     });
 

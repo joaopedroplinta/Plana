@@ -20,6 +20,7 @@ import {
   LogOut,
   Menu,
   Store,
+  User as UserIcon,
   X,
 } from 'lucide-react'
 
@@ -96,6 +97,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       label: 'Planos',
       href: `/${slug}/dashboard/planos`,
       icon: <CreditCard className="h-4 w-4" />,
+    },
+    {
+      label: 'Perfil',
+      href: `/${slug}/dashboard/perfil`,
+      icon: <UserIcon className="h-4 w-4" />,
     },
   ]
 
