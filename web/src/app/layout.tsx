@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Sora, Manrope, Geist_Mono } from "next/font/google";
 import { Toaster } from "@/components/ui/sonner";
 import { ThemeProvider } from "@/components/theme-provider";
+import { CookieConsent } from "@/components/shared/CookieConsent";
 import "./globals.css";
 
 const fontSans = Manrope({
@@ -47,6 +48,7 @@ export default function RootLayout({
         >
           {children}
           <Toaster />
+          <CookieConsent />
         </ThemeProvider>
       </body>
     </html>
